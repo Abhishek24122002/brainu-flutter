@@ -1,11 +1,13 @@
 
 import 'package:brainu/screens/Identify.dart';
 import 'package:brainu/screens/Phonemene_deletetion_final.dart';
-import 'package:brainu/screens/Swapping.dart';
-import 'package:brainu/screens/ph_deletion.dart';
+
 import 'package:flutter/material.dart';
 
 import 'Letter.dart';
+import 'Phonemene_deletetion_initial.dart';
+import 'Phonemene_substitution_final.dart';
+import 'Phonemene_substitution_initial.dart';
 import 'Word.dart';
 import 'Listen.dart';
 import 'Story.dart';
@@ -28,7 +30,7 @@ class LevelSelectionScreen extends StatelessWidget {
         ),
         itemCount: 10,
         itemBuilder: (context, index) {
-          bool isActive = index < 7; // Only first 6 levels are active
+          bool isActive = index < 10; // Only first 10 levels are active
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: isActive ? Colors.blue : Colors.grey,
@@ -78,6 +80,26 @@ class LevelSelectionScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => Ph_deletion_final()),
+                      );
+                    }
+                    else if (index == 7) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Ph_deletion_initial()),
+                      );
+                    }
+
+                    else if (index == 8) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Ph_substitution_final()),
+                      );
+                    }
+
+                    else if (index == 9) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Ph_substitution_initial()),
                       );
                     }
                   }

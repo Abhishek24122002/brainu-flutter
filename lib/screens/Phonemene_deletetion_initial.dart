@@ -13,12 +13,12 @@ import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
 import 'LevelSelectionScreen.dart';
 
-class Ph_deletion_final extends StatefulWidget {
+class Ph_deletion_initial extends StatefulWidget {
   @override
-  _Ph_deletion_finalState createState() => _Ph_deletion_finalState();
+  _Ph_deletion_initialState createState() => _Ph_deletion_initialState();
 }
 
-class _Ph_deletion_finalState extends State<Ph_deletion_final> {
+class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   String word1 = '';
   String word2 = '';
   List<String> options = [];
@@ -37,32 +37,33 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   String? _recordingPath;
 
   List<List<String>> wordPairs = [
-    ['bank', 'bank_k'],
-    ['bart', 'bart_t'],
-    ['boom', 'boom_m'],
-    ['brown', 'brown_n'],
-    ['chilly', 'chilly_y'],
-    ['down', 'down_n'],
-    ['fort', 'fort_t'],
-    ['ink', 'ink_k'],
-    ['kino', 'kino_o'],
-    ['news', 'news_s'],
-    ['party', 'party_y'],
-    ['peak', 'peak_k'],
-    ['pink', 'pink_k'],
-    ['seat', 'seat_t'],
-    ['seed', 'seed_d'],
-    ['sing', 'sing_g'],
+    ['across', 'across_a'],
+    ['aware', 'aware_a'],
+    ['bland', 'bland_b'],
+    ['bridge', 'bridge_b'],
+    ['bring', 'bring_b'],
+    ['chair', 'chair_ch'],
+    ['cloud', 'cloud_c'],
+    ['cold', 'cold_c'],
+    ['factual', 'factual_f'],
+    ['fall', 'fall_f'],
+    ['land', 'land_l'],
+    ['learn', 'learn_l'],
+    ['learning', 'learning_l'],
+    ['part', 'part_p'],
+    ['place', 'place_p'],
+    ['plate', 'plate_p'],
+    ['prime', 'prime_p'],
+    ['proof', 'proof_p'],
+    ['select', 'select_s'],
+    ['space', 'space_s'],
+    ['spoke', 'spoke_s'],
+    ['start', 'start_s'],
+    ['table', 'table_t'],
     ['tact', 'tact_t'],
-    ['teach', 'teach_ch'],
-    ['tips', 'tips_s'],
-    ['took', 'took_k'],
-    ['want', 'want_t'],
-    ['waster', 'waster_r'],
-    ['weepy', 'weepy_y'],
-    ['wind', 'wind_d'],
-    ['woven', 'woven_n']
-  ];
+    ['teach', 'teach_t']
+];
+
 
   List<List<String>> usedWordPairs = [];
 
@@ -176,11 +177,11 @@ Future<void> _initializeRecorder() async {
       if (isOption) {
         // The option already contains the correct filename, so use it as is.
         audioPath =
-            'audio/english/phoneme_deletion/final/${option.toLowerCase()}';
+            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}';
       } else {
         // Construct path for individual words
         audioPath =
-            'audio/english/phoneme_deletion/final/${option.toLowerCase()}.wav';
+            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}.wav';
       }
 
       print('Playing audio: $audioPath');
@@ -309,7 +310,7 @@ Future<void> _initializeRecorder() async {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      title: Text('Phoneme Deletion Final'),
+      title: Text('Phoneme Deletion Initial'),
       backgroundColor: Colors.blueAccent,
     ),
     body: Container(

@@ -13,12 +13,12 @@ import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
 import 'LevelSelectionScreen.dart';
 
-class Ph_deletion_final extends StatefulWidget {
+class Ph_substitution_final extends StatefulWidget {
   @override
-  _Ph_deletion_finalState createState() => _Ph_deletion_finalState();
+  _Ph_substitution_finalState createState() => _Ph_substitution_finalState();
 }
 
-class _Ph_deletion_finalState extends State<Ph_deletion_final> {
+class _Ph_substitution_finalState extends State<Ph_substitution_final> {
   String word1 = '';
   String word2 = '';
   List<String> options = [];
