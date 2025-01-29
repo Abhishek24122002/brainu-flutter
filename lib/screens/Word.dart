@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import '../components/StartRecordingButton.dart';
@@ -15,7 +16,13 @@ class Word extends StatefulWidget {
 }
 
 class _WordState extends State<Word> {
-  final String wordToRead = "Apple";
+  final List<String> words = [
+    "Wonder", "Huge", "Alarm", "Cabin", "Daily", "Blush", "Promise", "Divide", "Expect", "Opinion", "Avoid", "Famous", "Proof", "Reflect", "Board", "Excess", "Search", "Lizard", "Notice", "Ocean", "Career", "Brain", "Rumor", "Flood", "Idea"
+  ];
+  List<String> remainingWords = [];
+  late SharedPreferences prefs;
+  String currentWord = "";
+
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
@@ -28,6 +35,31 @@ class _WordState extends State<Word> {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
+    _loadWords();
+  }
+
+  Future<void> _loadWords() async {
+    prefs = await SharedPreferences.getInstance();
+    remainingWords = prefs.getStringList('remainingWords') ?? words;
+    if (remainingWords.isEmpty) {
+      _resetWords();
+    } else {
+      setState(() {
+        currentWord = remainingWords.first;
+      });
+    }
+  }
+
+  Future<void> _saveWords() async {
+    await prefs.setStringList('remainingWords', remainingWords);
+  }
+
+  Future<void> _resetWords() async {
+    setState(() {
+      remainingWords = List.from(words);
+      currentWord = remainingWords.first;
+    });
+    await _saveWords();
   }
 
   Future<void> _initializeRecorder() async {
@@ -85,6 +117,20 @@ class _WordState extends State<Word> {
     }
   }
 
+  void _onConfirm() async {
+    if (remainingWords.isNotEmpty) {
+      setState(() {
+        remainingWords.removeAt(0);
+        if (remainingWords.isEmpty) {
+          currentWord = "";
+        } else {
+          currentWord = remainingWords.first;
+        }
+      });
+      await _saveWords();
+    }
+  }
+
   @override
   void dispose() {
     _recorder.closeRecorder();
@@ -116,73 +162,84 @@ class _WordState extends State<Word> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Read this word aloud:',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        wordToRead,
-                        style: TextStyle(
-                          fontSize: 50,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                    ],
+              if (currentWord.isNotEmpty)
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
                   ),
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Read this word aloud:',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          currentWord,
+                          style: TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    Text(
+                      'All words completed!',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _resetWords,
+                      child: Text('Reset Words'),
+                    ),
+                  ],
                 ),
-              ),
               SizedBox(height: 40),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 5,
-                child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    children: [
-                      StartRecordingButton(
-                        onPressed: _toggleRecording,
-                        isRecording: _isRecording,
-                      ),
-                      SizedBox(height: 15),
-                      PlayAudioButton(
-                        onPressed: _isPlaying ? null : _playRecording,
-                        isPlaying: _isPlaying,
-                      ),
-                      SizedBox(height: 15),
-                      ConfirmButton(
-                        onPressed: _recordingAvailable
-                            ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LevelSelectionScreen(),
-                                  ),
-                                );
-                              }
-                            : null,
-                        isEnabled: _recordingAvailable,
-                      ),
-                    ],
+              if (currentWord.isNotEmpty)
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Column(
+                      children: [
+                        StartRecordingButton(
+                          onPressed: _toggleRecording,
+                          isRecording: _isRecording,
+                        ),
+                        SizedBox(height: 15),
+                        PlayAudioButton(
+                          onPressed: _isPlaying ? null : _playRecording,
+                          isPlaying: _isPlaying,
+                        ),
+                        SizedBox(height: 15),
+                        ConfirmButton(
+                          onPressed: _recordingAvailable ? _onConfirm : null,
+                          isEnabled: _recordingAvailable,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

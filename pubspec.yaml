@@ -87,6 +87,8 @@ flutter:
     - assets/audio/english/spoonerism/
     - assets/audio/english/phoneme_deletion/final/
     - assets/audio/english/phoneme_deletion/initial/
+    - assets/audio/english/phoneme_substitution/final/
+    - assets/audio/english/phoneme_substitution/initial/
     
 
 

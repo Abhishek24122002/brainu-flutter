@@ -19,8 +19,9 @@ class Ph_substitution_initial extends StatefulWidget {
 }
 
 class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
-  String word1 = '';
-  String word2 = '';
+  String sound1 = '';
+  String sound2 = '';
+  String word = '';
   List<String> options = [];
   String? selectedOption;
   bool isSubmitEnabled = false;
@@ -37,31 +38,31 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   String? _recordingPath;
 
   List<List<String>> wordPairs = [
-    ['across', 'across_a'],
-    ['aware', 'aware_a'],
-    ['bland', 'bland_b'],
-    ['bridge', 'bridge_b'],
-    ['bring', 'bring_b'],
-    ['chair', 'chair_ch'],
-    ['cloud', 'cloud_c'],
-    ['cold', 'cold_c'],
-    ['factual', 'factual_f'],
-    ['fall', 'fall_f'],
-    ['land', 'land_l'],
-    ['learn', 'learn_l'],
-    ['learning', 'learning_l'],
-    ['part', 'part_p'],
-    ['place', 'place_p'],
-    ['plate', 'plate_p'],
-    ['prime', 'prime_p'],
-    ['proof', 'proof_p'],
-    ['select', 'select_s'],
-    ['space', 'space_s'],
-    ['spoke', 'spoke_s'],
-    ['start', 'start_s'],
-    ['table', 'table_t'],
-    ['tact', 'tact_t'],
-    ['teach', 'teach_t']
+  ["b", "t", "bass"],
+  ["b", "r", "bat"],
+  ["b", "s", "bell"],
+  ["b", "f", "box"],
+  ["c", "t", "cake"],
+  ["c", "g", "cat"],
+  ["c", "f", "click"],
+  ["c", "h", "corn"],
+  ["c", "t", "cry"],
+  ["f", "p", "fan"],
+  ["f", "s", "feed"],
+  ["f", "h", "feel"],
+  ["h", "s", "fun"],
+  ["l", "f", "hit"],
+  ["m", "c", "lamp"],
+  ["n", "l", "make"],
+  ["p", "h", "note"],
+  ["p", "s", "past"],
+  ["p", "l", "pen"],
+  ["r", "b", "pink"],
+  ["r", "f", "punch"],
+  ["s", "b", "red"],
+  ["w", "f", "root"],
+  ["s", "l", "sick"],
+  ["w", "s", "week"]
 ];
 
 
@@ -76,7 +77,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     _player.openPlayer();
   }
 
-Future<void> _initializeRecorder() async {
+  Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
     await Permission.storage.request();
     await _recorder.openRecorder();
@@ -130,6 +131,7 @@ Future<void> _initializeRecorder() async {
       });
     }
   }
+
   Future<void> _loadTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -160,8 +162,9 @@ Future<void> _initializeRecorder() async {
     List<String> selectedPair = wordPairs.removeAt(index);
     usedWordPairs.add(selectedPair);
 
-    word1 = selectedPair[0];
-    word2 = selectedPair[1];
+    sound1 = selectedPair[0];
+    sound2 = selectedPair[1];
+    word = selectedPair[2];
 
     setState(() {
       selectedOption = null;
@@ -174,14 +177,13 @@ Future<void> _initializeRecorder() async {
     try {
       String audioPath;
 
-      if (isOption) {
-        // The option already contains the correct filename, so use it as is.
-        audioPath =
-            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}';
+      if (option.length == 1) {
+        // For single-character sounds
+        audioPath = 'audio/english/v_and_c/${option.toLowerCase()}.wav';
       } else {
-        // Construct path for individual words
+        // For words
         audioPath =
-            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}.wav';
+            'audio/english/phoneme_substitution/initial/${option.toLowerCase()}.wav';
       }
 
       print('Playing audio: $audioPath');
@@ -193,7 +195,7 @@ Future<void> _initializeRecorder() async {
 
   void handleSubmit() {
     String correctAnswer =
-        '${word2[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}_c.wav';
+        '${sound2[0]}${sound1.substring(1)}_${sound1[0]}${sound2.substring(1)}.wav';
 
     if (selectedOption == correctAnswer) {
       print('Correct Answer!');
@@ -307,155 +309,190 @@ Future<void> _initializeRecorder() async {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Phoneme Deletion Initial'),
-      backgroundColor: Colors.blueAccent,
-    ),
-    body: Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          // Question Container with shadow
-          Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Text(
-              'Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and word icons on the board to listen to the audio.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          // Main game content
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Display dynamic text with clickable buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        children: [
-                          TextSpan(text: 'Remove '),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: GestureDetector(
-                              onTap: () => playAudio(word2),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.lightBlueAccent,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                ),
-                                child: Text(
-                                  "Sound",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          TextSpan(text: ' from '),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: GestureDetector(
-                              onTap: () => playAudio(word1),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.orangeAccent,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                ),
-                                child: Text(
-                                  "Word",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Phoneme Substitution Initial'),
+        backgroundColor: Colors.blueAccent,
+      ),
+      body: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            // Question Container with shadow
+            Container(
+              padding: EdgeInsets.all(16),
+              margin: EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 7,
+                    offset: Offset(0, 3),
                   ),
-                  SizedBox(height: 40),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 5,
-                child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    children: [
-                      StartRecordingButton(
-                        onPressed: _toggleRecording,
-                        isRecording: _isRecording,
-                      ),
-                      SizedBox(height: 15),
-                      PlayAudioButton(
-                        onPressed: _isPlaying ? null : _playRecording,
-                        isPlaying: _isPlaying,
-                      ),
-                      SizedBox(height: 15),
-                      ConfirmButton(
-                        onPressed: _recordingAvailable
-                            ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LevelSelectionScreen(),
-                                  ),
-                                );
-                              }
-                            : null,
-                        isEnabled: _recordingAvailable,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-                  
                 ],
               ),
+              child: Text(
+                'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons on the board for audio.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
-          ),
-        ],
+            // Main game content
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Center-aligned text for "Substitute"
+                    Text(
+                      'Substitute',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(
+                        height:
+                            10), // Add spacing between "Substitute" and the next section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: RichText(
+                        textAlign: TextAlign.center, // Center-align the text
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          children: [
+                            // Sound1 Button
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: GestureDetector(
+                                onTap: () => playAudio(sound1),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.lightBlueAccent,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                  ),
+                                  child: Text(
+                                    "Sound1",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TextSpan(text: ' with '),
+                            // Sound2 Button
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: GestureDetector(
+                                onTap: () => playAudio(sound2),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.lightBlueAccent,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                  ),
+                                  child: Text(
+                                    "Sound2",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                        height:
+                            20), // Add spacing between "with" section and Word button
+                    // Word Button
+                    GestureDetector(
+                      onTap: () => playAudio(word),
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                        child: Text(
+                          "Word",
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: Column(
+                          children: [
+                            StartRecordingButton(
+                              onPressed: _toggleRecording,
+                              isRecording: _isRecording,
+                            ),
+                            SizedBox(height: 15),
+                            PlayAudioButton(
+                              onPressed: _isPlaying ? null : _playRecording,
+                              isPlaying: _isPlaying,
+                            ),
+                            SizedBox(height: 15),
+                            ConfirmButton(
+                              onPressed: _recordingAvailable
+                                  ? () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LevelSelectionScreen(),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              isEnabled: _recordingAvailable,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
-}
-
