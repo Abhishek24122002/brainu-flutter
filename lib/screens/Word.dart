@@ -17,7 +17,31 @@ class Word extends StatefulWidget {
 
 class _WordState extends State<Word> {
   final List<String> words = [
-    "Wonder", "Huge", "Alarm", "Cabin", "Daily", "Blush", "Promise", "Divide", "Expect", "Opinion", "Avoid", "Famous", "Proof", "Reflect", "Board", "Excess", "Search", "Lizard", "Notice", "Ocean", "Career", "Brain", "Rumor", "Flood", "Idea"
+    "Wonder",
+    "Huge",
+    "Alarm",
+    "Cabin",
+    "Daily",
+    "Blush",
+    "Promise",
+    "Divide",
+    "Expect",
+    "Opinion",
+    "Avoid",
+    "Famous",
+    "Proof",
+    "Reflect",
+    "Board",
+    "Excess",
+    "Search",
+    "Lizard",
+    "Notice",
+    "Ocean",
+    "Career",
+    "Brain",
+    "Rumor",
+    "Flood",
+    "Idea"
   ];
   List<String> remainingWords = [];
   late SharedPreferences prefs;
@@ -122,13 +146,59 @@ class _WordState extends State<Word> {
       setState(() {
         remainingWords.removeAt(0);
         if (remainingWords.isEmpty) {
-          currentWord = "";
+          _showCompletionDialog();
         } else {
           currentWord = remainingWords.first;
         }
       });
       await _saveWords();
     }
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Congratulations!'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('You have completed all words.'),
+                SizedBox(height: 20),
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _resetWords();
+                  },
+                  child: Text('Reset Words'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LevelSelectionScreen(),
+                      ),
+                    );
+                  },
+                  child: Text('Next Level'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -141,10 +211,9 @@ class _WordState extends State<Word> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
         title: Text(
-          'Level 2: Read Aloud',
-          style: TextStyle(color: Colors.white),
+          'Word',style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -160,86 +229,62 @@ class _WordState extends State<Word> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (currentWord.isNotEmpty)
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 8,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Read this word aloud:',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blueAccent,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          currentWord,
-                          style: TextStyle(
-                            fontSize: 50,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
-                          ),
-                        ),
-                      ],
+              Container(
+                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 7,
+                      offset: Offset(0, 3),
                     ),
+                  ],
+                ),
+                child: Text(
+                  'Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                )
-              else
+                ),
+              ),
+              SizedBox(height: 20),
+              if (currentWord.isNotEmpty)
                 Column(
                   children: [
                     Text(
-                      'All words completed!',
+                      currentWord,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 50,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: Color.fromARGB(255, 255, 255, 255),
                       ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _resetWords,
-                      child: Text('Reset Words'),
                     ),
                   ],
                 ),
               SizedBox(height: 40),
-              if (currentWord.isNotEmpty)
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Column(
-                      children: [
-                        StartRecordingButton(
-                          onPressed: _toggleRecording,
-                          isRecording: _isRecording,
-                        ),
-                        SizedBox(height: 15),
-                        PlayAudioButton(
-                          onPressed: _isPlaying ? null : _playRecording,
-                          isPlaying: _isPlaying,
-                        ),
-                        SizedBox(height: 15),
-                        ConfirmButton(
-                          onPressed: _recordingAvailable ? _onConfirm : null,
-                          isEnabled: _recordingAvailable,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              StartRecordingButton(
+                onPressed: _toggleRecording,
+                isRecording: _isRecording,
+              ),
+              SizedBox(height: 15),
+              PlayAudioButton(
+                onPressed: _isPlaying ? null : _playRecording,
+                isPlaying: _isPlaying, isEnabled:  _recordingAvailable,
+              ),
+              SizedBox(height: 15),
+              ConfirmButton(
+                onPressed: _recordingAvailable ? _onConfirm : null,
+                isEnabled: _recordingAvailable,
+              ),
             ],
           ),
         ),

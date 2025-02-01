@@ -113,7 +113,7 @@ class _IdentifyState extends State<Identify> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.brown, // **Board-Like Background**
-      appBar: AppBar(
+      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
         title: Text(
           'Identify',
           style: TextStyle(color: Colors.white),
@@ -121,81 +121,109 @@ class _IdentifyState extends State<Identify> {
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // **Board-Like Grid Container**
-            Container(
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.brown[300], // Light brown board color
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.brown[200]!, width: 10), // Thick border
-              ),
-              child: GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                itemCount: _images.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: Offset(2, 4),
-                        ),
-                      ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 7,
+                      offset: Offset(0, 3),
                     ),
-                    child: Image.asset(
-                      _images[index],
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                },
+                  ],
+                ),
+                child: Text(
+                  'Help Brainu to understand what is pinned on the board. \n Certain items will appear on the notes. \n \n Say them out loud from left to right as fast as you can.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            Column(
-              children: [
-                _buildStyledButton(
-                  onPressed: _toggleRecording,
-                  label: _isRecording ? 'Stop Recording' : 'Start Recording',
-                  icon: _isRecording ? Icons.stop : Icons.mic,
-                  color: _isRecording ? Colors.red : Colors.blue,
+              // **Board-Like Grid Container**
+              Container(
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.brown[300], // Light brown board color
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: Colors.brown[200]!, width: 10), // Thick border
                 ),
-                SizedBox(height: 15),
-                _buildStyledButton(
-                  onPressed: _isPlaying ? null : _playRecording,
-                  label: 'Play Audio',
-                  icon: Icons.play_arrow,
-                  color: Colors.amberAccent,
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: _images.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                            offset: Offset(2, 4),
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        _images[index],
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(height: 15),
-                _buildStyledButton(
-                  onPressed: _recordingAvailable
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LevelSelectionScreen(),
-                            ),
-                          );
-                        }
-                      : null,
-                  label: 'Confirm',
-                  icon: Icons.send,
-                  color: _recordingAvailable ? Colors.green : Colors.grey,
-                ),
-              ],
-            ),
-          ],
+              ),
+              SizedBox(height: 20),
+              Column(
+                children: [
+                  _buildStyledButton(
+                    onPressed: _toggleRecording,
+                    label: _isRecording ? 'Stop Recording' : 'Start Recording',
+                    icon: _isRecording ? Icons.stop : Icons.mic,
+                    color: _isRecording ? Colors.red : Colors.blue,
+                  ),
+                  SizedBox(height: 15),
+                  _buildStyledButton(
+                    onPressed: _isPlaying ? null : _playRecording,
+                    label: 'Play Audio',
+                    icon: Icons.play_arrow,
+                    color: Colors.amberAccent,
+                  ),
+                  SizedBox(height: 15),
+                  _buildStyledButton(
+                    onPressed: _recordingAvailable
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LevelSelectionScreen(),
+                              ),
+                            );
+                          }
+                        : null,
+                    label: 'Confirm',
+                    icon: Icons.send,
+                    color: _recordingAvailable ? Colors.green : Colors.grey,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -288,9 +288,11 @@ class _SwapState extends State<Swap> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Swap the Words'),
+      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
+        title: Text('Swapping',style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blueAccent,
+        centerTitle: true,
       ),
       body: Container(
         color: Colors.white,

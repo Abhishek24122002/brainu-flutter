@@ -32,12 +32,14 @@
       int crossAxisCount = 2; // Fixed to 2 columns for 2xN layout
 
       return Scaffold(
-        appBar: AppBar(
-          title: Text('Select Level'),
-          backgroundColor: Colors.blueAccent,
+        appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
+          title: Text('Select Level',style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blueAccent,
+        centerTitle: true,
           actions: [
             IconButton(
-              icon: Icon(Icons.menu),
+              icon: Icon(Icons.menu, color: Colors.white,),
               onPressed: () async {
                 final result = await showDialog<List<bool>>(
                   context: context,

@@ -36,6 +36,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   bool _isPlaying = false;
   bool _recordingAvailable = false;
   String? _recordingPath;
+  bool _showGameElements = false; 
 
   List<List<String>> wordPairs = [
   ["b", "t", "bass"],
@@ -78,18 +79,28 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   }
 
   Future<void> _initializeRecorder() async {
-    await Permission.microphone.request();
-    await Permission.storage.request();
-    await _recorder.openRecorder();
+    var micStatus = await Permission.microphone.request();
+    if (micStatus.isGranted) {
+      await _recorder.openRecorder();
+    } else {
+      print("Microphone permission denied");
+    }
   }
 
   Future<String> _getFilePath() async {
     final directory = await getApplicationDocumentsDirectory();
-    final test1Dir = Directory('${directory.path}/test1');
-    if (!test1Dir.existsSync()) {
-      test1Dir.createSync(recursive: true);
+    final phonemeDir = Directory('${directory.path}/Phoneme_substitution_final');
+
+    if (!phonemeDir.existsSync()) {
+      phonemeDir.createSync(recursive: true);
     }
-    return '${test1Dir.path}/audio_recording.aac';
+
+    // Ensure word2 is available before naming the file
+    if (word.isEmpty) {
+      throw Exception("word is empty, cannot generate file name.");
+    }
+
+    return '${phonemeDir.path}/${word}_rec.aac';
   }
 
   Future<void> _toggleRecording() async {
@@ -103,18 +114,29 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   Future<void> _startRecording() async {
     _recordingPath = await _getFilePath();
     await _recorder.startRecorder(toFile: _recordingPath);
+
     setState(() {
       _isRecording = true;
+      _recordingAvailable =
+          false; // Ensure recording isn't considered available until finished
     });
   }
 
   Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
-    setState(() {
-      _isRecording = false;
-      _recordingAvailable = true;
-    });
-  }
+  await _recorder.stopRecorder();
+  
+  // Ensure the file path is updated before checking if it exists
+  String filePath = await _getFilePath();
+  
+  setState(() {
+    _isRecording = false;
+    _recordingPath = filePath;
+    _recordingAvailable = File(filePath).existsSync(); // Check if file exists
+    isSubmitEnabled = _recordingAvailable; // Enable confirm button if recording is available
+  });
+
+  print("Recording stopped. File exists: $_recordingAvailable");
+}
 
   Future<void> _playRecording() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
@@ -135,14 +157,14 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   Future<void> _loadTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      trophyCount = prefs.getInt('trophyCount') ??
+      trophyCount = prefs.getInt('ph_subs_ini_trophyCount') ??
           0; // Default to 0 if no trophy count is stored
     });
   }
 
   Future<void> _saveTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('trophyCount', trophyCount); // Save the trophy count
+    await prefs.setInt('ph_subs_ini_trophyCount', trophyCount); // Save the trophy count
   }
 
   void generateWords() {
@@ -193,29 +215,32 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     }
   }
 
-  void handleSubmit() {
-    String correctAnswer =
-        '${sound2[0]}${sound1.substring(1)}_${sound1[0]}${sound2.substring(1)}.wav';
+ Future<void> handleSubmit() async {
+  setState(() {
+    questionCounter++;
+    _showGameElements = false;
+    _recordingAvailable = false; // Reset for next iteration
+    isSubmitEnabled = false; // Disable confirm button until a new recording is made
+  });
 
-    if (selectedOption == correctAnswer) {
-      print('Correct Answer!');
-    } else {
-      print('Incorrect Answer.');
-    }
-
-    setState(() {
-      questionCounter++;
-      if (questionCounter == 5) {
-        iterationCounter++;
-        trophyCount++; // Increment trophy count
-        _saveTrophyCount();
-        questionCounter = 0;
-        showIterationCompleteDialog();
-      } else {
-        generateWords();
-      }
-    });
+  if (questionCounter == 5) {
+    iterationCounter++;
+    trophyCount++;
+    _saveTrophyCount();
+    questionCounter = 0;
+    showIterationCompleteDialog();
   }
+
+  if (wordPairs.isNotEmpty) {
+    generateWords();
+  } else {
+    showAllWordsDoneDialog();
+  }
+}
+  Future<bool> _checkForNewRecording() async {
+  if (_recordingPath == null) return false;
+  return File(_recordingPath!).existsSync();
+}
 
   void resetLevel() {
     setState(() {
@@ -311,9 +336,11 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Phoneme Substitution Initial'),
+      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
+        title: Text('Word Game 4',style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blueAccent,
+        centerTitle: true,
       ),
       body: Container(
         color: Colors.white,
@@ -336,7 +363,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                 ],
               ),
               child: Text(
-                'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons on the board for audio.',
+                'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2 and word icons on the board for audio.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
@@ -345,7 +372,35 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                 ),
               ),
             ),
+            if (!_showGameElements)
+            Container(
+              margin: EdgeInsets.all(20),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showGameElements = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Button color
+                  padding: EdgeInsets.symmetric(vertical: 20), // Button height
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: SizedBox(
+                  width: double.infinity, // Full width button
+                  child: Center(
+                    child: Text(
+                      "Click Here to Start",
+                      style: TextStyle(fontSize: 20, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             // Main game content
+            if (_showGameElements) ...[
             Expanded(
               child: Center(
                 child: Column(
@@ -422,6 +477,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                 ),
                               ),
                             ),
+                            TextSpan(text: ' in '),
                           ],
                         ),
                       ),
@@ -464,23 +520,16 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                             ),
                             SizedBox(height: 15),
                             PlayAudioButton(
+                              isEnabled:_recordingAvailable,
                               onPressed: _isPlaying ? null : _playRecording,
                               isPlaying: _isPlaying,
                             ),
                             SizedBox(height: 15),
                             ConfirmButton(
-                              onPressed: _recordingAvailable
-                                  ? () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              LevelSelectionScreen(),
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                              isEnabled: _recordingAvailable,
+                              isEnabled:
+                                  _recordingAvailable, // Only enable when a new recording exists
+                              onPressed:
+                                  _recordingAvailable ? handleSubmit : null,
                             ),
                           ],
                         ),
@@ -491,7 +540,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
               ),
             ),
           ],
-        ),
+        ]),
       ),
     );
   }

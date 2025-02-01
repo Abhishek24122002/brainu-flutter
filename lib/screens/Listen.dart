@@ -76,13 +76,14 @@ class _ListenState extends State<Listen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
         title: Text(
-          'Level 3: Write the Word',
+          'Listen',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
+        
       ),
       body: Container(
         color: Colors.white, // Plain white background
