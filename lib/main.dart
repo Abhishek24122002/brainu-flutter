@@ -1,9 +1,10 @@
+import 'package:brainu/screens/Registration.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:brainu/screens/language_selection.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(BrainUApp());
@@ -22,7 +23,8 @@ class BrainUApp extends StatelessWidget {
 
 class PermissionRequestScreen extends StatefulWidget {
   @override
-  _PermissionRequestScreenState createState() => _PermissionRequestScreenState();
+  _PermissionRequestScreenState createState() =>
+      _PermissionRequestScreenState();
 }
 
 class _PermissionRequestScreenState extends State<PermissionRequestScreen> {
@@ -42,10 +44,17 @@ class _PermissionRequestScreenState extends State<PermissionRequestScreen> {
     }
   }
 
+  // void _navigateToLanguageSelection() {
+  //   Navigator.pushReplacement(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => LanguageSelectionScreen()),
+  //   );
+  // }
+
   void _navigateToLanguageSelection() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => LanguageSelectionScreen()),
+      MaterialPageRoute(builder: (context) => RegistrationPage()),
     );
   }
 
@@ -79,7 +88,8 @@ class _PermissionRequestScreenState extends State<PermissionRequestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(), // Display a loading indicator while requesting permissions
+        child:
+            CircularProgressIndicator(), // Display a loading indicator while requesting permissions
       ),
     );
   }
