@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -125,24 +127,44 @@ class _SwapState extends State<Swap> {
     print('Generated options (shuffled): $options');
   }
 
+  // Future<void> playAudio(String option, [bool isOption = false]) async {
+  //   try {
+  //     String audioPath;
+
+  //     if (isOption) {
+  //       // The option already contains the correct filename, so use it as is.
+  //       audioPath = 'audio/english/spoonerism/${option.toLowerCase()}';
+  //     } else {
+  //       // Construct path for individual words
+  //       audioPath = 'audio/english/spoonerism/${option.toLowerCase()}.wav';
+  //     }
+
+  //     print('Playing audio: $audioPath');
+  //     await audioPlayer.play(AssetSource(audioPath));
+  //   } catch (e) {
+  //     print('Error playing audio: $e');
+  //   }
+  // }
+//using language variable
   Future<void> playAudio(String option, [bool isOption = false]) async {
-    try {
-      String audioPath;
+  try {
+    String language = await _getUserLanguage(); // Fetch user's selected language
+    String audioPath;
 
-      if (isOption) {
-        // The option already contains the correct filename, so use it as is.
-        audioPath = 'audio/english/spoonerism/${option.toLowerCase()}';
-      } else {
-        // Construct path for individual words
-        audioPath = 'audio/english/spoonerism/${option.toLowerCase()}.wav';
-      }
-
-      print('Playing audio: $audioPath');
-      await audioPlayer.play(AssetSource(audioPath));
-    } catch (e) {
-      print('Error playing audio: $e');
+    if (isOption) {
+      // Use the correct language folder dynamically
+      audioPath = 'audio/$language/spoonerism/${option.toLowerCase()}';
+    } else {
+      audioPath = 'audio/$language/spoonerism/${option.toLowerCase()}.wav';
     }
+
+    print('Playing audio: $audioPath');
+    await audioPlayer.play(AssetSource(audioPath));
+  } catch (e) {
+    print('Error playing audio: $e');
   }
+}
+
 
   void handleClick(String option) {
     setState(() {
@@ -171,30 +193,73 @@ class _SwapState extends State<Swap> {
           count >= 2); // Enable submit button if an option is selected
     });
   }
+  Future<String> _getUserLanguage() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return "english"; // Default to English if user not found
 
-  void handleSubmit() {
-    String correctAnswer =
-        '${word2[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}_c.wav';
+  String userId = user.uid;
 
-    if (selectedOption == correctAnswer) {
-      print('Correct Answer!');
-    } else {
-      print('Incorrect Answer.');
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(userId)
+        .get();
+
+    if (userDoc.exists) {
+      String language = userDoc.get("language") ?? "english";
+      return language.toLowerCase(); // Ensure lowercase for consistency
     }
-
-    setState(() {
-      questionCounter++;
-      if (questionCounter == 5) {
-        iterationCounter++;
-        trophyCount++; // Increment trophy count
-        _saveTrophyCount();
-        questionCounter = 0;
-        showIterationCompleteDialog();
-      } else {
-        generateWords();
-      }
-    });
+  } catch (e) {
+    print("Error fetching user language: $e");
   }
+  
+  return "english"; // Default to English in case of an error
+}
+
+Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+  
+  String userId = user.uid;
+  String language = await _getUserLanguage(); // Fetch the selected language
+
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc(userId)
+      .collection("swapping")
+      .doc(language) // Store answer under the correct language
+      .set({
+    correctAnswer: isCorrect
+  }, SetOptions(merge: true));
+}
+
+
+  void handleSubmit() async {
+  String correctAnswer =
+      '${word2[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}_c.wav';
+  
+  bool isCorrect = selectedOption == correctAnswer;
+
+  // Increase trophy count only for correct answers
+  if (isCorrect) {
+    trophyCount++;
+    _saveTrophyCount();
+  }
+
+  // Store the answer in Firebase Firestore
+  await _storeAnswer(correctAnswer, isCorrect);
+
+  setState(() {
+    questionCounter++;
+    if (questionCounter == 5) {
+      iterationCounter++;
+      questionCounter = 0;
+      showIterationCompleteDialog();
+    } else {
+      generateWords();
+    }
+  });
+}
 
   void resetLevel() {
     setState(() {

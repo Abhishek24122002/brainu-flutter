@@ -1,13 +1,26 @@
-import 'package:brainu/screens/Registration.dart';
+import 'package:brainu/Authentication/Registration.dart';
+import 'package:brainu/Authentication/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:brainu/screens/language_selection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'screens/LevelSelectionScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(BrainUApp());
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? storedUid = prefs.getString('uid');
+
+  
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: storedUid != null ? LevelSelectionScreen() : LoginPage(),
+    ),
+  );
 }
 
 class BrainUApp extends StatelessWidget {
@@ -54,7 +67,8 @@ class _PermissionRequestScreenState extends State<PermissionRequestScreen> {
   void _navigateToLanguageSelection() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => RegistrationPage()),
+      // MaterialPageRoute(builder: (context) => RegistrationPage()),
+      MaterialPageRoute(builder: (context) => LoginPage()),
     );
   }
 
