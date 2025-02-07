@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "letterScreenText": "Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one.",
+  "@letterScreenText": {
+    "description": "Text shown in the Letter screen"
+  }
+}

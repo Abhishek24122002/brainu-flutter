@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
+import '../generated/l10n.dart';
 
 class Letter extends StatefulWidget {
   @override
@@ -28,24 +29,48 @@ class _LetterState extends State<Letter> {
   bool _showGameElements = false;
   int questionIndex = 0;
   int trophyCount = 0;
+  late String userLanguage = "english"; // Default to English
 
   List<List<String>> wordPairs = [
-    ['A', 'a'], ['B', 'b'], ['C', 'c'], ['D', 'd'], ['E', 'e'],
-    ['F', 'f'], ['G', 'g'], ['H', 'h'], ['I', 'i'], ['J', 'j'],
-    ['K', 'k'], ['L', 'l'], ['M', 'm'], ['N', 'n'], ['O', 'o'],
-    ['P', 'p'], ['Q', 'q'], ['R', 'r'], ['S', 's'], ['T', 't'],
-    ['U', 'u'], ['V', 'v'], ['W', 'w'], ['X', 'x'], ['Y', 'y'], ['Z', 'z']
+    ['A', 'a'],
+    ['B', 'b'],
+    ['C', 'c'],
+    ['D', 'd'],
+    ['E', 'e'],
+    ['F', 'f'],
+    ['G', 'g'],
+    ['H', 'h'],
+    ['I', 'i'],
+    ['J', 'j'],
+    ['K', 'k'],
+    ['L', 'l'],
+    ['M', 'm'],
+    ['N', 'n'],
+    ['O', 'o'],
+    ['P', 'p'],
+    ['Q', 'q'],
+    ['R', 'r'],
+    ['S', 's'],
+    ['T', 't'],
+    ['U', 'u'],
+    ['V', 'v'],
+    ['W', 'w'],
+    ['X', 'x'],
+    ['Y', 'y'],
+    ['Z', 'z']
   ];
 
   @override
   void initState() {
     super.initState();
+    _fetchUserLanguage();
     generateQuestionAndOptions();
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
           isAudioPlaying = false;
-          if (selectedOption != null && (clickCountMap[selectedOption!] ?? 0) < 2) {
+          if (selectedOption != null &&
+              (clickCountMap[selectedOption!] ?? 0) < 2) {
             clickCountMap[selectedOption!] = 0;
             selectedOption = null;
           }
@@ -54,6 +79,7 @@ class _LetterState extends State<Letter> {
       }
     });
   }
+
   Future<void> playAudio(String alphabet) async {
     try {
       final audioPath = 'audio/english/v_and_c/$alphabet.wav';
@@ -65,18 +91,12 @@ class _LetterState extends State<Letter> {
       print('Error playing audio: $e');
     }
   }
-  
-  
-  
-  
+
   Future<void> _saveTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('V_C_trophyCount', trophyCount); // Save the trophy count
   }
-  
-  
-  
-  
+
   void showIterationCompleteDialog() {
     showDialog(
       context: context,
@@ -153,45 +173,51 @@ class _LetterState extends State<Letter> {
 
     questionIndex++;
   }
-  Future<String> _getUserLanguage() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return "english"; // Default to English if user not found
 
-  String userId = user.uid;
-
-  try {
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(userId)
-        .get();
-
-    if (userDoc.exists) {
-      String language = userDoc.get("language") ?? "english";
-      return language.toLowerCase(); // Ensure lowercase for consistency
-    }
-  } catch (e) {
-    print("Error fetching user language: $e");
+  Future<void> _fetchUserLanguage() async {
+    userLanguage = await _getUserLanguage();
+    setState(() {}); // Refresh UI when language is loaded
   }
-  
-  return "english"; // Default to English in case of an error
-}
 
-  Future<void> saveUserAnswer(bool isCorrect) async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  Future<String> _getUserLanguage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return "english"; // Default to English if user not found
 
     String userId = user.uid;
-    String letter = question;
-    String result = isCorrect ? "Correct" : "Wrong";
-    String language = await _getUserLanguage();
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(userId)
-        .collection("Letter")
-        .doc(language)
-        .set({letter: result}, SetOptions(merge: true));
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        String language = userDoc.get("language") ?? "english";
+        return language.toLowerCase(); // Ensure lowercase for consistency
+      }
+    } catch (e) {
+      print("Error fetching user language: $e");
+    }
+
+    return "english"; // Default to English in case of an error
   }
+
+  Future<void> saveUserAnswer(bool isCorrect) async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  String userId = user.uid;
+  String letter = question;
+  String result = isCorrect ? "Correct" : "Wrong";
+
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc(userId)
+      .collection("Letter")
+      .doc(userLanguage) // Use the stored language
+      
+      .set({letter: result}, SetOptions(merge: true));
+}
 
   void handleClick(String option) {
     setState(() {
@@ -220,40 +246,35 @@ class _LetterState extends State<Letter> {
   }
 
   void handleSubmit() {
-  bool isCorrect = selectedOption == wordPairs[questionIndex - 1][1];
-  saveUserAnswer(isCorrect);
+    bool isCorrect = selectedOption == wordPairs[questionIndex - 1][1];
+    saveUserAnswer(isCorrect);
 
-  setState(() {
-    questionCounter++;
-    _showGameElements = false;
+    setState(() {
+      questionCounter++;
+      _showGameElements = false;
 
-   if (questionCounter == 5) {
-  iterationCounter++;
-  trophyCount++;
-  _saveTrophyCount();
-  questionCounter = 0;
+      if (questionCounter == 5) {
+        iterationCounter++;
+        trophyCount++;
+        _saveTrophyCount();
+        questionCounter = 0;
 
-  showIterationCompleteDialog();
+        showIterationCompleteDialog();
 
-  Future.delayed(Duration(milliseconds: 500), () {
-    if (mounted) {
-      setState(() {
-        
-        generateQuestionAndOptions();
-      });
-    }
-  });
-
-} else {
-  setState(() {
-    generateQuestionAndOptions();
-  });
-}
-
-
-  });
-}
-
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              generateQuestionAndOptions();
+            });
+          }
+        });
+      } else {
+        setState(() {
+          generateQuestionAndOptions();
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -291,9 +312,13 @@ class _LetterState extends State<Letter> {
                 ],
               ),
               child: Text(
-                'Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one.',
+                S.of(context).letterScreenText,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
             ),
             if (!_showGameElements)
@@ -308,12 +333,14 @@ class _LetterState extends State<Letter> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     padding: EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                   child: SizedBox(
                     width: double.infinity,
                     child: Center(
-                      child: Text("Click Here to Start", style: TextStyle(fontSize: 20, color: Colors.white)),
+                      child: Text("Click Here to Start",
+                          style: TextStyle(fontSize: 20, color: Colors.white)),
                     ),
                   ),
                 ),
@@ -322,7 +349,10 @@ class _LetterState extends State<Letter> {
             if (_showGameElements) ...[
               Text(
                 question.toUpperCase(),
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.orange),
+                style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange),
               ),
               SizedBox(height: 40),
               Wrap(
