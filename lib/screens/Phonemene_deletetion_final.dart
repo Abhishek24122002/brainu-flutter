@@ -11,6 +11,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
+import '../generated/l10n.dart';
 
 class Ph_deletion_final extends StatefulWidget {
   @override
@@ -343,8 +344,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
         iconTheme: IconThemeData(
           color: const Color.fromARGB(255, 255, 255, 255),
         ),
-        title: Text(
-          'Word Game 1',
+        title: Text(S.of(context).game_word_game1,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -369,9 +369,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                 ),
               ],
             ),
-            child: Text(
-              'Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and word icons on the board to listen to the audio.',
-              textAlign: TextAlign.center,
+            child: Text(S.of(context).phoneme_deletion_question,
+            textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -398,8 +397,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                 child: SizedBox(
                   width: double.infinity, // Full width button
                   child: Center(
-                    child: Text(
-                      "Click Here to Start",
+                    child: Text(S.of(context).click_here_to_start,
                       style: TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),

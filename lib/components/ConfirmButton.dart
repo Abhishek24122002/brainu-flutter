@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../generated/l10n.dart';
+
 class ConfirmButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isEnabled;
@@ -14,8 +16,7 @@ class ConfirmButton extends StatelessWidget {
     return ElevatedButton.icon(
       onPressed: isEnabled ? onPressed : null,
       icon: Icon(Icons.send, color: Colors.white),
-      label: Text(
-        'Confirm',
+      label: Text(S.of(context).confirm,
         style: TextStyle(fontSize: 18, color: Colors.white),
       ),
       style: ElevatedButton.styleFrom(

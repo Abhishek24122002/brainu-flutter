@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../generated/l10n.dart';
+
 class SubmitButton extends StatelessWidget {
   final bool isEnabled;
   final VoidCallback onPressed;
@@ -21,8 +23,7 @@ class SubmitButton extends StatelessWidget {
         ),
         padding: EdgeInsets.symmetric(vertical: 15, horizontal: 50),
       ),
-      child: Text(
-        'Submit',
+      child: Text(S.of(context).submit,
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );

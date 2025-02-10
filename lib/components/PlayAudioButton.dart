@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../generated/l10n.dart';
+
 class PlayAudioButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isPlaying;
@@ -16,8 +18,7 @@ class PlayAudioButton extends StatelessWidget {
     return ElevatedButton.icon(
       onPressed: isEnabled ? onPressed : null,
       icon: Icon(Icons.play_arrow, color: Colors.white),
-      label: Text(
-        'Play Audio',
+      label: Text(S.of(context).play_audio,
         style: TextStyle(fontSize: 18, color: Colors.white),
       ),
       style: ElevatedButton.styleFrom(

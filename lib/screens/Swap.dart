@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
+import '../generated/l10n.dart';
 
 class Swap extends StatefulWidget {
   @override
@@ -354,7 +355,7 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text('Swapping',style: TextStyle(color: Colors.white),
+        title: Text(S.of(context).game_swapping,style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -379,9 +380,8 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                   ),
                 ],
               ),
-              child: Text(
-                'To help Brainu perform the Spoonerism Step, exchange the first letters of the pair of words and tell Brainu what the new pair is! Tap on the words to listen.',
-                textAlign: TextAlign.center,
+              child: Text(S.of(context).spoonerism_question,
+              textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

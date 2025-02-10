@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../generated/l10n.dart';
+
 class StartRecordingButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isRecording;
@@ -18,7 +20,7 @@ class StartRecordingButton extends StatelessWidget {
         color: Colors.white,
       ),
       label: Text(
-        isRecording ? 'Stop Recording' : 'Start Recording',
+        isRecording ? S.of(context).stop_recording :  S.of(context).start_recording,
         style: TextStyle(fontSize: 18, color: Colors.white),
       ),
       style: ElevatedButton.styleFrom(

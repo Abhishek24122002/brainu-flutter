@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:math';
 
+import '../generated/l10n.dart';
+
 class Identify extends StatefulWidget {
   @override
   _IdentifyState createState() => _IdentifyState();
@@ -114,8 +116,7 @@ class _IdentifyState extends State<Identify> {
     return Scaffold(
       backgroundColor: Colors.brown, // **Board-Like Background**
       appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(
-          'Identify',
+        title: Text(S.of(context).game_identify,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -141,8 +142,7 @@ class _IdentifyState extends State<Identify> {
                     ),
                   ],
                 ),
-                child: Text(
-                  'Help Brainu to understand what is pinned on the board. \n Certain items will appear on the notes. \n \n Say them out loud from left to right as fast as you can.',
+                child: Text(S.of(context).ran_question,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -193,14 +193,14 @@ class _IdentifyState extends State<Identify> {
                 children: [
                   _buildStyledButton(
                     onPressed: _toggleRecording,
-                    label: _isRecording ? 'Stop Recording' : 'Start Recording',
+                    label: _isRecording ? S.of(context).stop_recording : S.of(context).start_recording,
                     icon: _isRecording ? Icons.stop : Icons.mic,
                     color: _isRecording ? Colors.red : Colors.blue,
                   ),
                   SizedBox(height: 15),
                   _buildStyledButton(
                     onPressed: _isPlaying ? null : _playRecording,
-                    label: 'Play Audio',
+                    label: S.of(context).play_audio,
                     icon: Icons.play_arrow,
                     color: Colors.amberAccent,
                   ),
@@ -216,7 +216,7 @@ class _IdentifyState extends State<Identify> {
                             );
                           }
                         : null,
-                    label: 'Confirm',
+                    label: S.of(context).confirm,
                     icon: Icons.send,
                     color: _recordingAvailable ? Colors.green : Colors.grey,
                   ),

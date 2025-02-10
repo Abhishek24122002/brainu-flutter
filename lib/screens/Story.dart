@@ -1,9 +1,10 @@
-import 'package:brainu/screens/LevelSelectionScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+
+import '../generated/l10n.dart';
 
 class Story extends StatefulWidget {
   @override
@@ -11,12 +12,7 @@ class Story extends StatefulWidget {
 }
 
 class _StoryState extends State<Story> {
-  final List<String> stories = [
-    "Ants are found everywhere in the world. They make their home in buildings, gardens, etc. They live in anthills. Ants are very hardworking insects. Throughout the summers, they collect food for the winter season.",
-    "The lion is known as the king of the jungle. It is a strong and powerful animal. Lions live in groups called prides. They hunt animals for food and are often seen resting under trees during the daytime.",
-    "The sun rises in the east and sets in the west. It provides light and heat to the Earth. Plants use sunlight to prepare food in a process called photosynthesis. Without the sun, life on Earth would not be possible."
-  ];
-
+  late List<String> stories;
   int currentStoryIndex = 0;
   bool _isRecording = false;
   bool _isPlaying = false;
@@ -40,37 +36,15 @@ class _StoryState extends State<Story> {
     await _recorder.openRecorder();
   }
 
-  Future<String> _getFilePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final test1Dir = Directory('${directory.path}/test1');
-    if (!test1Dir.existsSync()) {
-      test1Dir.createSync(recursive: true);
-    }
-    return '${test1Dir.path}/audio_recording$currentStoryIndex.aac';
-  }
-
-  Future<void> _toggleRecording() async {
-    if (_isRecording) {
-      await _stopRecording();
-    } else {
-      await _startRecording();
-    }
-  }
-
-  Future<void> _startRecording() async {
-    _recordingPath = await _getFilePath();
-    await _recorder.startRecorder(toFile: _recordingPath);
-    setState(() {
-      _isRecording = true;
-    });
-  }
-
-  Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
-    setState(() {
-      _isRecording = false;
-      _recordingAvailable = true;
-    });
+  /// Function to get stories dynamically from ARB files
+  List<String> getStories(BuildContext context) {
+    return [
+      S.of(context).paragraph_reading_0,
+      S.of(context).paragraph_reading_1,
+      S.of(context).paragraph_reading_2,
+      S.of(context).paragraph_reading_3,
+      S.of(context).paragraph_reading_4,
+    ].where((story) => story.isNotEmpty).toList(); // Filter out empty stories
   }
 
   Future<void> _playRecording() async {
@@ -90,33 +64,26 @@ class _StoryState extends State<Story> {
   }
 
   void _confirmStory() {
-  if (currentStoryIndex < stories.length - 1) {
-    setState(() {
-      _recordingAvailable = false;
-      currentStoryIndex++;
-      _recordingPath = null;
-    });
-  } else {
-    showAllWordsDoneDialog();
+    if (currentStoryIndex < stories.length - 1) {
+      setState(() {
+        _recordingAvailable = false;
+        currentStoryIndex++;
+        _recordingPath = null;
+        _showGameElements = false;
+      });
+    } else {
+      showAllWordsDoneDialog();
+    }
   }
-}
 
-
-  void _resetLevel() {
-    setState(() {
-      currentStoryIndex = 0;
-      _recordingAvailable = false;
-      _showGameElements = false;
-    });
-  }
   void showAllWordsDoneDialog() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('All Words Done!'),
+          title: Text('All Story Done'),
           content: Text(
-              'You have completed all words in this level. Reset to play again.'),
+              'You have completed all Stories in this Game. Reset to play again.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -131,18 +98,55 @@ class _StoryState extends State<Story> {
     );
   }
 
-  @override
-  void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
-    super.dispose();
+  Future<String> _getFilePath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final test1Dir = Directory('${directory.path}/test1');
+    if (!test1Dir.existsSync()) {
+      test1Dir.createSync(recursive: true);
+    }
+    return '${test1Dir.path}/audio_recording$currentStoryIndex.aac';
+  }
+
+  Future<void> _stopRecording() async {
+    await _recorder.stopRecorder();
+    setState(() {
+      _isRecording = false;
+      _recordingAvailable = true;
+    });
+  }
+
+  Future<void> _startRecording() async {
+    _recordingPath = await _getFilePath();
+    await _recorder.startRecorder(toFile: _recordingPath);
+    setState(() {
+      _isRecording = true;
+    });
+  }
+
+  void _resetLevel() {
+    setState(() {
+      currentStoryIndex = 0;
+      _recordingAvailable = false;
+      _showGameElements = false;
+    });
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      await _stopRecording();
+    } else {
+      await _startRecording();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    stories = getStories(context); // Fetch localized stories
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Story Reading', style: TextStyle(color: Colors.white)),
+        title: Text(S.of(context).game_story,
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
       ),
@@ -154,111 +158,119 @@ class _StoryState extends State<Story> {
             end: Alignment.bottomRight,
           ),
         ),
+        child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Question Section (Always Visible)
+              // Question Section
               Card(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                    borderRadius: BorderRadius.circular(15)),
                 elevation: 8,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Text(
-                    "Brainu wants to listen to a story but he is not able to read. Can you help him by reading a story?",
+                    S.of(context).paragraph_reading_question,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
 
               SizedBox(height: 20),
 
-              // Story Section (Initially Hidden)
-              if (_showGameElements)
+              // Story Section with Scrollbar and Dynamic Height
+              if (_showGameElements && currentStoryIndex < stories.length)
                 Card(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                      borderRadius: BorderRadius.circular(15)),
                   elevation: 8,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
-                    child: Text(
-                      stories[currentStoryIndex],
-                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height *
+                          0.28, // 30% of screen height
+                      child: Scrollbar(
+                        thumbVisibility: true, // Always show the scrollbar
+                        child: SingleChildScrollView(
+                          child: Text(
+                            stories[currentStoryIndex],
+                            style:
+                                TextStyle(fontSize: 16, color: Colors.black87),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
 
               SizedBox(height: 20),
 
-              // Click Here to Start Button (Initially Visible)
+              // Start Button
               if (!_showGameElements)
-            Container(
-              margin: EdgeInsets.all(20),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Button color
-                  padding: EdgeInsets.symmetric(vertical: 20), // Button height
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                ),
-                child: SizedBox(
-                  width: double.infinity, // Full width button
-                  child: Center(
-                    child: Text(
-                      "Click Here to Start",
-                      style: TextStyle(fontSize: 20, color: Colors.white),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(
+                        S.of(context).click_here_to_start,
+                        style: TextStyle(fontSize: 20, color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-              // Recording and Confirm Buttons (Initially Hidden)
+
+              // Recording & Confirm Buttons
               if (_showGameElements) ...[
                 SizedBox(height: 15),
                 _buildStyledButton(
                   onPressed: _toggleRecording,
-                  label: _isRecording ? 'Stop Recording' : 'Start Recording',
+                  label: _isRecording
+                      ? S.of(context).stop_recording
+                      : S.of(context).start_recording,
                   icon: _isRecording ? Icons.stop : Icons.mic,
                   color: _isRecording ? Colors.red : Colors.blue,
                 ),
                 SizedBox(height: 15),
                 _buildStyledButton(
                   onPressed: _isPlaying ? null : _playRecording,
-                  label: 'Play Audio',
+                  label: S.of(context).play_audio,
                   icon: Icons.play_arrow,
                   color: Colors.amberAccent,
                 ),
                 SizedBox(height: 15),
                 _buildStyledButton(
                   onPressed: _recordingAvailable ? _confirmStory : null,
-                  label: 'Confirm',
+                  label: S.of(context).confirm,
                   icon: Icons.send,
                   color: _recordingAvailable ? Colors.green : Colors.grey,
                 ),
               ],
-
-              SizedBox(height: 20),
-
-              
             ],
           ),
         ),
-      ),
+      ),)
     );
   }
 
-  Widget _buildStyledButton({required VoidCallback? onPressed, required String label, required IconData icon, required Color color}) {
+  Widget _buildStyledButton(
+      {required VoidCallback? onPressed,
+      required String label,
+      required IconData icon,
+      required Color color}) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: Colors.white),

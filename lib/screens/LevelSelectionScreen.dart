@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Authentication/navigation.dart';
 import '../components/SelectGameDialog.dart';
+import '../generated/l10n.dart';
 import 'Letter.dart';
 import 'Identify.dart';
 import 'Phonemene_deletetion_final.dart';
@@ -43,8 +44,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
         iconTheme: IconThemeData(
           color: const Color.fromARGB(255, 255, 255, 255),
         ),
-        title: Text(
-          'Select Level',
+        title: Text(S.of(context).games,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,

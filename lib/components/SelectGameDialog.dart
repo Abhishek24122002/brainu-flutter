@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../generated/l10n.dart';
 
 class SelectGameDialog extends StatefulWidget {
   final List<bool> initialSelectedLevels;
@@ -15,27 +16,26 @@ class _SelectGameDialogState extends State<SelectGameDialog> {
   @override
   void initState() {
     super.initState();
-    // Initialize with the passed-in selected levels
     selectedLevels = List.from(widget.initialSelectedLevels);
   }
 
-  List<String> levelNames = [
-    'Letter',
-    'Identify',
-    'Word',
-    'Listen',
-    'Story',
-    'Swapping',
-    'Word Game 1',
-    'Word Game 2',
-    'Word Game 3',
-    'Word Game 4'
-  ];
-
   @override
   Widget build(BuildContext context) {
+    List<String> levelNames = [
+      S.of(context).game_letter,
+      S.of(context).game_identify,
+      S.of(context).game_word,
+      S.of(context).game_listen,
+      S.of(context).game_story,
+      S.of(context).game_swapping,
+      S.of(context).game_word_game1,
+      S.of(context).game_word_game2,
+      S.of(context).game_word_game3,
+      S.of(context).game_word_game4,
+    ];
+
     return AlertDialog(
-      title: Text('Select Levels'),
+      title: Text(S.of(context).select_your_games),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -55,9 +55,9 @@ class _SelectGameDialogState extends State<SelectGameDialog> {
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.pop(context, selectedLevels); // Pass selected levels back
+            Navigator.pop(context, selectedLevels);
           },
-          child: Text('Done'),
+          child: Text(S.of(context).done),
         ),
       ],
     );

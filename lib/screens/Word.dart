@@ -8,6 +8,7 @@ import 'dart:io';
 import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
+import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
 
 class Word extends StatefulWidget {
@@ -212,8 +213,8 @@ class _WordState extends State<Word> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(
-          'Word',style: TextStyle(color: Colors.white),
+        title: Text(S.of(context).game_word
+        ,style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -246,9 +247,8 @@ class _WordState extends State<Word> {
                     ),
                   ],
                 ),
-                child: Text(
-                  'Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap.',
-                  textAlign: TextAlign.center,
+                child: Text(S.of(context).word_reading_question,
+                textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

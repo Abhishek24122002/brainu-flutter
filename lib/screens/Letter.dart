@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:brainu/firebase/firebase_save_answer.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
+import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 
 class Letter extends StatefulWidget {
@@ -16,6 +16,9 @@ class Letter extends StatefulWidget {
 }
 
 class _LetterState extends State<Letter> {
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseSave _firebaseSave = FirebaseSave();
+  late String userLanguage = "english"; // Default to English
   String question = '';
   List<String> options = [];
   bool isSubmitEnabled = false;
@@ -29,7 +32,6 @@ class _LetterState extends State<Letter> {
   bool _showGameElements = false;
   int questionIndex = 0;
   int trophyCount = 0;
-  late String userLanguage = "english"; // Default to English
 
   List<List<String>> wordPairs = [
     ['A', 'a'],
@@ -91,6 +93,18 @@ class _LetterState extends State<Letter> {
       print('Error playing audio: $e');
     }
   }
+//working dynamic langauage path
+  // Future<void> playAudio(String alphabet) async {
+  //   try {
+  //     final audioPath = 'audio/$userLanguage/v_and_c/$alphabet.wav';
+  //     await audioPlayer.play(AssetSource(audioPath));
+  //     setState(() {
+  //       isAudioPlaying = true;
+  //     });
+  //   } catch (e) {
+  //     print('Error playing audio: $e');
+  //   }
+  // }
 
   Future<void> _saveTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -175,49 +189,15 @@ class _LetterState extends State<Letter> {
   }
 
   Future<void> _fetchUserLanguage() async {
-    userLanguage = await _getUserLanguage();
+    userLanguage = await _firebaseServices.getUserLanguage();
     setState(() {}); // Refresh UI when language is loaded
   }
 
-  Future<String> _getUserLanguage() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return "english"; // Default to English if user not found
+  
 
-    String userId = user.uid;
-
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(userId)
-          .get();
-
-      if (userDoc.exists) {
-        String language = userDoc.get("language") ?? "english";
-        return language.toLowerCase(); // Ensure lowercase for consistency
-      }
-    } catch (e) {
-      print("Error fetching user language: $e");
-    }
-
-    return "english"; // Default to English in case of an error
+  Future<void> saveAnswer_Letter(bool isCorrect) async {
+    await _firebaseSave.saveAnswer_Letter(question, isCorrect, userLanguage);
   }
-
-  Future<void> saveUserAnswer(bool isCorrect) async {
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-
-  String userId = user.uid;
-  String letter = question;
-  String result = isCorrect ? "Correct" : "Wrong";
-
-  await FirebaseFirestore.instance
-      .collection("users")
-      .doc(userId)
-      .collection("Letter")
-      .doc(userLanguage) // Use the stored language
-      
-      .set({letter: result}, SetOptions(merge: true));
-}
 
   void handleClick(String option) {
     setState(() {
@@ -247,7 +227,7 @@ class _LetterState extends State<Letter> {
 
   void handleSubmit() {
     bool isCorrect = selectedOption == wordPairs[questionIndex - 1][1];
-    saveUserAnswer(isCorrect);
+    saveAnswer_Letter(isCorrect);
 
     setState(() {
       questionCounter++;
@@ -288,7 +268,7 @@ class _LetterState extends State<Letter> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
-        title: Text('Letter', style: TextStyle(color: Colors.white)),
+        title: Text(S.of(context).letter, style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
       ),
@@ -312,7 +292,7 @@ class _LetterState extends State<Letter> {
                 ],
               ),
               child: Text(
-                S.of(context).letterScreenText,
+                S.of(context).vc_starting_question,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
@@ -339,7 +319,7 @@ class _LetterState extends State<Letter> {
                   child: SizedBox(
                     width: double.infinity,
                     child: Center(
-                      child: Text("Click Here to Start",
+                      child: Text(S.of(context).click_here_to_start,
                           style: TextStyle(fontSize: 20, color: Colors.white)),
                     ),
                   ),

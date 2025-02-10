@@ -11,6 +11,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
+import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
 
 class Ph_substitution_initial extends StatefulWidget {
@@ -337,7 +338,8 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text('Word Game 4',style: TextStyle(color: Colors.white),
+        title: Text(S.of(context).game_word_game4,
+        style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -362,9 +364,8 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                   ),
                 ],
               ),
-              child: Text(
-                'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2 and word icons on the board for audio.',
-                textAlign: TextAlign.center,
+              child: Text(S.of(context).phoneme_substitution_question,
+              textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -391,8 +392,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                 child: SizedBox(
                   width: double.infinity, // Full width button
                   child: Center(
-                    child: Text(
-                      "Click Here to Start",
+                    child: Text(S.of(context).click_here_to_start,
                       style: TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),

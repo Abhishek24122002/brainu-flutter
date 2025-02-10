@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
+import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
 
 class Listen extends StatefulWidget {
@@ -77,8 +78,7 @@ class _ListenState extends State<Listen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(
-          'Listen',
+        title: Text(S.of(context).game_listen,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -100,12 +100,11 @@ class _ListenState extends State<Listen> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      Text(
-                        'Write the word you hear',
+                      Text(S.of(context).dictation_consonent,
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blueAccent,
+                          
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -142,8 +141,7 @@ class _ListenState extends State<Listen> {
               ElevatedButton.icon(
                 onPressed: _onSubmit,
                 icon: Icon(Icons.check, color: Colors.white),
-                label: Text(
-                  'Submit',
+                label: Text(S.of(context).submit,
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
