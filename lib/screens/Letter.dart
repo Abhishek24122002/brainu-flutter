@@ -33,7 +33,7 @@ class _LetterState extends State<Letter> {
   int questionIndex = 0;
   int trophyCount = 0;
 
-  List<List<String>> wordPairs = [
+  List<List<String>> englishWordPairs = [
     ['A', 'a'],
     ['B', 'b'],
     ['C', 'c'],
@@ -62,6 +62,24 @@ class _LetterState extends State<Letter> {
     ['Z', 'z']
   ];
 
+  List<List<String>> hindiWordPairs = [
+  ['आ', 'aa'], ['च', 'ch'], ['छ', 'chh'], ['ई', 'ee'], ['ग', 'g'],
+  ['घ', 'gh'], ['ज', 'j'], ['झ', 'jh'], ['क', 'k'], ['ख', 'kh'],
+  ['ओ', 'o'], ['ऊ', 'oo'], ['ट', 'ta'], ['ठ', 'tha'], ['औ', 'aou'],
+  ['क्ष', 'sha'], ['ढ', 'dha'], ['त', 't'], ['ड', 'da'], ['थ', 'th'],
+  ['न', 'n'], ['फ', 'ph'], ['ल', 'l'], ['र', 'r'], ['इ', 'ee'],
+  ['द', 'd'], ['प', 'p'], ['म', 'm'], ['स', 's'], ['ह', 'h'],
+  ['य', 'y'], ['ब', 'b'], ['ण', 'n_n'], ['ष', 'sh_s'], ['भ', 'bh'],
+  ['श', 'sh_sh'], ['त्र', 'tra'], ['ऐ', 'a'], ['ऋ', 'ri'], ['ज्ञ', 'gya'],
+  ['अं', 'am'], ['ए', 'ae'], ['री', 'ree'], ['सि', 'si'], ['कु', 'ku'],
+  ['मू', 'mu'], ['उ', 'u'], ['खी', 'khi'], ['चू', 'chu'], ['मि', 'mi'],
+  ['हु', 'hu'], ['बी', 'bi'], ['ले', 'le'], ['म्रे', 'mre'], ['चि', 'chi'],
+  ['ने', 'ne'], ['जा', 'jaa'], ['टी', 'ti'], ['डा', 'da'], ['थे', 'the'],
+  ['से', 'se'], ['बा', 'baa'], ['गु', 'gu'], ['फै', 'fai'], ['ती', 'tii'],
+  ['रा', 'ra'], ['पु', 'pu'], ['सो', 'so'], ['वी', 'vi'], ['शू', 'shu'],
+  ['र्म', 'mre'], ['प्र', 'pr'], ['कृ', 'kre']
+];
+
   @override
   void initState() {
     super.initState();
@@ -82,21 +100,9 @@ class _LetterState extends State<Letter> {
     });
   }
 
-  Future<void> playAudio(String alphabet) async {
-    try {
-      final audioPath = 'audio/english/v_and_c/$alphabet.wav';
-      await audioPlayer.play(AssetSource(audioPath));
-      setState(() {
-        isAudioPlaying = true;
-      });
-    } catch (e) {
-      print('Error playing audio: $e');
-    }
-  }
-//working dynamic langauage path
   // Future<void> playAudio(String alphabet) async {
   //   try {
-  //     final audioPath = 'audio/$userLanguage/v_and_c/$alphabet.wav';
+  //     final audioPath = 'audio/english/v_and_c/$alphabet.wav';
   //     await audioPlayer.play(AssetSource(audioPath));
   //     setState(() {
   //       isAudioPlaying = true;
@@ -105,6 +111,18 @@ class _LetterState extends State<Letter> {
   //     print('Error playing audio: $e');
   //   }
   // }
+//working dynamic langauage path
+  Future<void> playAudio(String alphabet) async {
+    try {
+      final audioPath = 'audio/$userLanguage/v_and_c/$alphabet.wav';
+      await audioPlayer.play(AssetSource(audioPath));
+      setState(() {
+        isAudioPlaying = true;
+      });
+    } catch (e) {
+      print('Error playing audio: $e');
+    }
+  }
 
   Future<void> _saveTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -188,10 +206,15 @@ class _LetterState extends State<Letter> {
     questionIndex++;
   }
 
-  Future<void> _fetchUserLanguage() async {
-    userLanguage = await _firebaseServices.getUserLanguage();
-    setState(() {}); // Refresh UI when language is loaded
-  }
+  late List<List<String>> wordPairs = englishWordPairs; // Default is English
+
+Future<void> _fetchUserLanguage() async {
+  userLanguage = await _firebaseServices.getUserLanguage();
+  setState(() {
+    wordPairs = userLanguage == "hindi" ? hindiWordPairs : englishWordPairs;
+    generateQuestionAndOptions(); // Regenerate based on the new list
+  });
+}
 
   
 

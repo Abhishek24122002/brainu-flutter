@@ -86,7 +86,11 @@ flutter:
   assets:
     - assets/audio/
     - assets/audio/english/v_and_c/
+    - assets/audio/hindi/v_and_c/
+
     - assets/audio/english/dictation_consonent/
+    - assets/audio/hindi/dictation_consonent/
+    
     - assets/audio/english/spoonerism/
     - assets/audio/english/phoneme_deletion/final/
     - assets/audio/english/phoneme_deletion/initial/

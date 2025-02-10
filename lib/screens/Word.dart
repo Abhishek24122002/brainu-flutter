@@ -17,36 +17,10 @@ class Word extends StatefulWidget {
 }
 
 class _WordState extends State<Word> {
-  final List<String> words = [
-    "Wonder",
-    "Huge",
-    "Alarm",
-    "Cabin",
-    "Daily",
-    "Blush",
-    "Promise",
-    "Divide",
-    "Expect",
-    "Opinion",
-    "Avoid",
-    "Famous",
-    "Proof",
-    "Reflect",
-    "Board",
-    "Excess",
-    "Search",
-    "Lizard",
-    "Notice",
-    "Ocean",
-    "Career",
-    "Brain",
-    "Rumor",
-    "Flood",
-    "Idea"
-  ];
   List<String> remainingWords = [];
   late SharedPreferences prefs;
   String currentWord = "";
+  String currentLocale = "en"; // Default language
 
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
@@ -60,28 +34,66 @@ class _WordState extends State<Word> {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
-    _loadWords();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _detectLocaleAndLoadWords();
+  }
+
+  Future<void> _detectLocaleAndLoadWords() async {
+    Locale locale = Localizations.localeOf(context);
+    String newLocale = locale.languageCode;
+
+    if (currentLocale != newLocale) {
+      currentLocale = newLocale;
+      await _loadWords(); // Reload words when locale changes
+    }
   }
 
   Future<void> _loadWords() async {
     prefs = await SharedPreferences.getInstance();
-    remainingWords = prefs.getStringList('remainingWords') ?? words;
-    if (remainingWords.isEmpty) {
-      _resetWords();
+
+    // Define word lists for both languages
+    final Map<String, List<String>> wordLists = {
+      "en": [
+        "Wonder", "Huge", "Alarm", "Cabin", "Daily", "Blush", "Promise", "Divide",
+        "Expect", "Opinion", "Avoid", "Famous", "Proof", "Reflect", "Board",
+        "Excess", "Search", "Lizard", "Notice", "Ocean", "Career", "Brain",
+        "Rumor", "Flood", "Idea"
+      ],
+      "hi": [
+        "आश्चर्य", "बड़ा", "सतर्कता", "केबिन", "रोज़ाना", "शर्माना", "वादा", "विभाजित करना",
+        "अपेक्षा", "राय", "बचना", "प्रसिद्ध", "प्रमाण", "प्रतिबिंबित", "बोर्ड",
+        "अधिशेष", "खोज", "गिरगिट", "सूचना", "महासागर", "कैरियर", "मस्तिष्क",
+        "अफवाह", "बाढ़", "विचार"
+      ]
+    };
+
+    // Choose words based on locale
+    List<String> selectedWords = wordLists[currentLocale] ?? wordLists["en"]!;
+
+    // Load stored words or reset
+    List<String>? savedWords = prefs.getStringList('remainingWords_$currentLocale');
+
+    if (savedWords == null || savedWords.isEmpty) {
+      await _resetWords(selectedWords);
     } else {
       setState(() {
+        remainingWords = savedWords;
         currentWord = remainingWords.first;
       });
     }
   }
 
   Future<void> _saveWords() async {
-    await prefs.setStringList('remainingWords', remainingWords);
+    await prefs.setStringList('remainingWords_$currentLocale', remainingWords);
   }
 
-  Future<void> _resetWords() async {
+  Future<void> _resetWords(List<String> selectedWords) async {
     setState(() {
-      remainingWords = List.from(words);
+      remainingWords = List.from(selectedWords);
       currentWord = remainingWords.first;
     });
     await _saveWords();
@@ -163,38 +175,23 @@ class _WordState extends State<Word> {
       builder: (context) {
         return AlertDialog(
           title: Text('Congratulations!'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('You have completed all words.'),
-                SizedBox(height: 20),
-              ],
-            ),
-          ),
+          content: Text('You have completed all words.'),
           actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _resetWords();
-                  },
-                  child: Text('Reset Words'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LevelSelectionScreen(),
-                      ),
-                    );
-                  },
-                  child: Text('Next Level'),
-                ),
-              ],
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _loadWords();
+              },
+              child: Text('Reset Words'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+                );
+              },
+              child: Text('Next Level'),
             ),
           ],
         );
@@ -212,9 +209,11 @@ class _WordState extends State<Word> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(S.of(context).game_word
-        ,style: TextStyle(color: Colors.white),
+      appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
+        title: Text(
+          S.of(context).game_word,
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -230,14 +229,13 @@ class _WordState extends State<Word> {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: EdgeInsets.all(16),
                 margin: EdgeInsets.all(15),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.5),
@@ -247,44 +245,24 @@ class _WordState extends State<Word> {
                     ),
                   ],
                 ),
-                child: Text(S.of(context).word_reading_question,
-                textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                child: Text(
+                  S.of(context).word_reading_question,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
               ),
               SizedBox(height: 20),
               if (currentWord.isNotEmpty)
-                Column(
-                  children: [
-                    Text(
-                      currentWord,
-                      style: TextStyle(
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 255, 255, 255),
-                      ),
-                    ),
-                  ],
+                Text(
+                  currentWord,
+                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               SizedBox(height: 40),
-              StartRecordingButton(
-                onPressed: _toggleRecording,
-                isRecording: _isRecording,
-              ),
+              StartRecordingButton(onPressed: _toggleRecording, isRecording: _isRecording),
               SizedBox(height: 15),
-              PlayAudioButton(
-                onPressed: _isPlaying ? null : _playRecording,
-                isPlaying: _isPlaying, isEnabled:  _recordingAvailable,
-              ),
+              PlayAudioButton(onPressed: _isPlaying ? null : _playRecording, isPlaying: _isPlaying, isEnabled: _recordingAvailable),
               SizedBox(height: 15),
-              ConfirmButton(
-                onPressed: _recordingAvailable ? _onConfirm : null,
-                isEnabled: _recordingAvailable,
-              ),
+              ConfirmButton(onPressed: _recordingAvailable ? _onConfirm : null, isEnabled: _recordingAvailable),
             ],
           ),
         ),
