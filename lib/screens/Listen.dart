@@ -1,8 +1,14 @@
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 
 class Listen extends StatefulWidget {
   @override
@@ -60,6 +66,40 @@ class _ListenState extends State<Listen> {
     _audioPlayer.dispose();
     super.dispose();
   }
+  
+
+Future<void> _saveCanvasAsImage() async {
+  try {
+    // Convert the canvas to an image
+    RenderRepaintBoundary boundary =
+        _canvasKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage();
+    
+    // Convert image to byte data
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    // Get the application directory
+    final directory = await getApplicationDocumentsDirectory();
+    String filePath = '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+
+    // Save the image
+    File file = File(filePath);
+    await file.writeAsBytes(pngBytes);
+
+    print('Image saved at: $filePath');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Image saved successfully!'), backgroundColor: Colors.green),
+    );
+  } catch (e) {
+    print("Error saving image: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to save image'), backgroundColor: Colors.red),
+    );
+  }
+}
+
 
   void _playNextWordAudio() async {
     if (_remainingWords.isEmpty) {
@@ -101,22 +141,25 @@ class _ListenState extends State<Listen> {
   }
 
   void _onSubmit() {
-    if (_points.isEmpty || _points.every((point) => point == Offset.zero)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Write the word you heard"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      _playAudio(_currentWord); // Replay current word audio
-      return;
-    }
-
-    setState(() {
-      _points.clear();
-    });
-    _playNextWordAudio();
+  if (_points.isEmpty || _points.every((point) => point == Offset.zero)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Write the word you heard"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    _playAudio(_currentWord);
+    return;
   }
+
+  _saveCanvasAsImage(); // Save image before clearing
+
+  setState(() {
+    _points.clear();
+  });
+  _playNextWordAudio();
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -44,6 +44,7 @@ dependencies:
   open_file: 3.5.4
   audioplayers: 6.1.0
   shared_preferences: ^2.0.15 
+  image: ^4.0.17
   
   lottie: ^2.3.2
   flutter_localizations:
