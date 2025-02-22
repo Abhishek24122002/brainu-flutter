@@ -92,6 +92,8 @@ flutter:
     - assets/audio/hindi/dictation_consonent/
     
     - assets/audio/english/spoonerism/
+    - assets/audio/hindi/spoonerism/
+    
     - assets/audio/english/phoneme_deletion/final/
     - assets/audio/english/phoneme_deletion/initial/
     - assets/audio/english/phoneme_substitution/final/
