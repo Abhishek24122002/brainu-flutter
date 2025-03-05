@@ -36,19 +36,14 @@ class _Swap2State extends State<Swap2> {
   int currentIndex = 0;
 
   Future<void> _getUserLanguage() async {
-    // Fetch the user's selected language (this could come from SharedPreferences or settings)
-    // For now, it's set manually
     setState(() {
-      userLanguage = 'hindi'; // Change to 'english' for English words
+      userLanguage = 'hindi'; // Change this to 'english' if needed
     });
   }
 
   Future<void> playAudio(String option, [bool isOption = false]) async {
     try {
-      String audioPath = isOption
-          ? 'audio/$userLanguage/spoonerism/${option.toLowerCase()}.wav'
-          : 'audio/$userLanguage/spoonerism/${option.toLowerCase()}.wav';
-
+      String audioPath = 'audio/$userLanguage/spoonerism/${option.toLowerCase()}.wav';
       print('Playing audio: $audioPath');
       await _audioPlayer.play(AssetSource(audioPath));
     } catch (e) {
@@ -71,22 +66,26 @@ class _Swap2State extends State<Swap2> {
     options.shuffle(); // Shuffle options
 
     return Scaffold(
-      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(S.of(context).game_swapping,style: TextStyle(color: Colors.white),
+      appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
+        title: Text(
+          S.of(context).game_swapping,
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
-      ),body: Container(
+      ),
+      body: Container(
         color: Colors.white,
         child: Column(
           children: [
-            // Question Container with shadow
+            // Question Container
             Container(
               padding: EdgeInsets.all(16),
               margin: EdgeInsets.all(15),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                borderRadius: BorderRadius.all(Radius.circular(10)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.5),
@@ -96,59 +95,74 @@ class _Swap2State extends State<Swap2> {
                   ),
                 ],
               ),
-              child: Text(S.of(context).spoonerism_question,
-              textAlign: TextAlign.center,
+              child: Text(
+                S.of(context).spoonerism_question,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-            ),Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-  onTap: () => playAudio(currentPair[2]),
-  child: Container(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    margin: EdgeInsets.symmetric(vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.5),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Text(
-      currentPair[0],
-      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-    ),
-  ),
-),
-SizedBox(height: 20),
-            GestureDetector(
-  onTap: () => playAudio(currentPair[3]),
-  child: Container(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    margin: EdgeInsets.symmetric(vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.5),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),)),
+            ),
+            // Display Word 1
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Word 1 Container
+                GestureDetector(
+                  onTap: () => playAudio(currentPair[2]),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 7,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      currentPair[0],
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+
+                // Word 2 Container
+                GestureDetector(
+                  onTap: () => playAudio(currentPair[3]),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 7,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      currentPair[1],
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
 
             // Answer options
             for (int i = 0; i < 3; i++)
@@ -156,7 +170,7 @@ SizedBox(height: 20),
                 onPressed: () {
                   playAudio(options[i], true);
                   bool isCorrect = options[i] == currentPair[4];
-                  
+                  print(isCorrect ? "Correct Answer" : "Wrong Answer");
                 },
                 child: Text(userLanguage == 'hindi' ? "विकल्प ${i + 1}" : "Option ${i + 1}"),
               ),
@@ -174,6 +188,6 @@ SizedBox(height: 20),
           ],
         ),
       ),
-  ]) ));
+    );
   }
 }

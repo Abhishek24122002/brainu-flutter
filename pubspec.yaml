@@ -99,6 +99,11 @@ flutter:
     - assets/audio/english/phoneme_deletion/initial/
     - assets/audio/english/phoneme_substitution/final/
     - assets/audio/english/phoneme_substitution/initial/
+
+    - assets/audio/hindi/phoneme_deletion/final/
+    - assets/audio/hindi/phoneme_deletion/initial/
+    - assets/audio/hindi/phoneme_substitution/final/
+    - assets/audio/hindi/phoneme_substitution/initial/
     
 
 

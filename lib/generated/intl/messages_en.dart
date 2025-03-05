@@ -22,12 +22,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "In": MessageLookupByLibrary.simpleMessage("in"),
+        "Remove": MessageLookupByLibrary.simpleMessage("Remove"),
+        "With": MessageLookupByLibrary.simpleMessage("With"),
+        "Word": MessageLookupByLibrary.simpleMessage("Word"),
         "click_here_to_start":
             MessageLookupByLibrary.simpleMessage("Click here to Start"),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
             "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brain by typing the word that is dictated!"),
         "done": MessageLookupByLibrary.simpleMessage("Done"),
+        "from_the": MessageLookupByLibrary.simpleMessage("From the"),
         "game_identify": MessageLookupByLibrary.simpleMessage("Identify"),
         "game_letter": MessageLookupByLibrary.simpleMessage("Letter"),
         "game_listen": MessageLookupByLibrary.simpleMessage("Listen"),
@@ -61,6 +66,9 @@ class MessageLookup extends MessageLookupByLibrary {
             "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can."),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("Select Your Games"),
+        "sound": MessageLookupByLibrary.simpleMessage("Sound"),
+        "sound1": MessageLookupByLibrary.simpleMessage("Sound 1"),
+        "sound2": MessageLookupByLibrary.simpleMessage("Sound 2"),
         "spoonerism_question": MessageLookupByLibrary.simpleMessage(
             "To help Brainu perform the Spoonerism Step, exchange the first letters of the pair of words and tell Brainu what the new pair is! Tap on the words to listen. Tap START to begin"),
         "start_recording":
@@ -69,6 +77,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "stop_recording":
             MessageLookupByLibrary.simpleMessage("Stop Recording"),
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
+        "substitute": MessageLookupByLibrary.simpleMessage("substitute"),
         "vc_starting_question": MessageLookupByLibrary.simpleMessage(
             "Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one."),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(

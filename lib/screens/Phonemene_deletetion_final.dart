@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../firebase/firebase_services.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
 import '../components/StartRecordingButton.dart';
@@ -19,6 +20,8 @@ class Ph_deletion_final extends StatefulWidget {
 }
 
 class _Ph_deletion_finalState extends State<Ph_deletion_final> {
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  String _userLanguage = "english"; // Default language
   String word1 = '';
   String word2 = '';
   List<String> options = [];
@@ -70,11 +73,18 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   @override
   void initState() {
     super.initState();
-    _loadTrophyCount(); // Load the trophy count when the level is loaded
-    generateWords();
+    _loadTrophyCount();
+     _fetchUserLanguage(); // Load the trophy count when the level is loaded
     _initializeRecorder();
     _player.openPlayer();
   }
+  Future<void> _fetchUserLanguage() async {
+    String language = await _firebaseServices.getUserLanguage();
+    setState(() {
+        _userLanguage = language;
+        generateWords(); // Call generateWords() after setting language
+    });
+}
 
   Future<void> _initializeRecorder() async {
     var micStatus = await Permission.microphone.request();
@@ -193,19 +203,11 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
     });
   }
 
-  Future<void> playAudio(String option, [bool isOption = false]) async {
+  Future<void> playAudio(String option) async {
     try {
       String audioPath;
-
-      if (isOption) {
-        // The option already contains the correct filename, so use it as is.
-        audioPath =
-            'audio/english/phoneme_deletion/final/${option.toLowerCase()}';
-      } else {
-        // Construct path for individual words
-        audioPath =
-            'audio/english/phoneme_deletion/final/${option.toLowerCase()}.wav';
-      }
+      // audioPath = 'audio/english/phoneme_deletion/final/${option.toLowerCase()}.wav';
+      audioPath = 'audio/$_userLanguage/phoneme_deletion/final/${option.toLowerCase()}.wav';
 
       print('Playing audio: $audioPath');
       await audioPlayer.play(AssetSource(audioPath));
@@ -424,7 +426,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                             color: Colors.black,
                           ),
                           children: [
-                            TextSpan(text: 'Remove '),
+                            TextSpan(text: S.of(context).Remove),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
@@ -438,7 +440,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   child: Text(
-                                    "Sound",
+                                    S.of(context).sound,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,
@@ -447,7 +449,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                 ),
                               ),
                             ),
-                            TextSpan(text: ' from '),
+                            TextSpan(text: S.of(context).from_the),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
@@ -460,8 +462,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                     borderRadius:
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
-                                  child: Text(
-                                    "Word",
+                                  child: Text(S.of(context).Word,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,

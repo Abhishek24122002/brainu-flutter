@@ -1,3 +1,4 @@
+import 'package:brainu/screens/swap3.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +46,8 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
         iconTheme: IconThemeData(
           color: const Color.fromARGB(255, 255, 255, 255),
         ),
-        title: Text(S.of(context).games,
+        title: Text(
+          S.of(context).games,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -120,17 +122,16 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                     page = Story();
                     break;
                   case 5:
-                    page = Swap2();
-                    break;
-                    case 6:
                     page = Swap();
                     break;
-                  // case 6: temp chnaged for testing
-                  //   page = Ph_deletion_final();
-                  //   break;
+
+                  case 6:
+                    page = Ph_deletion_final();
+                    break;
                   case 7:
                     page = Ph_deletion_initial();
                     break;
+
                   case 8:
                     page = Ph_substitution_final();
                     break;

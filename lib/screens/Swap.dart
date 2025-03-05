@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../firebase/firebase_services.dart'; // Import your FirebaseServices file
 
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
@@ -16,8 +17,16 @@ class Swap extends StatefulWidget {
 }
 
 class _SwapState extends State<Swap> {
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  String _userLanguage = "english"; // Default language
+
   String word1 = '';
   String word2 = '';
+  String word3 = '';
+  String word4 = '';
+  String correct = '';
+  String opt1 = '';
+  String opt2 = '';
   List<String> options = [];
   String? selectedOption;
   bool isSubmitEnabled = false;
@@ -27,33 +36,97 @@ class _SwapState extends State<Swap> {
   int trophyCount = 0; // Track total trophies
   Map<String, int> clickCountMap = {};
 
-  List<List<String>> wordPairs = [
-    ['Belly', 'Jeans'],
-    ['Bean', 'Dust'],
-    ['Bedding', 'Wells'],
-    ['Town', 'Drain'],
-    ['Waste', 'Hood'],
-    ['Pew', 'Nose'],
-    ['Nosy', 'Cook'],
-    ['Mold', 'Food'],
-    ['Most', 'Cold'],
-    ['Fold', 'Trap'],
-    ['Tick', 'Par'],
-    ['Wish', 'Deep'],
-    ['Care', 'Bar'],
-    ['Sound', 'Ride'],
-    ['Look', 'Take'],
-    ['Kind', 'Male'],
-    ['Came', 'Nap'],
-    ['Save', 'Cage'],
-    ['Lack', 'Band'],
-    ['Feast', 'Ban'],
-    ['Head', 'Dear'],
-    ['Doggy', 'Fay'],
-    ['Tot', 'Here'],
-    ['Take', 'Fall'],
-    ['Warm', 'Fire']
-  ];
+  Map<String, List<List<String>>> wordPairsByLanguage = {
+  "english": [
+    [
+      'Belly',
+      'Jeans',
+      'belly',
+      'jeans',
+      'jelly_beans_c',
+      'jelly_jeans',
+      'belly_beans'
+    ],
+    ['Bean', 'Dust', 'bean', 'dust', 'dean_bust_c', 'dean_dust', 'bean_bust'],
+    [
+      'Bedding',
+      'Wells',
+      'bedding',
+      'wells',
+      'wedding_bells_c',
+      'bedding_bells',
+      'wedding_wells'
+    ],
+    [
+      'Town',
+      'Drain',
+      'town',
+      'drain',
+      'down_train_c',
+      'down_drain',
+      'town_train'
+    ],
+    [
+      'Waste',
+      'Hood',
+      'waste',
+      'hood',
+      'haste_wood_c',
+      'haste_hood',
+      'waste_wood'
+    ],
+    ['Pew', 'Nose', 'pew', 'nose', 'new_pose_c', 'new_nose', 'pew_pose'],
+    ['Nosy', 'Cook', 'nosy', 'cook', 'cosy_nook_c', 'nosy_nook', 'cosy_cook'],
+    ['Mold', 'Food', 'mold', 'food', 'fold_mood_c', 'fold_food', 'mold_mood'],
+    ['Most', 'Cold', 'most', 'cold', 'cost_mold_c', 'cost_cold', 'most_mold'],
+    ['Fold', 'Trap', 'fold', 'trap', 'told_frap_c', 'told_trap', 'fold_frap'],
+    ['Tick', 'Par', 'tick', 'par', 'pick_tar_c', 'pick_par', 'tick_tar'],
+    ['Wish', 'Deep', 'wish', 'deep', 'dish_weep_c', 'dish_deep', 'wish_weep'],
+    ['Care', 'Bar', 'care', 'bar', 'bare_car_c', 'bare_bar', 'care_car'],
+    [
+      'Sound',
+      'Ride',
+      'sound',
+      'ride',
+      'round_side_c',
+      'round_ride',
+      'sound_side'
+    ],
+    ['Look', 'Take', 'look', 'take', 'took_lake_c', 'took_take', 'look_lake'],
+    ['Kind', 'Male', 'kind', 'male', 'mind_kale_c', 'mind_male', 'kind_kale'],
+    ['Came', 'Nap', 'came', 'nap', 'name_cap_c', 'came_cap', 'name_nap'],
+    ['Save', 'Cage', 'save', 'cage', 'cave_sage_c', 'cave_cage', 'save_sage'],
+    ['Lack', 'Band', 'lack', 'band', 'back_land_c', 'back_band', 'lack_land'],
+    ['Feast', 'Ban', 'feast', 'ban', 'beast_fan_c', 'beast_ban', 'feast_fan'],
+    ['Head', 'Dear', 'head', 'dear', 'dead_hear_c', 'dead_dear', 'head_hear'],
+    ['Doggy', 'Fay', 'doggy', 'fay', 'foggy_day_c', 'foggy_fay', 'doggy_day'],
+    ['Tot', 'Here', 'tot', 'here', 'hot_tere_c', 'hot_here', 'tot_tere'],
+    ['Take', 'Fall', 'take', 'fall', 'fake_tall_c', 'fake_fall', 'take_tall'],
+    ['Warm', 'Fire', 'warm', 'fire', 'farm_wire_c', 'farm_fire', 'warm_wire']
+  ],
+  "hindi": [
+    [
+    'कच्ची',
+    'सड़क',
+    'kachhi',
+    'sadak',
+    'sachhi_kadak',
+    'kachhi_kadak',
+    'sachii_sadak'
+  ],
+  ['दाग', 'नाल', 'daag', 'naal', 'naag_daal', 'naag_naal', 'daag_daal'],
+  ['आम', 'राजा', 'aam', 'raja', 'raam_aaja', 'raam_raja', 'aam_aaja'],
+  ['अदला', 'बदली', 'adla', 'badli', 'badla_adli', 'badla_badli', 'adla_adli'],
+  ['काल', 'ताज', 'kaal', 'taaj', 'taal_kaaj', 'taal_taaj', 'kaal_kaaj'],
+  ['काला', 'नाम', 'kaala', 'naam', 'nala_kaam', 'nala_naam', 'kala_kaam'],
+  ['शाम', 'कान', 'shaam', 'kaan', 'kaam_shaan', 'kaam_kaan', 'shaam_shaan'],
+  ['काम', 'धान', 'kaam', 'dhaan', 'dhaam_kaan', 'kaam_kaan', 'dhaam_dhaan'],
+  ['जली', 'गोभी', 'jali', 'gobhi', 'goli_jabhi', 'goli_gabhi', 'jali_jabhi'],
+  ]
+};
+
+
+ 
 
   List<List<String>> usedWordPairs = [];
 
@@ -61,8 +134,19 @@ class _SwapState extends State<Swap> {
   void initState() {
     super.initState();
     _loadTrophyCount(); // Load the trophy count when the level is loaded
-    generateWords();
+    _fetchUserLanguage();
   }
+
+ 
+  Future<void> _fetchUserLanguage() async {
+    String language = await _firebaseServices.getUserLanguage();
+    setState(() {
+        _userLanguage = language;
+        generateWords(); // Call generateWords() after setting language
+    });
+
+}
+
 
   Future<void> _loadTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,45 +161,42 @@ class _SwapState extends State<Swap> {
     await prefs.setInt('trophyCount', trophyCount); // Save the trophy count
   }
 
+
   void generateWords() {
-    if (wordPairs.isEmpty) {
-      // All words used; show level completed
-      setState(() {
-        selectedOption = null;
-        isSubmitEnabled = false;
-        clickCountMap.clear();
-      });
-      showAllWordsDoneDialog();
-      return;
-    }
-
-    Random random = Random();
-    int index = random.nextInt(wordPairs.length);
-    List<String> selectedPair = wordPairs.removeAt(index);
-    usedWordPairs.add(selectedPair);
-
-    word1 = selectedPair[0];
-    word2 = selectedPair[1];
-
-    generateOptions(word1, word2);
-
-    setState(() {
-      selectedOption = null;
-      isSubmitEnabled = false;
-      clickCountMap = {for (var option in options) option: 0};
-    });
+  if (wordPairsByLanguage[_userLanguage] == null || wordPairsByLanguage[_userLanguage]!.isEmpty) {
+    showAllWordsDoneDialog();
+    return;
   }
 
-  void generateOptions(String word1, String word2) {
+  Random random = Random();
+  int index = random.nextInt(wordPairsByLanguage[_userLanguage]!.length);
+  List<String> selectedPair = List.from(wordPairsByLanguage[_userLanguage]![index]);
+  usedWordPairs.add(selectedPair);
+
+  word1 = selectedPair[0];
+  word2 = selectedPair[1];
+  word3 = selectedPair[2];
+  word4 = selectedPair[3];
+  correct = selectedPair[4];
+  opt1 = selectedPair[5];
+  opt2 = selectedPair[6];
+
+  generateOptions(correct);
+  setState(() {
+    selectedOption = null;
+    isSubmitEnabled = false;
+    clickCountMap.clear();
+  });
+}
+
+
+  void generateOptions(correct) {
     // Correct Answer
-    String correctAnswer =
-        '${word2[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}_c.wav';
+    String correctAnswer = '$correct.wav';
 
     // Distractors
-    String distractor1 =
-        '${word1[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}.wav';
-    String distractor2 =
-        '${word2[0]}${word1.substring(1)}_${word2[0]}${word2.substring(1)}.wav';
+    String distractor1 = '$opt1.wav';
+    String distractor2 = '$opt2.wav';
 
     // Collect options and shuffle to randomize positions
     List<String> optionsList = [correctAnswer, distractor1, distractor2];
@@ -128,44 +209,20 @@ class _SwapState extends State<Swap> {
     print('Generated options (shuffled): $options');
   }
 
-  // Future<void> playAudio(String option, [bool isOption = false]) async {
-  //   try {
-  //     String audioPath;
-
-  //     if (isOption) {
-  //       // The option already contains the correct filename, so use it as is.
-  //       audioPath = 'audio/english/spoonerism/${option.toLowerCase()}';
-  //     } else {
-  //       // Construct path for individual words
-  //       audioPath = 'audio/english/spoonerism/${option.toLowerCase()}.wav';
-  //     }
-
-  //     print('Playing audio: $audioPath');
-  //     await audioPlayer.play(AssetSource(audioPath));
-  //   } catch (e) {
-  //     print('Error playing audio: $e');
-  //   }
-  // }
 //using language variable
   Future<void> playAudio(String option, [bool isOption = false]) async {
-  try {
-    String language = await _getUserLanguage(); // Fetch user's selected language
-    String audioPath;
+    try {
+      String audioPath;
 
-    if (isOption) {
-      // Use the correct language folder dynamically
-      audioPath = 'audio/$language/spoonerism/${option.toLowerCase()}';
-    } else {
-      audioPath = 'audio/$language/spoonerism/${option.toLowerCase()}.wav';
+      audioPath = 'audio/$_userLanguage/spoonerism/${option.toLowerCase()}${isOption ? '' : '.wav'}';
+
+
+      print('Playing audio: $audioPath');
+      await audioPlayer.play(AssetSource(audioPath));
+    } catch (e) {
+      print('Error playing audio: $e');
     }
-
-    print('Playing audio: $audioPath');
-    await audioPlayer.play(AssetSource(audioPath));
-  } catch (e) {
-    print('Error playing audio: $e');
   }
-}
-
 
   void handleClick(String option) {
     setState(() {
@@ -194,83 +251,62 @@ class _SwapState extends State<Swap> {
           count >= 2); // Enable submit button if an option is selected
     });
   }
-  Future<String> _getUserLanguage() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return "english"; // Default to English if user not found
 
-  String userId = user.uid;
+  
+  Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  try {
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+    String userId = user.uid;
+    
+
+    await FirebaseFirestore.instance
         .collection("users")
         .doc(userId)
-        .get();
-
-    if (userDoc.exists) {
-      String language = userDoc.get("language") ?? "english";
-      return language.toLowerCase(); // Ensure lowercase for consistency
-    }
-  } catch (e) {
-    print("Error fetching user language: $e");
+        .collection("swapping")
+        .doc(_userLanguage) // Store answer under the correct language
+        .set({correctAnswer: isCorrect}, SetOptions(merge: true));
   }
-  
-  return "english"; // Default to English in case of an error
-}
-
-Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-  
-  String userId = user.uid;
-  String language = await _getUserLanguage(); // Fetch the selected language
-
-  await FirebaseFirestore.instance
-      .collection("users")
-      .doc(userId)
-      .collection("swapping")
-      .doc(language) // Store answer under the correct language
-      .set({
-    correctAnswer: isCorrect
-  }, SetOptions(merge: true));
-}
-
 
   void handleSubmit() async {
-  String correctAnswer =
-      '${word2[0]}${word1.substring(1)}_${word1[0]}${word2.substring(1)}_c.wav';
-  
-  bool isCorrect = selectedOption == correctAnswer;
+    String correctAnswer = '$correct.wav';
 
-  // Increase trophy count only for correct answers
-  if (isCorrect) {
-    trophyCount++;
-    _saveTrophyCount();
-  }
+    bool isCorrect = selectedOption == correctAnswer;
 
-  // Store the answer in Firebase Firestore
-  await _storeAnswer(correctAnswer, isCorrect);
-
-  setState(() {
-    questionCounter++;
-    if (questionCounter == 5) {
-      iterationCounter++;
-      questionCounter = 0;
-      showIterationCompleteDialog();
-    } else {
-      generateWords();
+    // Increase trophy count only for correct answers
+    if (isCorrect) {
+      trophyCount++;
+      _saveTrophyCount();
     }
-  });
-}
+
+    // Store the answer in Firebase Firestore
+    await _storeAnswer(correctAnswer, isCorrect);
+
+    setState(() {
+      questionCounter++;
+      if (questionCounter == 5) {
+        iterationCounter++;
+        questionCounter = 0;
+        showIterationCompleteDialog();
+      } else {
+        generateWords();
+      }
+    });
+  }
 
   void resetLevel() {
     setState(() {
-      wordPairs.addAll(usedWordPairs);
-      usedWordPairs.clear();
-      questionCounter = 0;
-      iterationCounter = 0;
+        if (usedWordPairs.isNotEmpty) {
+            wordPairsByLanguage[_userLanguage]?.addAll(usedWordPairs);
+            usedWordPairs.clear();
+        }
+        questionCounter = 0;
+        iterationCounter = 0;
     });
     generateWords();
-  }
+}
+
+
 
   void showIterationCompleteDialog() {
     showDialog(
@@ -354,8 +390,13 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(S.of(context).game_swapping,style: TextStyle(color: Colors.white),
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: const Color.fromARGB(255, 255, 255, 255),
+        ),
+        title: Text(
+          S.of(context).game_swapping,
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
@@ -380,8 +421,9 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                   ),
                 ],
               ),
-              child: Text(S.of(context).spoonerism_question,
-              textAlign: TextAlign.center,
+              child: Text(
+                S.of(context).spoonerism_question,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -400,7 +442,7 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                       children: [
                         GestureDetector(
                           onTap: () =>
-                              playAudio(word1), // For playing individual words
+                              playAudio(word3), // For playing individual words
 
                           child: Container(
                             padding: EdgeInsets.symmetric(
@@ -419,7 +461,7 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                               ],
                             ),
                             child: Text(
-                              '${word1.substring(0, 1)}${word1.substring(1)}',
+                              '$word1',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -431,7 +473,7 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                         SizedBox(width: 30),
                         GestureDetector(
                           onTap: () =>
-                              playAudio(word2), // For playing individual words
+                              playAudio(word4), // For playing individual words
                           child: Container(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 10),
@@ -449,7 +491,7 @@ Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
                               ],
                             ),
                             child: Text(
-                              '${word2.substring(0, 1)}${word2.substring(1)}',
+                              '$word2',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,

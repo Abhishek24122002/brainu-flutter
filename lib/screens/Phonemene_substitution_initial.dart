@@ -408,7 +408,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                   children: [
                     // Center-aligned text for "Substitute"
                     Text(
-                      'Substitute',
+                      S.of(context).substitute,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
@@ -444,7 +444,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   child: Text(
-                                    "Sound1",
+                                    S.of(context).sound1,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,
@@ -453,7 +453,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                 ),
                               ),
                             ),
-                            TextSpan(text: ' with '),
+                            TextSpan(text: S.of(context).With),
                             // Sound2 Button
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
@@ -468,7 +468,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   child: Text(
-                                    "Sound2",
+                                    S.of(context).sound2,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,
@@ -477,7 +477,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                 ),
                               ),
                             ),
-                            TextSpan(text: ' in '),
+                            TextSpan(text: S.of(context).In),
                           ],
                         ),
                       ),
@@ -496,7 +496,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         child: Text(
-                          "Word",
+                          S.of(context).Word,
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.white,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -421,7 +422,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                             color: Colors.black,
                           ),
                           children: [
-                            TextSpan(text: 'Remove '),
+                            TextSpan(text:S.of(context).Remove),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
@@ -435,7 +436,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   child: Text(
-                                    "Sound",
+                                    S.of(context).sound,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,
@@ -444,7 +445,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                 ),
                               ),
                             ),
-                            TextSpan(text: ' from '),
+                            TextSpan(text: S.of(context).from_the),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
@@ -458,7 +459,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   child: Text(
-                                    "Word",
+                                    S.of(context).Word,
                                     style: TextStyle(
                                       fontSize: 20,
                                       color: Colors.white,

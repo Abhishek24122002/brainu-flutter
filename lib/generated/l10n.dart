@@ -399,6 +399,96 @@ class S {
       args: [],
     );
   }
+
+  /// `Sound`
+  String get sound {
+    return Intl.message(
+      'Sound',
+      name: 'sound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sound 1`
+  String get sound1 {
+    return Intl.message(
+      'Sound 1',
+      name: 'sound1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sound 2`
+  String get sound2 {
+    return Intl.message(
+      'Sound 2',
+      name: 'sound2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Word`
+  String get Word {
+    return Intl.message(
+      'Word',
+      name: 'Word',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `substitute`
+  String get substitute {
+    return Intl.message(
+      'substitute',
+      name: 'substitute',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `With`
+  String get With {
+    return Intl.message(
+      'With',
+      name: 'With',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `in`
+  String get In {
+    return Intl.message(
+      'in',
+      name: 'In',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove`
+  String get Remove {
+    return Intl.message(
+      'Remove',
+      name: 'Remove',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `From the`
+  String get from_the {
+    return Intl.message(
+      'From the',
+      name: 'from_the',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
