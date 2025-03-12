@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Authentication/navigation.dart';
+import '../aws/file_upload_page.dart';
 import '../components/SelectGameDialog.dart';
 import '../generated/l10n.dart';
 import 'Letter.dart';
@@ -109,6 +110,9 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                   case 0:
                     page = Letter();
                     break;
+                  // case 0:
+                  //   page = ImageUploadScreen();
+                  //   break;
                   case 1:
                     page = Identify();
                     break;

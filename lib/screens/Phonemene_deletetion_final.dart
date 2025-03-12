@@ -40,7 +40,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   String? _recordingPath;
   bool _showGameElements = false; // Initially hide the game elements
 
-  List<List<String>> wordPairs = [
+  Map<String, List<List<String>>> wordPairsByLanguage = {
+  "english": [
     ['bank', 'bank_k'],
     ['bart', 'bart_t'],
     ['boom', 'boom_m'],
@@ -66,7 +67,16 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
     ['weepy', 'weepy_y'],
     ['wind', 'wind_d'],
     ['woven', 'woven_n']
-  ];
+  ],
+  "hindi": [
+    ['aadmi', 'aadmi_mi'],
+    ['bajar', 'bajar_ra'],
+    ['bakri', 'bakri_ri'],
+    ['dharti', 'dharti_ti'],
+    ['jankari', 'jankari_ri']
+  ]
+};
+
 
   List<List<String>> usedWordPairs = [];
 
@@ -177,44 +187,44 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   }
 
   void generateWords() {
-    if (wordPairs.isEmpty) {
-      // All words used; show level completed
-      setState(() {
-        selectedOption = null;
-        isSubmitEnabled = false;
-        clickCountMap.clear();
-      });
-      showAllWordsDoneDialog();
-      return;
-    }
+  List<List<String>> availableWords = wordPairsByLanguage[_userLanguage] ?? [];
 
-    Random random = Random();
-    int index = random.nextInt(wordPairs.length);
-    List<String> selectedPair = wordPairs.removeAt(index);
-    usedWordPairs.add(selectedPair);
-
-    word1 = selectedPair[0];
-    word2 = selectedPair[1];
-
+  if (availableWords.isEmpty) {
     setState(() {
       selectedOption = null;
       isSubmitEnabled = false;
-      clickCountMap = {for (var option in options) option: 0};
+      clickCountMap.clear();
     });
+    showAllWordsDoneDialog();
+    return;
   }
+
+  Random random = Random();
+  int index = random.nextInt(availableWords.length);
+  List<String> selectedPair = availableWords.removeAt(index);
+  usedWordPairs.add(selectedPair);
+
+  word1 = selectedPair[0];
+  word2 = selectedPair[1];
+
+  setState(() {
+    selectedOption = null;
+    isSubmitEnabled = false;
+    clickCountMap = {for (var option in options) option: 0};
+  });
+}
+
 
   Future<void> playAudio(String option) async {
-    try {
-      String audioPath;
-      // audioPath = 'audio/english/phoneme_deletion/final/${option.toLowerCase()}.wav';
-      audioPath = 'audio/$_userLanguage/phoneme_deletion/final/${option.toLowerCase()}.wav';
-
-      print('Playing audio: $audioPath');
-      await audioPlayer.play(AssetSource(audioPath));
-    } catch (e) {
-      print('Error playing audio: $e');
-    }
+  try {
+    String audioPath = 'audio/$_userLanguage/phoneme_deletion/final/${option.toLowerCase()}.wav';
+    print('Playing audio: $audioPath');
+    await audioPlayer.play(AssetSource(audioPath));
+  } catch (e) {
+    print('Error playing audio: $e');
   }
+}
+
 
   Future<void> handleSubmit() async {
   setState(() {
@@ -232,7 +242,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
     showIterationCompleteDialog();
   }
 
-  if (wordPairs.isNotEmpty) {
+  if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
     generateWords();
   } else {
     showAllWordsDoneDialog();
@@ -250,7 +260,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
 
   void resetLevel() {
     setState(() {
-      wordPairs.addAll(usedWordPairs);
+      wordPairsByLanguage[_userLanguage]!.addAll(usedWordPairs);
       usedWordPairs.clear();
       questionCounter = 0;
       iterationCounter = 0;

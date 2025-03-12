@@ -12,6 +12,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
+import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
 
@@ -21,6 +22,8 @@ class Ph_deletion_initial extends StatefulWidget {
 }
 
 class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  String _userLanguage = "english"; // Default language
   String word1 = '';
   String word2 = '';
   List<String> options = [];
@@ -39,7 +42,10 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   String? _recordingPath;
   bool _showGameElements = false;
 
-  List<List<String>> wordPairs = [
+
+
+  Map<String, List<List<String>>> wordPairsByLanguage = {
+  "english": [
     ['across', 'across_a'],
     ['aware', 'aware_a'],
     ['bland', 'bland_b'],
@@ -65,18 +71,34 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     ['table', 'table_t'],
     ['tact', 'tact_t'],
     ['teach', 'teach_t']
-  ];
+  ],
+  "hindi": [
+    ['sapna', 'sapna_sa'],
+    ['magar', 'magar_ma'],
+    ['kidhar', 'kidhar_ki'],
+    ['achal', 'achal_a'],
+    ['bahar', 'bahar_b']
+  ]
+};
 
   List<List<String>> usedWordPairs = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTrophyCount(); // Load the trophy count when the level is loaded
+    _loadTrophyCount();
+    _fetchUserLanguage(); // Load the trophy count when the level is loaded
     generateWords();
     _initializeRecorder();
     _player.openPlayer();
   }
+  Future<void> _fetchUserLanguage() async {
+    String language = await _firebaseServices.getUserLanguage();
+    setState(() {
+        _userLanguage = language;
+        generateWords(); // Call generateWords() after setting language
+    });
+}
 
   Future<void> _initializeRecorder() async {
     var micStatus = await Permission.microphone.request();
@@ -169,7 +191,9 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   }
 
   void generateWords() {
-    if (wordPairs.isEmpty) {
+  List<List<String>> availableWords = wordPairsByLanguage[_userLanguage] ?? [];
+
+    if (availableWords.isEmpty) {
       // All words used; show level completed
       setState(() {
         selectedOption = null;
@@ -181,8 +205,8 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     }
 
     Random random = Random();
-    int index = random.nextInt(wordPairs.length);
-    List<String> selectedPair = wordPairs.removeAt(index);
+    int index = random.nextInt(availableWords.length);
+    List<String> selectedPair = availableWords.removeAt(index);
     usedWordPairs.add(selectedPair);
 
     word1 = selectedPair[0];
@@ -195,19 +219,10 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     });
   }
 
-  Future<void> playAudio(String option, [bool isOption = false]) async {
+  Future<void> playAudio(String option) async {
     try {
       String audioPath;
-
-      if (isOption) {
-        // The option already contains the correct filename, so use it as is.
-        audioPath =
-            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}';
-      } else {
-        // Construct path for individual words
-        audioPath =
-            'audio/english/phoneme_deletion/initial/${option.toLowerCase()}.wav';
-      }
+      audioPath = 'audio/$_userLanguage/phoneme_deletion/initial/${option.toLowerCase()}.wav';
 
       print('Playing audio: $audioPath');
       await audioPlayer.play(AssetSource(audioPath));
@@ -233,7 +248,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
       showIterationCompleteDialog();
     }
 
-    if (wordPairs.isNotEmpty) {
+    if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
       generateWords();
     } else {
       showAllWordsDoneDialog();
@@ -248,7 +263,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
 
   void resetLevel() {
     setState(() {
-      wordPairs.addAll(usedWordPairs);
+      wordPairsByLanguage[_userLanguage]!.addAll(usedWordPairs);
       usedWordPairs.clear();
       questionCounter = 0;
       iterationCounter = 0;

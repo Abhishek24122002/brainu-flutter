@@ -9,6 +9,8 @@ import 'dart:typed_data';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Listen extends StatefulWidget {
   @override
@@ -67,38 +69,56 @@ class _ListenState extends State<Listen> {
     super.dispose();
   }
   
+  Future<void> _uploadImageToS3(File file) async {
+  var request = http.MultipartRequest(
+    'POST',
+    Uri.parse('http://localhost:5000/upload'),
+  );
+
+  request.files.add(
+    await http.MultipartFile.fromPath('image', file.path),
+  );
+
+  var response = await request.send();
+  if (response.statusCode == 200) {
+    var responseData = await response.stream.bytesToString();
+    var jsonData = jsonDecode(responseData);
+    print('Uploaded Image URL: ${jsonData["imageUrl"]}');
+  } else {
+    print('Upload failed with status: ${response.statusCode}');
+  }
+}
 
 Future<void> _saveCanvasAsImage() async {
   try {
-    // Convert the canvas to an image
     RenderRepaintBoundary boundary =
         _canvasKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
     ui.Image image = await boundary.toImage();
-    
-    // Convert image to byte data
     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-    // Get the application directory
     final directory = await getApplicationDocumentsDirectory();
     String filePath = '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-
-    // Save the image
     File file = File(filePath);
     await file.writeAsBytes(pngBytes);
 
     print('Image saved at: $filePath');
     
+    // Upload the image to AWS S3
+    await _uploadImageToS3(file);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Image saved successfully!'), backgroundColor: Colors.green),
+      SnackBar(content: Text('Image uploaded successfully!'), backgroundColor: Colors.green),
     );
   } catch (e) {
     print("Error saving image: $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to save image'), backgroundColor: Colors.red),
+      SnackBar(content: Text('Failed to upload image'), backgroundColor: Colors.red),
     );
   }
 }
+
+
 
 
   void _playNextWordAudio() async {
