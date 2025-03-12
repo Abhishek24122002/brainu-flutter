@@ -50,12 +50,35 @@ class _ListenState extends State<Listen> {
   void _loadWords() {
     final Map<String, List<String>> wordLists = {
       "en": [
-        "amaze", "avoid", "book", "cage", "cake", "cooky", "credit",
-        "cycle", "dinner", "fear", "fruit"
+        "amaze",
+        "avoid",
+        "book",
+        "cage",
+        "cake",
+        "cooky",
+        "credit",
+        "cycle",
+        "dinner",
+        "fear",
+        "fruit"
       ],
       "hi": [
-        "dosti","kandhe","tasvir","pathar","prasad","sundar","baccha","basti",
-        "dhyan","kulla","kutta","machar","parantu","pyasa","sant","takhti"
+        "dosti",
+        "kandhe",
+        "tasvir",
+        "pathar",
+        "prasad",
+        "sundar",
+        "baccha",
+        "basti",
+        "dhyan",
+        "kulla",
+        "kutta",
+        "machar",
+        "parantu",
+        "pyasa",
+        "sant",
+        "takhti"
       ]
     };
 
@@ -68,58 +91,61 @@ class _ListenState extends State<Listen> {
     _audioPlayer.dispose();
     super.dispose();
   }
-  
+
   Future<void> _uploadImageToS3(File file) async {
-  var request = http.MultipartRequest(
-    'POST',
-    Uri.parse('http://localhost:5000/upload'),
-  );
-
-  request.files.add(
-    await http.MultipartFile.fromPath('image', file.path),
-  );
-
-  var response = await request.send();
-  if (response.statusCode == 200) {
-    var responseData = await response.stream.bytesToString();
-    var jsonData = jsonDecode(responseData);
-    print('Uploaded Image URL: ${jsonData["imageUrl"]}');
-  } else {
-    print('Upload failed with status: ${response.statusCode}');
-  }
-}
-
-Future<void> _saveCanvasAsImage() async {
-  try {
-    RenderRepaintBoundary boundary =
-        _canvasKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    ui.Image image = await boundary.toImage();
-    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-    final directory = await getApplicationDocumentsDirectory();
-    String filePath = '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-    File file = File(filePath);
-    await file.writeAsBytes(pngBytes);
-
-    print('Image saved at: $filePath');
-    
-    // Upload the image to AWS S3
-    await _uploadImageToS3(file);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Image uploaded successfully!'), backgroundColor: Colors.green),
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://192.168.0.176:5000/upload'),
     );
-  } catch (e) {
-    print("Error saving image: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to upload image'), backgroundColor: Colors.red),
+
+    request.files.add(
+      await http.MultipartFile.fromPath('image', file.path),
     );
+
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var responseData = await response.stream.bytesToString();
+      var jsonData = jsonDecode(responseData);
+      print('Uploaded Image URL: ${jsonData["imageUrl"]}');
+    } else {
+      print('Upload failed with status: ${response.statusCode}');
+    }
   }
-}
 
+  Future<void> _saveCanvasAsImage() async {
+    try {
+      RenderRepaintBoundary boundary = _canvasKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage();
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
 
+      final directory = await getApplicationDocumentsDirectory();
+      String filePath =
+          '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+      File file = File(filePath);
+      await file.writeAsBytes(pngBytes);
 
+      print('Image saved at: $filePath');
+
+      // Upload the image to AWS S3
+      await _uploadImageToS3(file);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Image uploaded successfully!'),
+            backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      print("Error saving image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Failed to upload image'),
+            backgroundColor: Colors.red),
+      );
+    }
+  }
 
   void _playNextWordAudio() async {
     if (_remainingWords.isEmpty) {
@@ -161,25 +187,24 @@ Future<void> _saveCanvasAsImage() async {
   }
 
   void _onSubmit() {
-  if (_points.isEmpty || _points.every((point) => point == Offset.zero)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Write the word you heard"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    _playAudio(_currentWord);
-    return;
+    if (_points.isEmpty || _points.every((point) => point == Offset.zero)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Write the word you heard"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _playAudio(_currentWord);
+      return;
+    }
+
+    _saveCanvasAsImage();
+
+    setState(() {
+      _points.clear();
+    });
+    _playNextWordAudio();
   }
-
-  _saveCanvasAsImage(); // Save image before clearing
-
-  setState(() {
-    _points.clear();
-  });
-  _playNextWordAudio();
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +235,8 @@ Future<void> _saveCanvasAsImage() async {
                     children: [
                       Text(
                         S.of(context).dictation_consonent,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w600),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -222,9 +248,10 @@ Future<void> _saveCanvasAsImage() async {
                 child: GestureDetector(
                   onPanUpdate: (details) {
                     setState(() {
-                      RenderBox renderBox =
-                          _canvasKey.currentContext!.findRenderObject() as RenderBox;
-                      _points.add(renderBox.globalToLocal(details.globalPosition));
+                      RenderBox renderBox = _canvasKey.currentContext!
+                          .findRenderObject() as RenderBox;
+                      _points
+                          .add(renderBox.globalToLocal(details.globalPosition));
                     });
                   },
                   onPanEnd: (_) => _points.add(Offset.zero),
@@ -234,7 +261,8 @@ Future<void> _saveCanvasAsImage() async {
                       painter: CanvasPainter(_points),
                       child: Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blueAccent, width: 2),
+                          border:
+                              Border.all(color: Colors.blueAccent, width: 2),
                         ),
                       ),
                     ),
