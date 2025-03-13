@@ -29,6 +29,8 @@ class _ListenState extends State<Listen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    
+    
   }
 
   @override
@@ -36,6 +38,8 @@ class _ListenState extends State<Listen> {
     super.didChangeDependencies();
     _detectLocaleAndLoadWords();
   }
+  
+
 
   Future<void> _detectLocaleAndLoadWords() async {
     Locale locale = Localizations.localeOf(context);
@@ -92,16 +96,17 @@ class _ListenState extends State<Listen> {
     super.dispose();
   }
 
+
   Future<void> _uploadImageToS3(File file) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.0.176:5000/upload'),
-    );
+  var request = http.MultipartRequest(
+    'POST',
+    Uri.parse('http://192.168.0.116:5000/upload'), // Make sure the IP matches
+    // Uri.parse('http://192.168.0.176:5000/upload'), Rahul
+  );
 
-    request.files.add(
-      await http.MultipartFile.fromPath('image', file.path),
-    );
+  request.files.add(await http.MultipartFile.fromPath('image', file.path));
 
+  try {
     var response = await request.send();
     if (response.statusCode == 200) {
       var responseData = await response.stream.bytesToString();
@@ -110,42 +115,102 @@ class _ListenState extends State<Listen> {
     } else {
       print('Upload failed with status: ${response.statusCode}');
     }
+  } catch (e) {
+    print("Error connecting to server: $e"); // Log actual error
   }
+}
 
+
+  // Future<void> _saveCanvasAsImage() async {
+  //   try {
+  //     RenderRepaintBoundary boundary = _canvasKey.currentContext!
+  //         .findRenderObject() as RenderRepaintBoundary;
+  //     ui.Image image = await boundary.toImage();
+  //     ByteData? byteData =
+  //         await image.toByteData(format: ui.ImageByteFormat.png);
+  //     Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+  //     final directory = await getApplicationDocumentsDirectory();
+  //     String filePath =
+  //         '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+  //     File file = File(filePath);
+  //     await file.writeAsBytes(pngBytes);
+
+  //     print('Image saved at: $filePath');
+
+  //     // Upload the image to AWS S3
+  //     await _uploadImageToS3(file);
+
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //           content: Text('Image uploaded successfully!'),
+  //           backgroundColor: Colors.green),
+  //     );
+  //   } catch (e) {
+  //     print("Error saving image: $e");
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //           content: Text('Failed to upload image'),
+  //           backgroundColor: Colors.red),
+  //     );
+  //   }
+  // }
   Future<void> _saveCanvasAsImage() async {
-    try {
-      RenderRepaintBoundary boundary = _canvasKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage();
-      ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
+  try {
+    RenderRepaintBoundary boundary =
+        _canvasKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image originalImage = await boundary.toImage();
 
-      final directory = await getApplicationDocumentsDirectory();
-      String filePath =
-          '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-      File file = File(filePath);
-      await file.writeAsBytes(pngBytes);
+    // Get image dimensions
+    int width = originalImage.width;
+    int height = originalImage.height;
 
-      print('Image saved at: $filePath');
+    // Create a new blank canvas with a white background
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()));
 
-      // Upload the image to AWS S3
-      await _uploadImageToS3(file);
+    // Fill the canvas with white
+    Paint whitePaint = Paint()..color = Colors.white;
+    canvas.drawRect(Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()), whitePaint);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Image uploaded successfully!'),
-            backgroundColor: Colors.green),
-      );
-    } catch (e) {
-      print("Error saving image: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Failed to upload image'),
-            backgroundColor: Colors.red),
-      );
-    }
+    // Draw the original image on top of the white background
+    final paint = Paint();
+    canvas.drawImage(originalImage, Offset.zero, paint);
+
+    // Convert the new canvas to an image
+    ui.Image finalImage = await recorder.endRecording().toImage(width, height);
+
+    // Convert to byte data
+    ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
+    Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    // Save the image to file
+    final directory = await getApplicationDocumentsDirectory();
+    String filePath =
+        '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
+    File file = File(filePath);
+    await file.writeAsBytes(pngBytes);
+
+    print('Image saved at: $filePath');
+
+    // Upload the image to AWS S3
+    await _uploadImageToS3(file);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text('Image uploaded successfully!'),
+          backgroundColor: Colors.green),
+    );
+  } catch (e) {
+    print("Error saving image: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text('Failed to upload image'),
+          backgroundColor: Colors.red),
+    );
   }
+}
+
 
   void _playNextWordAudio() async {
     if (_remainingWords.isEmpty) {

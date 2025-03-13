@@ -17,14 +17,24 @@ const upload = multer({
   storage: multerS3({
     s3: s3,
     bucket: process.env.AWS_S3_BUCKET_NAME,
-   
     metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      cb(null, `uploads/${Date.now()}_${file.originalname}`);
+      const filename = `uploads/${Date.now()}_${file.originalname}`;
+      console.log("Uploading file to S3:", filename); // ✅ Log filename
+      cb(null, filename);
     },
   }),
 });
+
+// ✅ Debugging Middleware
+upload.single("image"), (req, res, next) => {
+  if (!req.file) {
+    console.error("Multer failed to process file.");
+    return res.status(500).json({ error: "Multer upload failed" });
+  }
+  next();
+};
 
 module.exports = upload;
