@@ -45,6 +45,7 @@ dependencies:
   audioplayers: 6.1.0
   shared_preferences: ^2.0.15 
   image: ^4.0.17
+  file_picker: ^8.0.0
 
   http: ^0.13.5
   

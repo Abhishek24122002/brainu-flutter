@@ -1,33 +1,44 @@
 const express = require("express");
 const cors = require("cors");
-const upload = require("./upload"); // Import upload.js
+const { upload, uploadAudio } = require("./upload");
 
 const app = express();
-app.use(cors()); // Allow requests from any origin
+app.use(cors());
 app.use(express.json());
 
-// Test API
-app.get("/test", (req, res) => {
-  res.json({ message: "Server is working!" });
+// Upload Image to S3
+app.post("/upload", (req, res, next) => {
+  upload.single("image")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded or invalid file type." });
+    }
+    res.json({ imageUrl: req.file.location });
+  });
 });
 
-// ✅ Add the missing /upload route
-app.post("/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "File upload failed" });
-  }
-  res.json({ imageUrl: req.file.location });
+// Upload Audio to S3
+app.post("/upload-audio", (req, res, next) => {
+  uploadAudio.single("audio")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded or invalid file type." });
+    }
+    res.json({ audioUrl: req.file.location });
+  });
 });
-// Upload audio to S3
-// app.post("/upload-audio", upload.single("audio"), (req, res) => {
-//   if (!req.file) {
-//     return res.status(400).json({ error: "Audio upload failed" });
-//   }
-//   res.json({ audioUrl: req.file.location }); // Return S3 URL
-// });
 
-// Start server
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+  });
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
-
-
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
