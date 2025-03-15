@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Authentication/navigation.dart';
-import '../aws/file_upload_page.dart';
+import '../aws/FileUploader.dart';
 import '../components/SelectGameDialog.dart';
 import '../generated/l10n.dart';
 import 'Letter.dart';
