@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:http_parser/http_parser.dart';
 
 class UploadScreen extends StatefulWidget {
   @override
@@ -38,36 +39,58 @@ class _UploadScreenState extends State<UploadScreen> {
     }
 
     bool isAudio = _selectedFile!.path.endsWith(".mp3") ||
-        _selectedFile!.path.endsWith(".wav");
+        _selectedFile!.path.endsWith(".wav") ||
+        _selectedFile!.path.endsWith(".aac");
 
     String uploadUrl = isAudio
-        ? 'http://192.168.0.176:5000/upload-audio'
-        : 'http://192.168.0.176:5000/upload';
+        ? 'https://brainu.onrender.com/upload-audio'
+        : 'https://brainu.onrender.com/upload';
 
-    var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
 
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        isAudio ? 'audio' : 'image',
-        _selectedFile!.path,
-      ),
-    );
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          isAudio ? 'audio' : 'image',
+          _selectedFile!.path,
+          contentType:
+              isAudio ? MediaType('audio', 'mpeg') : MediaType('image', 'jpeg'),
+        ),
+      );
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
+      // Debugging: Print request details
+      print("Uploading to: $uploadUrl");
+      print("File path: ${_selectedFile!.path}");
+
+      var response = await request.send();
+
+      // Read response data
       var responseData = await response.stream.bytesToString();
-      var jsonData = jsonDecode(responseData);
-      setState(() {
-        _uploadedFileUrl = jsonData["imageUrl"] ?? jsonData["audioUrl"];
-      });
+      print("Response Code: ${response.statusCode}");
+      print("Response Data: $responseData");
 
+      if (response.statusCode == 200) {
+        var jsonData = jsonDecode(responseData);
+        setState(() {
+          _uploadedFileUrl = jsonData["imageUrl"] ?? jsonData["audioUrl"];
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Upload successful!'),
+              backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Upload failed!'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      print("Upload error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Upload successful!'), backgroundColor: Colors.green),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload failed!'), backgroundColor: Colors.red),
+            content: Text('An error occurred!'), backgroundColor: Colors.red),
       );
     }
   }

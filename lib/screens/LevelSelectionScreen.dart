@@ -1,4 +1,5 @@
 import 'package:brainu/screens/swap3.dart';
+import 'package:brainu/screens/upload.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -126,7 +127,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                     page = Story();
                     break;
                   case 5:
-                    page = Swap();
+                    page = UploadScreen();
                     break;
 
                   case 6:
