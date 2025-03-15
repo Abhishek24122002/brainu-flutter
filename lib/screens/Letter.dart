@@ -100,18 +100,6 @@ class _LetterState extends State<Letter> {
     });
   }
 
-  // Future<void> playAudio(String alphabet) async {
-  //   try {
-  //     final audioPath = 'audio/english/v_and_c/$alphabet.wav';
-  //     await audioPlayer.play(AssetSource(audioPath));
-  //     setState(() {
-  //       isAudioPlaying = true;
-  //     });
-  //   } catch (e) {
-  //     print('Error playing audio: $e');
-  //   }
-  // }
-//working dynamic langauage path
   Future<void> playAudio(String alphabet) async {
     try {
       final audioPath = 'audio/$userLanguage/v_and_c/$alphabet.wav';
@@ -215,8 +203,6 @@ Future<void> _fetchUserLanguage() async {
     generateQuestionAndOptions(); // Regenerate based on the new list
   });
 }
-
-  
 
   Future<void> saveAnswer_Letter(bool isCorrect) async {
     await _firebaseSave.saveAnswer_Letter(question, isCorrect, userLanguage);

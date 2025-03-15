@@ -12,6 +12,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../firebase/firebase_save_answer.dart';
+import '../firebase/firebase_services.dart';
 
 class Listen extends StatefulWidget {
   @override
@@ -20,6 +22,9 @@ class Listen extends StatefulWidget {
 
 class _ListenState extends State<Listen> {
   final GlobalKey _canvasKey = GlobalKey();
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseSave _firebaseSave = FirebaseSave();
+  late String userLanguage = "english"; // Default to English
   late AudioPlayer _audioPlayer;
   List<String> _remainingWords = [];
   String _currentWord = "";
@@ -29,6 +34,7 @@ class _ListenState extends State<Listen> {
       FileUploader(); // Create an instance of FileUploader
   @override
   void initState() {
+    _fetchUserLanguage();
     super.initState();
     _audioPlayer = AudioPlayer();
   }
@@ -93,64 +99,11 @@ class _ListenState extends State<Listen> {
     _audioPlayer.dispose();
     super.dispose();
   }
+  Future<void> _fetchUserLanguage() async {
+  userLanguage = await _firebaseServices.getUserLanguage();
+  
+}
 
-  Future<void> _uploadImageToS3(File file) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.0.116:5000/upload'), // Make sure the IP matches
-      // Uri.parse('http://192.168.0.176:5000/upload'), Rahul
-    );
-
-    request.files.add(await http.MultipartFile.fromPath('image', file.path));
-
-    try {
-      var response = await request.send();
-      if (response.statusCode == 200) {
-        var responseData = await response.stream.bytesToString();
-        var jsonData = jsonDecode(responseData);
-        print('Uploaded Image URL: ${jsonData["imageUrl"]}');
-      } else {
-        print('Upload failed with status: ${response.statusCode}');
-      }
-    } catch (e) {
-      print("Error connecting to server: $e"); // Log actual error
-    }
-  }
-
-  // Future<void> _saveCanvasAsImage() async {
-  //   try {
-  //     RenderRepaintBoundary boundary = _canvasKey.currentContext!
-  //         .findRenderObject() as RenderRepaintBoundary;
-  //     ui.Image image = await boundary.toImage();
-  //     ByteData? byteData =
-  //         await image.toByteData(format: ui.ImageByteFormat.png);
-  //     Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-  //     final directory = await getApplicationDocumentsDirectory();
-  //     String filePath =
-  //         '${directory.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png';
-  //     File file = File(filePath);
-  //     await file.writeAsBytes(pngBytes);
-
-  //     print('Image saved at: $filePath');
-
-  //     // Upload the image to AWS S3
-  //     await _uploadImageToS3(file);
-
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //           content: Text('Image uploaded successfully!'),
-  //           backgroundColor: Colors.green),
-  //     );
-  //   } catch (e) {
-  //     print("Error saving image: $e");
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //           content: Text('Failed to upload image'),
-  //           backgroundColor: Colors.red),
-  //     );
-  //   }
-  // }
   Future<void> _saveCanvasAsImage() async {
     try {
       RenderRepaintBoundary boundary = _canvasKey.currentContext!
@@ -180,11 +133,17 @@ class _ListenState extends State<Listen> {
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
       // ✅ Upload the PNG bytes directly using FileUploader
-      String? uploadedUrl =
-          await fileUploader.uploadBytes(pngBytes, "drawing.png");
+      String fileName = "drawing_${DateTime.now().millisecondsSinceEpoch}.png";
+      String? uploadedUrl = await fileUploader.uploadBytes(pngBytes, fileName);
 
       if (uploadedUrl != null) {
         print("Uploaded File URL: $uploadedUrl");
+
+        // ✅ Save file URL to Firebase
+        // await saveAnswer_Listen(uploadedUrl);
+        await _firebaseSave.saveAnswer_Listen(uploadedUrl, userLanguage, _currentWord);
+  
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Image uploaded successfully!'),

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:math';
 
+import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
 
 class Identify extends StatefulWidget {
@@ -25,6 +26,8 @@ class _IdentifyState extends State<Identify> {
 
   List<String> _images = [];
 
+  final FileUploader _fileUploader =
+      FileUploader(); // Add this inside `_IdentifyState`
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
@@ -62,6 +65,37 @@ class _IdentifyState extends State<Identify> {
       test1Dir.createSync(recursive: true);
     }
     return '${test1Dir.path}/audio_recording.aac';
+  }
+
+  Future<void> _uploadAudioAndNavigate() async {
+    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No recording found!")),
+      );
+      return;
+    }
+
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+    if (uploadedUrl != null) {
+      print("Audio uploaded: $uploadedUrl");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload successful!")),
+      );
+
+      // Navigate to next screen after successful upload
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LevelSelectionScreen(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed! Please try again.")),
+      );
+    }
   }
 
   Future<void> _toggleRecording() async {
@@ -115,8 +149,12 @@ class _IdentifyState extends State<Identify> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.brown, // **Board-Like Background**
-      appBar: AppBar(iconTheme: IconThemeData( color: const Color.fromARGB(255, 255, 255, 255),),
-        title: Text(S.of(context).game_identify,
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: const Color.fromARGB(255, 255, 255, 255),
+        ),
+        title: Text(
+          S.of(context).game_identify,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -142,7 +180,8 @@ class _IdentifyState extends State<Identify> {
                     ),
                   ],
                 ),
-                child: Text(S.of(context).ran_question,
+                child: Text(
+                  S.of(context).ran_question,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -193,7 +232,9 @@ class _IdentifyState extends State<Identify> {
                 children: [
                   _buildStyledButton(
                     onPressed: _toggleRecording,
-                    label: _isRecording ? S.of(context).stop_recording : S.of(context).start_recording,
+                    label: _isRecording
+                        ? S.of(context).stop_recording
+                        : S.of(context).start_recording,
                     icon: _isRecording ? Icons.stop : Icons.mic,
                     color: _isRecording ? Colors.red : Colors.blue,
                   ),
@@ -206,16 +247,8 @@ class _IdentifyState extends State<Identify> {
                   ),
                   SizedBox(height: 15),
                   _buildStyledButton(
-                    onPressed: _recordingAvailable
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LevelSelectionScreen(),
-                              ),
-                            );
-                          }
-                        : null,
+                    onPressed:
+                        _recordingAvailable ? _uploadAudioAndNavigate : null,
                     label: S.of(context).confirm,
                     icon: Icons.send,
                     color: _recordingAvailable ? Colors.green : Colors.grey,
