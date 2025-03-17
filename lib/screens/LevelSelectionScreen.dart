@@ -1,9 +1,7 @@
-import 'package:brainu/screens/upload.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Authentication/navigation.dart';
-import '../aws/FileUploader.dart';
 import '../components/SelectGameDialog.dart';
 import '../generated/l10n.dart';
 import 'Letter.dart';
@@ -16,6 +14,7 @@ import 'Word.dart';
 import 'Listen.dart';
 import 'Story.dart';
 import 'swap.dart';
+
 
 class LevelSelectionScreen extends StatefulWidget {
   @override
@@ -107,32 +106,29 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                 Widget page;
                 switch (levelIndex) {
                   case 0:
-                    page = Letter();
+                    page = Letter(); 
                     break;
-                  // case 0:
-                  //   page = ImageUploadScreen();
-                  //   break;
                   case 1:
-                    page = Identify();
+                    page = Identify(); //need to add Strings for showing images instead of random
                     break;
                   case 2:
-                    page = Word();
+                    page = Word(); 
                     break;
                   case 3:
-                    page = Listen();
+                    page = Listen(); 
                     break;
                   case 4:
-                    page = Story();
+                    page = Story(); 
                     break;
                   case 5:
-                    page = UploadScreen();
+                    page = Swap(); 
                     break;
 
                   case 6:
-                    page = Ph_deletion_final();
+                    page = Ph_deletion_final(); 
                     break;
                   case 7:
-                    page = Ph_deletion_initial();
+                    page = Ph_deletion_initial(); 
                     break;
 
                   case 8:

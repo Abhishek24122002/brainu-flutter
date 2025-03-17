@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../aws/FileUploader.dart';
 import '../firebase/firebase_services.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
@@ -13,6 +14,7 @@ import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
 import '../generated/l10n.dart';
+import '../firebase/firebase_save_answer.dart';
 
 class Ph_deletion_final extends StatefulWidget {
   @override
@@ -21,6 +23,8 @@ class Ph_deletion_final extends StatefulWidget {
 
 class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseSave _firebaseSave = FirebaseSave();
+  final FileUploader _fileUploader = FileUploader();
   String _userLanguage = "english"; // Default language
   String word1 = '';
   String word2 = '';
@@ -41,42 +45,41 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   bool _showGameElements = false; // Initially hide the game elements
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
-  "english": [
-    ['bank', 'bank_k'],
-    ['bart', 'bart_t'],
-    ['boom', 'boom_m'],
-    ['brown', 'brown_n'],
-    ['chilly', 'chilly_y'],
-    ['down', 'down_n'],
-    ['fort', 'fort_t'],
-    ['ink', 'ink_k'],
-    ['kino', 'kino_o'],
-    ['news', 'news_s'],
-    ['party', 'party_y'],
-    ['peak', 'peak_k'],
-    ['pink', 'pink_k'],
-    ['seat', 'seat_t'],
-    ['seed', 'seed_d'],
-    ['sing', 'sing_g'],
-    ['tact', 'tact_t'],
-    ['teach', 'teach_ch'],
-    ['tips', 'tips_s'],
-    ['took', 'took_k'],
-    ['want', 'want_t'],
-    ['waster', 'waster_r'],
-    ['weepy', 'weepy_y'],
-    ['wind', 'wind_d'],
-    ['woven', 'woven_n']
-  ],
-  "hindi": [
-    ['aadmi', 'aadmi_mi'],
-    ['bajar', 'bajar_ra'],
-    ['bakri', 'bakri_ri'],
-    ['dharti', 'dharti_ti'],
-    ['jankari', 'jankari_ri']
-  ]
-};
-
+    "english": [
+      ['bank', 'bank_k'],
+      ['bart', 'bart_t'],
+      ['boom', 'boom_m'],
+      ['brown', 'brown_n'],
+      ['chilly', 'chilly_y'],
+      ['down', 'down_n'],
+      ['fort', 'fort_t'],
+      ['ink', 'ink_k'],
+      ['kino', 'kino_o'],
+      ['news', 'news_s'],
+      ['party', 'party_y'],
+      ['peak', 'peak_k'],
+      ['pink', 'pink_k'],
+      ['seat', 'seat_t'],
+      ['seed', 'seed_d'],
+      ['sing', 'sing_g'],
+      ['tact', 'tact_t'],
+      ['teach', 'teach_ch'],
+      ['tips', 'tips_s'],
+      ['took', 'took_k'],
+      ['want', 'want_t'],
+      ['waster', 'waster_r'],
+      ['weepy', 'weepy_y'],
+      ['wind', 'wind_d'],
+      ['woven', 'woven_n']
+    ],
+    "hindi": [
+      ['aadmi', 'aadmi_mi'],
+      ['bajar', 'bajar_ra'],
+      ['bakri', 'bakri_ri'],
+      ['dharti', 'dharti_ti'],
+      ['jankari', 'jankari_ri']
+    ]
+  };
 
   List<List<String>> usedWordPairs = [];
 
@@ -84,17 +87,18 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   void initState() {
     super.initState();
     _loadTrophyCount();
-     _fetchUserLanguage(); // Load the trophy count when the level is loaded
+    _fetchUserLanguage(); // Load the trophy count when the level is loaded
     _initializeRecorder();
     _player.openPlayer();
   }
+
   Future<void> _fetchUserLanguage() async {
     String language = await _firebaseServices.getUserLanguage();
     setState(() {
-        _userLanguage = language;
-        generateWords(); // Call generateWords() after setting language
+      _userLanguage = language;
+      generateWords(); // Call generateWords() after setting language
     });
-}
+  }
 
   Future<void> _initializeRecorder() async {
     var micStatus = await Permission.microphone.request();
@@ -122,12 +126,12 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   }
 
   Future<void> _toggleRecording() async {
-  if (_isRecording) {
-    await _stopRecording();
-  } else {
-    await _startRecording();
+    if (_isRecording) {
+      await _stopRecording();
+    } else {
+      await _startRecording();
+    }
   }
-}
 
   Future<void> _startRecording() async {
     _recordingPath = await _getFilePath();
@@ -141,21 +145,21 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   }
 
   Future<void> _stopRecording() async {
-  await _recorder.stopRecorder();
-  
-  // Ensure the file path is updated before checking if it exists
-  String filePath = await _getFilePath();
-  
-  setState(() {
-    _isRecording = false;
-    _recordingPath = filePath;
-    _recordingAvailable = File(filePath).existsSync(); // Check if file exists
-    isSubmitEnabled = _recordingAvailable; // Enable confirm button if recording is available
-  });
+    await _recorder.stopRecorder();
 
-  print("Recording stopped. File exists: $_recordingAvailable");
-}
+    // Ensure the file path is updated before checking if it exists
+    String filePath = await _getFilePath();
 
+    setState(() {
+      _isRecording = false;
+      _recordingPath = filePath;
+      _recordingAvailable = File(filePath).existsSync(); // Check if file exists
+      isSubmitEnabled =
+          _recordingAvailable; // Enable confirm button if recording is available
+    });
+
+    print("Recording stopped. File exists: $_recordingAvailable");
+  }
 
   Future<void> _playRecording() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
@@ -187,76 +191,90 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   }
 
   void generateWords() {
-  List<List<String>> availableWords = wordPairsByLanguage[_userLanguage] ?? [];
+    List<List<String>> availableWords =
+        wordPairsByLanguage[_userLanguage] ?? [];
 
-  if (availableWords.isEmpty) {
+    if (availableWords.isEmpty) {
+      setState(() {
+        selectedOption = null;
+        isSubmitEnabled = false;
+        clickCountMap.clear();
+      });
+      showAllWordsDoneDialog();
+      return;
+    }
+
+    Random random = Random();
+    int index = random.nextInt(availableWords.length);
+    List<String> selectedPair = availableWords.removeAt(index);
+    usedWordPairs.add(selectedPair);
+
+    word1 = selectedPair[0];
+    word2 = selectedPair[1];
+
     setState(() {
       selectedOption = null;
       isSubmitEnabled = false;
-      clickCountMap.clear();
+      clickCountMap = {for (var option in options) option: 0};
     });
-    showAllWordsDoneDialog();
-    return;
   }
-
-  Random random = Random();
-  int index = random.nextInt(availableWords.length);
-  List<String> selectedPair = availableWords.removeAt(index);
-  usedWordPairs.add(selectedPair);
-
-  word1 = selectedPair[0];
-  word2 = selectedPair[1];
-
-  setState(() {
-    selectedOption = null;
-    isSubmitEnabled = false;
-    clickCountMap = {for (var option in options) option: 0};
-  });
-}
-
 
   Future<void> playAudio(String option) async {
-  try {
-    String audioPath = 'audio/$_userLanguage/phoneme_deletion/final/${option.toLowerCase()}.wav';
-    print('Playing audio: $audioPath');
-    await audioPlayer.play(AssetSource(audioPath));
-  } catch (e) {
-    print('Error playing audio: $e');
+    try {
+      String audioPath =
+          'audio/$_userLanguage/phoneme_deletion/final/${option.toLowerCase()}.wav';
+      print('Playing audio: $audioPath');
+      await audioPlayer.play(AssetSource(audioPath));
+    } catch (e) {
+      print('Error playing audio: $e');
+    }
   }
-}
-
 
   Future<void> handleSubmit() async {
-  setState(() {
-    questionCounter++;
-    _showGameElements = false;
-    _recordingAvailable = false; // Reset for next iteration
-    isSubmitEnabled = false; // Disable confirm button until a new recording is made
-  });
+  if (_recordingPath != null && File(_recordingPath!).existsSync()) {
+    File file = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(file);
 
-  if (questionCounter == 5) {
-    iterationCounter++;
-    trophyCount++;
-    _saveTrophyCount();
-    questionCounter = 0;
-    showIterationCompleteDialog();
-  }
+    if (uploadedUrl != null) {
+      print("File uploaded successfully: $uploadedUrl");
 
-  if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
-    generateWords();
+      // Call the function to save the uploaded URL
+      await _firebaseSave.saveAnswer_Ph_deletion_final(uploadedUrl, _userLanguage, word2);
+
+      setState(() {
+        questionCounter++;
+        _showGameElements = false;
+        _recordingAvailable = false;
+        isSubmitEnabled = false; // Disable confirm button until a new recording is made
+      });
+
+      if (questionCounter == 5) {
+        iterationCounter++;
+        trophyCount++;
+        _saveTrophyCount();
+        questionCounter = 0;
+        showIterationCompleteDialog();
+      }
+
+      if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+        generateWords();
+      } else {
+        showAllWordsDoneDialog();
+      }
+    } else {
+      print("File upload failed.");
+    }
   } else {
-    showAllWordsDoneDialog();
+    print("No recording available for upload.");
   }
 }
-
 
 
 // Check if a new recording file exists
   Future<bool> _checkForNewRecording() async {
-  if (_recordingPath == null) return false;
-  return File(_recordingPath!).existsSync();
-}
-
+    if (_recordingPath == null) return false;
+    return File(_recordingPath!).existsSync();
+  }
 
   void resetLevel() {
     setState(() {
@@ -356,7 +374,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
         iconTheme: IconThemeData(
           color: const Color.fromARGB(255, 255, 255, 255),
         ),
-        title: Text(S.of(context).game_word_game1,
+        title: Text(
+          S.of(context).game_word_game1,
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blueAccent,
@@ -381,8 +400,9 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                 ),
               ],
             ),
-            child: Text(S.of(context).phoneme_deletion_question,
-            textAlign: TextAlign.center,
+            child: Text(
+              S.of(context).phoneme_deletion_question,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -409,7 +429,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                 child: SizedBox(
                   width: double.infinity, // Full width button
                   child: Center(
-                    child: Text(S.of(context).click_here_to_start,
+                    child: Text(
+                      S.of(context).click_here_to_start,
                       style: TextStyle(fontSize: 20, color: Colors.white),
                     ),
                   ),
@@ -435,56 +456,111 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
-                          children: [
-                            TextSpan(text: S.of(context).Remove),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: GestureDetector(
-                                onTap: () => playAudio(word2),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.lightBlueAccent,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10)),
-                                  ),
-                                  child: Text(
-                                    S.of(context).sound,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Colors.white,
+                          children: _userLanguage == "hindi"
+                              ? [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: GestureDetector(
+                                      onTap: () => playAudio(
+                                          word1), // Swap order for Hindi
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orangeAccent,
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10)),
+                                        ),
+                                        child: Text(
+                                          S.of(context).Word,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            TextSpan(text: S.of(context).from_the),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: GestureDetector(
-                                onTap: () => playAudio(word1),
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orangeAccent,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10)),
-                                  ),
-                                  child: Text(S.of(context).Word,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Colors.white,
+                                  TextSpan(text: "  "),
+                                  TextSpan(text: S.of(context).from_the),
+                                  TextSpan(text: "  "),
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: GestureDetector(
+                                      onTap: () => playAudio(
+                                          word2), // Swap order for Hindi
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.lightBlueAccent,
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10)),
+                                        ),
+                                        child: Text(
+                                          S.of(context).sound,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                          ],
+                                  TextSpan(text: "  "),
+                                  TextSpan(text: S.of(context).Remove),
+                                ]
+                              : [
+                                  TextSpan(text: S.of(context).Remove),
+                                  TextSpan(text: "  "),
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: GestureDetector(
+                                      onTap: () => playAudio(word2),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.lightBlueAccent,
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10)),
+                                        ),
+                                        child: Text(
+                                          S.of(context).sound,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  TextSpan(text: "  "),
+                                  TextSpan(text: S.of(context).from_the),
+                                  TextSpan(text: "  "),
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: GestureDetector(
+                                      onTap: () => playAudio(word1),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orangeAccent,
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10)),
+                                        ),
+                                        child: Text(
+                                          S.of(context).Word,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                         ),
                       ),
                     ),
+
                     SizedBox(height: 40),
                     Card(
                       shape: RoundedRectangleBorder(
@@ -501,7 +577,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                             ),
                             SizedBox(height: 15),
                             PlayAudioButton(
-                              isEnabled:_recordingAvailable,
+                              isEnabled: _recordingAvailable,
                               onPressed: _isPlaying ? null : _playRecording,
                               isPlaying: _isPlaying,
                             ),

@@ -1,17 +1,10 @@
-import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../generated/l10n.dart';
-import 'LevelSelectionScreen.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:image/image.dart' as img;
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 

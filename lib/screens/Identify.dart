@@ -1,5 +1,4 @@
 import 'package:brainu/screens/LevelSelectionScreen.dart';
-import 'package:brainu/screens/Listen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,6 +7,8 @@ import 'dart:io';
 import 'dart:math';
 
 import '../aws/FileUploader.dart';
+import '../firebase/firebase_save_answer.dart';
+import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 
 class Identify extends StatefulWidget {
@@ -17,17 +18,22 @@ class Identify extends StatefulWidget {
 
 class _IdentifyState extends State<Identify> {
   final List<String> _imageNames = [
-    'ic_r_fish.png',
-    'ic_r_color_star.png',
-    'ic_r_table.png',
-    'ic_r_ship.png',
-    'ic_r_key.png'
+    'fish',
+    'color_star',
+    'table',
+    'ship',
+    'key'
   ];
+
+  late String _imageNamesString; // Single string of names
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseSave _firebaseSave = FirebaseSave();
+  late String userLanguage = "english"; // Default to English
 
   List<String> _images = [];
 
   final FileUploader _fileUploader =
-      FileUploader(); // Add this inside `_IdentifyState`
+      FileUploader(); 
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
@@ -39,14 +45,17 @@ class _IdentifyState extends State<Identify> {
   void initState() {
     super.initState();
     _initializeRecorder();
+    _fetchUserLanguage();
     _player.openPlayer();
     _randomizeImages();
+    // Convert list to string for Firebase
+    _imageNamesString = _imageNames.join(', ');
   }
 
   void _randomizeImages() {
     Random random = Random();
     _images = List.generate(15, (index) {
-      return 'assets/img/${_imageNames[random.nextInt(_imageNames.length)]}';
+      return 'assets/img/ic_r_${_imageNames[random.nextInt(_imageNames.length)]}.png';
     });
 
     setState(() {});
@@ -83,6 +92,8 @@ class _IdentifyState extends State<Identify> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload successful!")),
       );
+      // ✅ Save as a single string in Firebase
+      await _firebaseSave.saveAnswer_Identify(uploadedUrl, userLanguage, _imageNamesString);
 
       // Navigate to next screen after successful upload
       Navigator.push(
@@ -143,6 +154,10 @@ class _IdentifyState extends State<Identify> {
     _recorder.closeRecorder();
     _player.closePlayer();
     super.dispose();
+  }
+
+  Future<void> _fetchUserLanguage() async {
+    userLanguage = await _firebaseServices.getUserLanguage();
   }
 
   @override

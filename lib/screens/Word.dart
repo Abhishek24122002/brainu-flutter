@@ -8,8 +8,12 @@ import 'dart:io';
 import '../components/StartRecordingButton.dart';
 import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
+import '../firebase/firebase_save_answer.dart';
+import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
+
+import '../aws/FileUploader.dart';
 
 class Word extends StatefulWidget {
   @override
@@ -21,6 +25,11 @@ class _WordState extends State<Word> {
   late SharedPreferences prefs;
   String currentWord = "";
   String currentLocale = "en"; // Default language
+
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseSave _firebaseSave = FirebaseSave();
+  late String userLanguage = "english"; // Default to English
+  final FileUploader _fileUploader = FileUploader();
 
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
@@ -34,6 +43,7 @@ class _WordState extends State<Word> {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
+    _fetchUserLanguage();
   }
 
   @override
@@ -52,22 +62,68 @@ class _WordState extends State<Word> {
     }
   }
 
+  Future<void> _fetchUserLanguage() async {
+    userLanguage = await _firebaseServices.getUserLanguage();
+  }
+
   Future<void> _loadWords() async {
     prefs = await SharedPreferences.getInstance();
 
     // Define word lists for both languages
     final Map<String, List<String>> wordLists = {
       "en": [
-        "Wonder", "Huge", "Alarm", "Cabin", "Daily", "Blush", "Promise", "Divide",
-        "Expect", "Opinion", "Avoid", "Famous", "Proof", "Reflect", "Board",
-        "Excess", "Search", "Lizard", "Notice", "Ocean", "Career", "Brain",
-        "Rumor", "Flood", "Idea"
+        "Wonder",
+        "Huge",
+        "Alarm",
+        "Cabin",
+        "Daily",
+        "Blush",
+        "Promise",
+        "Divide",
+        "Expect",
+        "Opinion",
+        "Avoid",
+        "Famous",
+        "Proof",
+        "Reflect",
+        "Board",
+        "Excess",
+        "Search",
+        "Lizard",
+        "Notice",
+        "Ocean",
+        "Career",
+        "Brain",
+        "Rumor",
+        "Flood",
+        "Idea"
       ],
       "hi": [
-        "आश्चर्य", "बड़ा", "सतर्कता", "केबिन", "रोज़ाना", "शर्माना", "वादा", "विभाजित करना",
-        "अपेक्षा", "राय", "बचना", "प्रसिद्ध", "प्रमाण", "प्रतिबिंबित", "बोर्ड",
-        "अधिशेष", "खोज", "गिरगिट", "सूचना", "महासागर", "कैरियर", "मस्तिष्क",
-        "अफवाह", "बाढ़", "विचार"
+        "आश्चर्य",
+        "बड़ा",
+        "सतर्कता",
+        "केबिन",
+        "रोज़ाना",
+        "शर्माना",
+        "वादा",
+        "विभाजित करना",
+        "अपेक्षा",
+        "राय",
+        "बचना",
+        "प्रसिद्ध",
+        "प्रमाण",
+        "प्रतिबिंबित",
+        "बोर्ड",
+        "अधिशेष",
+        "खोज",
+        "गिरगिट",
+        "सूचना",
+        "महासागर",
+        "कैरियर",
+        "मस्तिष्क",
+        "अफवाह",
+        "बाढ़",
+        "विचार"
       ]
     };
 
@@ -75,7 +131,8 @@ class _WordState extends State<Word> {
     List<String> selectedWords = wordLists[currentLocale] ?? wordLists["en"]!;
 
     // Load stored words or reset
-    List<String>? savedWords = prefs.getStringList('remainingWords_$currentLocale');
+    List<String>? savedWords =
+        prefs.getStringList('remainingWords_$currentLocale');
 
     if (savedWords == null || savedWords.isEmpty) {
       await _resetWords(selectedWords);
@@ -155,16 +212,35 @@ class _WordState extends State<Word> {
   }
 
   void _onConfirm() async {
-    if (remainingWords.isNotEmpty) {
-      setState(() {
-        remainingWords.removeAt(0);
-        if (remainingWords.isEmpty) {
-          _showCompletionDialog();
-        } else {
-          currentWord = remainingWords.first;
-        }
-      });
-      await _saveWords();
+    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+      print("No recording available to upload.");
+      return;
+    }
+
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+    if (uploadedUrl != null) {
+      print("File uploaded successfully: $uploadedUrl");
+
+      // ✅ Call saveAnswer_word function
+      await _firebaseSave.saveAnswer_word(
+          uploadedUrl, userLanguage, currentWord);
+
+      // Proceed with updating words
+      if (remainingWords.isNotEmpty) {
+        setState(() {
+          remainingWords.removeAt(0);
+          if (remainingWords.isEmpty) {
+            _showCompletionDialog();
+          } else {
+            currentWord = remainingWords.first;
+          }
+        });
+        await _saveWords();
+      }
+    } else {
+      print("File upload failed.");
     }
   }
 
@@ -188,7 +264,8 @@ class _WordState extends State<Word> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => LevelSelectionScreen()),
                 );
               },
               child: Text('Next Level'),
@@ -248,21 +325,33 @@ class _WordState extends State<Word> {
                 child: Text(
                   S.of(context).word_reading_question,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
               ),
               SizedBox(height: 20),
               if (currentWord.isNotEmpty)
                 Text(
                   currentWord,
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               SizedBox(height: 40),
-              StartRecordingButton(onPressed: _toggleRecording, isRecording: _isRecording),
+              StartRecordingButton(
+                  onPressed: _toggleRecording, isRecording: _isRecording),
               SizedBox(height: 15),
-              PlayAudioButton(onPressed: _isPlaying ? null : _playRecording, isPlaying: _isPlaying, isEnabled: _recordingAvailable),
+              PlayAudioButton(
+                  onPressed: _isPlaying ? null : _playRecording,
+                  isPlaying: _isPlaying,
+                  isEnabled: _recordingAvailable),
               SizedBox(height: 15),
-              ConfirmButton(onPressed: _recordingAvailable ? _onConfirm : null, isEnabled: _recordingAvailable),
+              ConfirmButton(
+                  onPressed: _recordingAvailable ? _onConfirm : null,
+                  isEnabled: _recordingAvailable),
             ],
           ),
         ),

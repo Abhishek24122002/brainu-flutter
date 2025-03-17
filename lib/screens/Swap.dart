@@ -263,7 +263,7 @@ class _SwapState extends State<Swap> {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(userId)
-        .collection("swapping")
+        .collection("6 Swapping")
         .doc(_userLanguage) // Store answer under the correct language
         .set({correctAnswer: isCorrect}, SetOptions(merge: true));
   }
