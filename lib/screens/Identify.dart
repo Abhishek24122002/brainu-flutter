@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:math';
 
 import '../aws/FileUploader.dart';
+import '../components/question_container.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
@@ -176,35 +177,12 @@ class _IdentifyState extends State<Identify> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      
+    
           child: Column(
             children: [
-              Container(
-                padding: EdgeInsets.all(16),
-                margin: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 7,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  S.of(context).ran_question,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
+              CustomContainer(text: S.of(context).ran_question),
+              
               // **Board-Like Grid Container**
               Container(
                 padding: EdgeInsets.all(15),
@@ -272,10 +250,8 @@ class _IdentifyState extends State<Identify> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        )
+  );}
 
   Widget _buildStyledButton({
     required VoidCallback? onPressed,

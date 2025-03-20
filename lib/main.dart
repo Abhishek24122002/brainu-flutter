@@ -86,7 +86,7 @@ class _BrainUAppState extends State<BrainUApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'BrainU App',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(primarySwatch: Colors.deepPurple),
       locale: _locale,
       supportedLocales: S.delegate.supportedLocales,
       localizationsDelegates: [

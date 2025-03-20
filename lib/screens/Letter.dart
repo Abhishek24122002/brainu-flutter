@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/option_button.dart';
+import '../components/question_container.dart';
 import '../components/submit_button.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
@@ -278,38 +279,14 @@ Future<void> _fetchUserLanguage() async {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         title: Text(S.of(context).letter, style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(
         color: Colors.white,
         child: Column(
           children: [
-            Container(
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 2,
-                    blurRadius: 7,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Text(
-                S.of(context).vc_starting_question,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
+            CustomContainer(text: S.of(context).vc_starting_question),
             if (!_showGameElements)
               Container(
                 margin: EdgeInsets.all(20),
@@ -320,7 +297,7 @@ Future<void> _fetchUserLanguage() async {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).primaryColorDark,
                     padding: EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),

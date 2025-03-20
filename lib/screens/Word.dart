@@ -10,10 +10,9 @@ import '../components/PlayAudioButton.dart';
 import '../components/ConfirmButton.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
+import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
 import 'LevelSelectionScreen.dart';
-
-import '../aws/FileUploader.dart';
 
 class Word extends StatefulWidget {
   @override
@@ -24,7 +23,6 @@ class _WordState extends State<Word> {
   List<String> remainingWords = [];
   late SharedPreferences prefs;
   String currentWord = "";
-  String currentLocale = "en"; // Default language
 
   final FirebaseServices _firebaseServices = FirebaseServices();
   final FirebaseSave _firebaseSave = FirebaseSave();
@@ -46,24 +44,9 @@ class _WordState extends State<Word> {
     _fetchUserLanguage();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _detectLocaleAndLoadWords();
-  }
-
-  Future<void> _detectLocaleAndLoadWords() async {
-    Locale locale = Localizations.localeOf(context);
-    String newLocale = locale.languageCode;
-
-    if (currentLocale != newLocale) {
-      currentLocale = newLocale;
-      await _loadWords(); // Reload words when locale changes
-    }
-  }
-
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
+    await _loadWords(); // Load words after fetching user language
   }
 
   Future<void> _loadWords() async {
@@ -71,7 +54,7 @@ class _WordState extends State<Word> {
 
     // Define word lists for both languages
     final Map<String, List<String>> wordLists = {
-      "en": [
+      "english": [
         "Wonder",
         "Huge",
         "Alarm",
@@ -98,7 +81,7 @@ class _WordState extends State<Word> {
         "Flood",
         "Idea"
       ],
-      "hi": [
+      "hindi": [
         "आश्चर्य",
         "बड़ा",
         "सतर्कता",
@@ -127,12 +110,13 @@ class _WordState extends State<Word> {
       ]
     };
 
-    // Choose words based on locale
-    List<String> selectedWords = wordLists[currentLocale] ?? wordLists["en"]!;
+    // Select words based on the fetched user language
+    List<String> selectedWords =
+        wordLists[userLanguage.toLowerCase()] ?? wordLists["english"]!;
 
     // Load stored words or reset
     List<String>? savedWords =
-        prefs.getStringList('remainingWords_$currentLocale');
+        prefs.getStringList('remainingWords_$userLanguage');
 
     if (savedWords == null || savedWords.isEmpty) {
       await _resetWords(selectedWords);
@@ -145,7 +129,7 @@ class _WordState extends State<Word> {
   }
 
   Future<void> _saveWords() async {
-    await prefs.setStringList('remainingWords_$currentLocale', remainingWords);
+    await prefs.setStringList('remainingWords_$userLanguage', remainingWords);
   }
 
   Future<void> _resetWords(List<String> selectedWords) async {
@@ -223,11 +207,11 @@ class _WordState extends State<Word> {
     if (uploadedUrl != null) {
       print("File uploaded successfully: $uploadedUrl");
 
-      // ✅ Call saveAnswer_word function
+      // ✅ Save the word answer
       await _firebaseSave.saveAnswer_word(
           uploadedUrl, userLanguage, currentWord);
 
-      // Proceed with updating words
+      // Update words
       if (remainingWords.isNotEmpty) {
         setState(() {
           remainingWords.removeAt(0);
