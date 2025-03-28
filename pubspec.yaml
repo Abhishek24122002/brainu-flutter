@@ -97,6 +97,7 @@ flutter:
   generate: true
   assets:
     - assets/audio/
+    - assets/img/
     - assets/audio/english/v_and_c/
     - assets/audio/hindi/v_and_c/
 

@@ -18,6 +18,21 @@ class Identify extends StatefulWidget {
 }
 
 class _IdentifyState extends State<Identify> {
+  int _iteration = 0;
+  List<List<String>> iterations = [
+  // Iteration 1 (Common)
+  ['star', 'triangle', 'circle', 'rectangle'],
+
+  // Iteration 2 (Common)
+  ['ship', 'color_star', 'fish', 'table', 'key'],
+
+  // Iteration 3 (Hindi Only)
+  ['g', 'f', 'v', 'j', 'k'],
+
+  // Iteration 4 (Hindi Only)
+  ['p', 'k', 'v']
+];
+
   final List<String> _imageNames = [
     'fish',
     'color_star',
@@ -48,19 +63,35 @@ class _IdentifyState extends State<Identify> {
     _initializeRecorder();
     _fetchUserLanguage();
     _player.openPlayer();
-    _randomizeImages();
     // Convert list to string for Firebase
     _imageNamesString = _imageNames.join(', ');
   }
 
   void _randomizeImages() {
-    Random random = Random();
-    _images = List.generate(15, (index) {
-      return 'assets/img/ic_r_${_imageNames[random.nextInt(_imageNames.length)]}.png';
-    });
+  Random random = Random();
 
-    setState(() {});
-  }
+  // Determine the correct iteration list
+  List<List<String>> allowedIterations = (userLanguage == "hindi") 
+      ? iterations 
+      : iterations.sublist(0, 2);
+
+  int currentIteration = _iteration % allowedIterations.length; // Ensure it loops back
+
+  List<String> availableImages = allowedIterations[currentIteration];
+
+  _images = List.generate(15, (index) {
+    return 'assets/img/ic_r_${availableImages[random.nextInt(availableImages.length)]}.png';
+  });
+
+  setState(() {});
+}
+
+Future<void> _fetchUserLanguage() async {
+  userLanguage = await _firebaseServices.getUserLanguage();
+  
+  _randomizeImages();
+}
+
 
   Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
@@ -78,37 +109,45 @@ class _IdentifyState extends State<Identify> {
   }
 
   Future<void> _uploadAudioAndNavigate() async {
-    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No recording found!")),
-      );
-      return;
-    }
-
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-    if (uploadedUrl != null) {
-      print("Audio uploaded: $uploadedUrl");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload successful!")),
-      );
-      // ✅ Save as a single string in Firebase
-      await _firebaseSave.saveAnswer_Identify(uploadedUrl, userLanguage, _imageNamesString);
-
-      // Navigate to next screen after successful upload
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LevelSelectionScreen(),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload failed! Please try again.")),
-      );
-    }
+  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("No recording found!")),
+    );
+    return;
   }
+
+  File audioFile = File(_recordingPath!);
+  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+  if (uploadedUrl != null) {
+    print("Audio uploaded: $uploadedUrl");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Upload successful!")),
+    );
+
+    await _firebaseSave.saveAnswer_Identify(uploadedUrl, userLanguage, _imageNamesString);
+
+    // **Increment Iteration Counter**
+    setState(() {
+      _iteration++;
+    });
+
+    _randomizeImages(); // Refresh with new iteration images
+
+    // Navigate to next screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LevelSelectionScreen(),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Upload failed! Please try again.")),
+    );
+  }
+}
+
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
@@ -157,9 +196,8 @@ class _IdentifyState extends State<Identify> {
     super.dispose();
   }
 
-  Future<void> _fetchUserLanguage() async {
-    userLanguage = await _firebaseServices.getUserLanguage();
-  }
+  
+
 
   @override
   Widget build(BuildContext context) {

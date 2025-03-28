@@ -51,17 +51,7 @@ class _ListenState extends State<Listen> {
   void _loadWords() {
     final Map<String, List<String>> wordLists = {
       "en": [
-        "amaze",
-        "avoid",
-        "book",
-        "cage",
-        "cake",
-        "cooky",
-        "credit",
-        "cycle",
-        "dinner",
-        "fear",
-        "fruit"
+        "amaze","avoid","book","cage","cake","cooky","credit","cycle","dinner","edit","fear","fruit","head","invite","kind","mood","note","phone","plan","plate","play","select","soft","vanish","yellow"
       ],
       "hi": [
         "dosti",
