@@ -187,9 +187,10 @@ class _StoryState extends State<Story> {
 
     return Scaffold(
         appBar: AppBar(
+          iconTheme: IconThemeData(color: Colors.white),
           title: Text(S.of(context).game_story,
               style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: Theme.of(context).primaryColorDark,
           centerTitle: true,
         ),
         body: Container(
@@ -260,7 +261,7 @@ class _StoryState extends State<Story> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Theme.of(context).primaryColorDark,
                         padding: EdgeInsets.symmetric(vertical: 20),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),

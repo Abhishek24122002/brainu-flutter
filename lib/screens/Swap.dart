@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../components/question_container.dart';
 import '../firebase/firebase_services.dart'; // Import your FirebaseServices file
 
 import '../components/option_button.dart';
@@ -34,99 +35,138 @@ class _SwapState extends State<Swap> {
   int questionCounter = 0;
   int iterationCounter = 0;
   int trophyCount = 0; // Track total trophies
+  bool _showGameElements = false;
   Map<String, int> clickCountMap = {};
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
-  "english": [
-    [
-      'Belly',
-      'Jeans',
-      'belly',
-      'jeans',
-      'jelly_beans_c',
-      'jelly_jeans',
-      'belly_beans'
+    "english": [
+      [
+        'Belly',
+        'Jeans',
+        'belly',
+        'jeans',
+        'jelly_beans_c',
+        'jelly_jeans',
+        'belly_beans'
+      ],
+      ['Bean', 'Dust', 'bean', 'dust', 'dean_bust_c', 'dean_dust', 'bean_bust'],
+      [
+        'Bedding',
+        'Wells',
+        'bedding',
+        'wells',
+        'wedding_bells_c',
+        'bedding_bells',
+        'wedding_wells'
+      ],
+      [
+        'Town',
+        'Drain',
+        'town',
+        'drain',
+        'down_train_c',
+        'down_drain',
+        'town_train'
+      ],
+      [
+        'Waste',
+        'Hood',
+        'waste',
+        'hood',
+        'haste_wood_c',
+        'haste_hood',
+        'waste_wood'
+      ],
+      ['Pew', 'Nose', 'pew', 'nose', 'new_pose_c', 'new_nose', 'pew_pose'],
+      ['Nosy', 'Cook', 'nosy', 'cook', 'cosy_nook_c', 'nosy_nook', 'cosy_cook'],
+      ['Mold', 'Food', 'mold', 'food', 'fold_mood_c', 'fold_food', 'mold_mood'],
+      ['Most', 'Cold', 'most', 'cold', 'cost_mold_c', 'cost_cold', 'most_mold'],
+      ['Fold', 'Trap', 'fold', 'trap', 'told_frap_c', 'told_trap', 'fold_frap'],
+      ['Tick', 'Par', 'tick', 'par', 'pick_tar_c', 'pick_par', 'tick_tar'],
+      ['Wish', 'Deep', 'wish', 'deep', 'dish_weep_c', 'dish_deep', 'wish_weep'],
+      ['Care', 'Bar', 'care', 'bar', 'bare_car_c', 'bare_bar', 'care_car'],
+      [
+        'Sound',
+        'Ride',
+        'sound',
+        'ride',
+        'round_side_c',
+        'round_ride',
+        'sound_side'
+      ],
+      ['Look', 'Take', 'look', 'take', 'took_lake_c', 'took_take', 'look_lake'],
+      ['Kind', 'Male', 'kind', 'male', 'mind_kale_c', 'mind_male', 'kind_kale'],
+      ['Came', 'Nap', 'came', 'nap', 'name_cap_c', 'came_cap', 'name_nap'],
+      ['Save', 'Cage', 'save', 'cage', 'cave_sage_c', 'cave_cage', 'save_sage'],
+      ['Lack', 'Band', 'lack', 'band', 'back_land_c', 'back_band', 'lack_land'],
+      ['Feast', 'Ban', 'feast', 'ban', 'beast_fan_c', 'beast_ban', 'feast_fan'],
+      ['Head', 'Dear', 'head', 'dear', 'dead_hear_c', 'dead_dear', 'head_hear'],
+      ['Doggy', 'Fay', 'doggy', 'fay', 'foggy_day_c', 'foggy_fay', 'doggy_day'],
+      ['Tot', 'Here', 'tot', 'here', 'hot_tere_c', 'hot_here', 'tot_tere'],
+      ['Take', 'Fall', 'take', 'fall', 'fake_tall_c', 'fake_fall', 'take_tall'],
+      ['Warm', 'Fire', 'warm', 'fire', 'farm_wire_c', 'farm_fire', 'warm_wire']
     ],
-    ['Bean', 'Dust', 'bean', 'dust', 'dean_bust_c', 'dean_dust', 'bean_bust'],
-    [
-      'Bedding',
-      'Wells',
-      'bedding',
-      'wells',
-      'wedding_bells_c',
-      'bedding_bells',
-      'wedding_wells'
-    ],
-    [
-      'Town',
-      'Drain',
-      'town',
-      'drain',
-      'down_train_c',
-      'down_drain',
-      'town_train'
-    ],
-    [
-      'Waste',
-      'Hood',
-      'waste',
-      'hood',
-      'haste_wood_c',
-      'haste_hood',
-      'waste_wood'
-    ],
-    ['Pew', 'Nose', 'pew', 'nose', 'new_pose_c', 'new_nose', 'pew_pose'],
-    ['Nosy', 'Cook', 'nosy', 'cook', 'cosy_nook_c', 'nosy_nook', 'cosy_cook'],
-    ['Mold', 'Food', 'mold', 'food', 'fold_mood_c', 'fold_food', 'mold_mood'],
-    ['Most', 'Cold', 'most', 'cold', 'cost_mold_c', 'cost_cold', 'most_mold'],
-    ['Fold', 'Trap', 'fold', 'trap', 'told_frap_c', 'told_trap', 'fold_frap'],
-    ['Tick', 'Par', 'tick', 'par', 'pick_tar_c', 'pick_par', 'tick_tar'],
-    ['Wish', 'Deep', 'wish', 'deep', 'dish_weep_c', 'dish_deep', 'wish_weep'],
-    ['Care', 'Bar', 'care', 'bar', 'bare_car_c', 'bare_bar', 'care_car'],
-    [
-      'Sound',
-      'Ride',
-      'sound',
-      'ride',
-      'round_side_c',
-      'round_ride',
-      'sound_side'
-    ],
-    ['Look', 'Take', 'look', 'take', 'took_lake_c', 'took_take', 'look_lake'],
-    ['Kind', 'Male', 'kind', 'male', 'mind_kale_c', 'mind_male', 'kind_kale'],
-    ['Came', 'Nap', 'came', 'nap', 'name_cap_c', 'came_cap', 'name_nap'],
-    ['Save', 'Cage', 'save', 'cage', 'cave_sage_c', 'cave_cage', 'save_sage'],
-    ['Lack', 'Band', 'lack', 'band', 'back_land_c', 'back_band', 'lack_land'],
-    ['Feast', 'Ban', 'feast', 'ban', 'beast_fan_c', 'beast_ban', 'feast_fan'],
-    ['Head', 'Dear', 'head', 'dear', 'dead_hear_c', 'dead_dear', 'head_hear'],
-    ['Doggy', 'Fay', 'doggy', 'fay', 'foggy_day_c', 'foggy_fay', 'doggy_day'],
-    ['Tot', 'Here', 'tot', 'here', 'hot_tere_c', 'hot_here', 'tot_tere'],
-    ['Take', 'Fall', 'take', 'fall', 'fake_tall_c', 'fake_fall', 'take_tall'],
-    ['Warm', 'Fire', 'warm', 'fire', 'farm_wire_c', 'farm_fire', 'warm_wire']
-  ],
-  "hindi": [
-    [
-    'कच्ची',
-    'सड़क',
-    'kachhi',
-    'sadak',
-    'sachhi_kadak',
-    'kachhi_kadak',
-    'sachii_sadak'
-  ],
-  ['दाग', 'नाल', 'daag', 'naal', 'naag_daal', 'naag_naal', 'daag_daal'],
-  ['आम', 'राजा', 'aam', 'raja', 'raam_aaja', 'raam_raja', 'aam_aaja'],
-  ['अदला', 'बदली', 'adla', 'badli', 'badla_adli', 'badla_badli', 'adla_adli'],
-  ['काल', 'ताज', 'kaal', 'taaj', 'taal_kaaj', 'taal_taaj', 'kaal_kaaj'],
-  ['काला', 'नाम', 'kaala', 'naam', 'nala_kaam', 'nala_naam', 'kala_kaam'],
-  ['शाम', 'कान', 'shaam', 'kaan', 'kaam_shaan', 'kaam_kaan', 'shaam_shaan'],
-  ['काम', 'धान', 'kaam', 'dhaan', 'dhaam_kaan', 'kaam_kaan', 'dhaam_dhaan'],
-  ['जली', 'गोभी', 'jali', 'gobhi', 'goli_jabhi', 'goli_gabhi', 'jali_jabhi'],
-  ]
-};
-
-
- 
+    "hindi": [
+      [
+        'कच्ची',
+        'सड़क',
+        'kachhi',
+        'sadak',
+        'sachhi_kadak',
+        'kachhi_kadak',
+        'sachii_sadak'
+      ],
+      ['दाग', 'नाल', 'daag', 'naal', 'naag_daal', 'naag_naal', 'daag_daal'],
+      ['आम', 'राजा', 'aam', 'raja', 'raam_aaja', 'raam_raja', 'aam_aaja'],
+      [
+        'अदला',
+        'बदली',
+        'adla',
+        'badli',
+        'badla_adli',
+        'badla_badli',
+        'adla_adli'
+      ],
+      ['काल', 'ताज', 'kaal', 'taaj', 'taal_kaaj', 'taal_taaj', 'kaal_kaaj'],
+      ['काला', 'नाम', 'kaala', 'naam', 'nala_kaam', 'nala_naam', 'kala_kaam'],
+      ['शाम', 'कान', 'shaam', 'kaan', 'kaam_shaan', 'kaam_kaan', 'shaam_shaan'],
+      ['काम', 'धान', 'kaam', 'dhaan', 'dhaam_kaan', 'kaam_kaan', 'dhaam_dhaan'],
+      [
+        'जली',
+        'गोभी',
+        'jali',
+        'gobhi',
+        'goli_jabhi',
+        'goli_gabhi',
+        'jali_jabhi'
+      ],
+    ]
+  };
+  Widget _buildWordContainer(String word) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        word,
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
 
   List<List<String>> usedWordPairs = [];
 
@@ -137,16 +177,13 @@ class _SwapState extends State<Swap> {
     _fetchUserLanguage();
   }
 
- 
   Future<void> _fetchUserLanguage() async {
     String language = await _firebaseServices.getUserLanguage();
     setState(() {
-        _userLanguage = language;
-        generateWords(); // Call generateWords() after setting language
+      _userLanguage = language;
+      generateWords(); // Call generateWords() after setting language
     });
-
-}
-
+  }
 
   Future<void> _loadTrophyCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -161,34 +198,34 @@ class _SwapState extends State<Swap> {
     await prefs.setInt('trophyCount', trophyCount); // Save the trophy count
   }
 
-
   void generateWords() {
-  if (wordPairsByLanguage[_userLanguage] == null || wordPairsByLanguage[_userLanguage]!.isEmpty) {
-    showAllWordsDoneDialog();
-    return;
+    if (wordPairsByLanguage[_userLanguage] == null ||
+        wordPairsByLanguage[_userLanguage]!.isEmpty) {
+      showAllWordsDoneDialog();
+      return;
+    }
+
+    Random random = Random();
+    int index = random.nextInt(wordPairsByLanguage[_userLanguage]!.length);
+    List<String> selectedPair =
+        List.from(wordPairsByLanguage[_userLanguage]![index]);
+    usedWordPairs.add(selectedPair);
+
+    word1 = selectedPair[0];
+    word2 = selectedPair[1];
+    word3 = selectedPair[2];
+    word4 = selectedPair[3];
+    correct = selectedPair[4];
+    opt1 = selectedPair[5];
+    opt2 = selectedPair[6];
+
+    generateOptions(correct);
+    setState(() {
+      selectedOption = null;
+      isSubmitEnabled = false;
+      clickCountMap.clear();
+    });
   }
-
-  Random random = Random();
-  int index = random.nextInt(wordPairsByLanguage[_userLanguage]!.length);
-  List<String> selectedPair = List.from(wordPairsByLanguage[_userLanguage]![index]);
-  usedWordPairs.add(selectedPair);
-
-  word1 = selectedPair[0];
-  word2 = selectedPair[1];
-  word3 = selectedPair[2];
-  word4 = selectedPair[3];
-  correct = selectedPair[4];
-  opt1 = selectedPair[5];
-  opt2 = selectedPair[6];
-
-  generateOptions(correct);
-  setState(() {
-    selectedOption = null;
-    isSubmitEnabled = false;
-    clickCountMap.clear();
-  });
-}
-
 
   void generateOptions(correct) {
     // Correct Answer
@@ -214,8 +251,8 @@ class _SwapState extends State<Swap> {
     try {
       String audioPath;
 
-      audioPath = 'audio/$_userLanguage/spoonerism/${option.toLowerCase()}${isOption ? '' : '.wav'}';
-
+      audioPath =
+          'audio/$_userLanguage/spoonerism/${option.toLowerCase()}${isOption ? '' : '.wav'}';
 
       print('Playing audio: $audioPath');
       await audioPlayer.play(AssetSource(audioPath));
@@ -252,13 +289,11 @@ class _SwapState extends State<Swap> {
     });
   }
 
-  
   Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     String userId = user.uid;
-    
 
     await FirebaseFirestore.instance
         .collection("users")
@@ -270,20 +305,21 @@ class _SwapState extends State<Swap> {
 
   void handleSubmit() async {
     String correctAnswer = '$correct.wav';
-
     bool isCorrect = selectedOption == correctAnswer;
 
-    // Increase trophy count only for correct answers
+    // Increase trophy count for correct answers
     if (isCorrect) {
       trophyCount++;
       _saveTrophyCount();
     }
 
-    // Store the answer in Firebase Firestore
+    // Store answer in Firebase
     await _storeAnswer(correctAnswer, isCorrect);
 
     setState(() {
       questionCounter++;
+      _showGameElements = false; // Hide elements after submitting
+
       if (questionCounter == 5) {
         iterationCounter++;
         questionCounter = 0;
@@ -296,17 +332,15 @@ class _SwapState extends State<Swap> {
 
   void resetLevel() {
     setState(() {
-        if (usedWordPairs.isNotEmpty) {
-            wordPairsByLanguage[_userLanguage]?.addAll(usedWordPairs);
-            usedWordPairs.clear();
-        }
-        questionCounter = 0;
-        iterationCounter = 0;
+      if (usedWordPairs.isNotEmpty) {
+        wordPairsByLanguage[_userLanguage]?.addAll(usedWordPairs);
+        usedWordPairs.clear();
+      }
+      questionCounter = 0;
+      iterationCounter = 0;
     });
     generateWords();
-}
-
-
+  }
 
   void showIterationCompleteDialog() {
     showDialog(
@@ -398,129 +432,81 @@ class _SwapState extends State<Swap> {
           S.of(context).game_swapping,
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(
         color: Colors.white,
         child: Column(
           children: [
-            // Question Container with shadow
-            Container(
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 2,
-                    blurRadius: 7,
-                    offset: Offset(0, 3),
+            CustomContainer(text: S.of(context).spoonerism_question),
+            if (!_showGameElements)
+              Container(
+                margin: EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                      generateWords(); // Generate words when the game starts
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                ],
-              ),
-              child: Text(
-                S.of(context).spoonerism_question,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(S.of(context).click_here_to_start,
+                          style: TextStyle(fontSize: 20, color: Colors.white)),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            SizedBox(height: 20),
             // Main game content
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () =>
-                              playAudio(word3), // For playing individual words
-
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 7,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              '$word1',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                child: _showGameElements
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () => playAudio(word3),
+                                child: _buildWordContainer(word1),
                               ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 30),
-                        GestureDetector(
-                          onTap: () =>
-                              playAudio(word4), // For playing individual words
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 7,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              '$word2',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                              SizedBox(width: 30),
+                              GestureDetector(
+                                onTap: () => playAudio(word4),
+                                child: _buildWordContainer(word2),
                               ),
-                            ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Wrap(
-                      spacing: 20,
-                      children: options.map((option) {
-                        return OptionButton(
-                          index: options.indexOf(option) + 1,
-                          isSelected: selectedOption == option,
-                          clickCount: clickCountMap[option] ?? 0,
-                          onPressed: () => handleClick(option),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: 20),
-                    SubmitButton(
-                      isEnabled: isSubmitEnabled,
-                      onPressed: handleSubmit,
-                    ),
-                  ],
-                ),
+                          SizedBox(height: 20),
+                          Wrap(
+                            spacing: 20,
+                            children: options.map((option) {
+                              return OptionButton(
+                                index: options.indexOf(option) + 1,
+                                isSelected: selectedOption == option,
+                                clickCount: clickCountMap[option] ?? 0,
+                                onPressed: () => handleClick(option),
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: 20),
+                          SubmitButton(
+                            isEnabled: isSubmitEnabled,
+                            onPressed: handleSubmit,
+                          ),
+                        ],
+                      )
+                    : Container(), // Hide elements when not started
               ),
             ),
           ],

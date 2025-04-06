@@ -125,6 +125,20 @@ flutter:
     - assets/img/ic_r_ship.png
     - assets/img/ic_r_key.png
     - assets/img/Brainu_icon.png
+    - assets/img/background.jpeg
+    
+    - assets/img/one.png
+    - assets/img/two.png
+    - assets/img/three.png
+    - assets/img/four.png
+    - assets/img/five.png
+    - assets/img/six.png
+    - assets/img/seven.png
+    - assets/img/eight.png
+    - assets/img/nine.png
+    - assets/img/Ten.png
+    - assets/img/button.png
+
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

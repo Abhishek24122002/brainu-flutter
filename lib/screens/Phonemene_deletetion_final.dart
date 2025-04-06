@@ -378,7 +378,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
           S.of(context).game_word_game1,
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+       backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(
@@ -420,7 +420,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Button color
+                  backgroundColor: Theme.of(context).primaryColorDark,
                   padding: EdgeInsets.symmetric(vertical: 20), // Button height
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

@@ -218,7 +218,7 @@ class _ListenState extends State<Listen> {
           S.of(context).game_listen,
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(

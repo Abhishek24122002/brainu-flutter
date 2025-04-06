@@ -85,7 +85,6 @@ class _LetterState extends State<Letter> {
   void initState() {
     super.initState();
     _fetchUserLanguage();
-    generateQuestionAndOptions();
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {

@@ -383,7 +383,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
           S.of(context).game_word_game4,
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(
@@ -425,7 +425,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Button color
+                  backgroundColor: Theme.of(context).primaryColorDark,// Button color
                   padding: EdgeInsets.symmetric(vertical: 20), // Button height
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

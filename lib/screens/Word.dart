@@ -12,7 +12,7 @@ import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
-import 'LevelSelectionScreen.dart';
+import '../screens/LevelSelectionScreen.dart';
 
 class Word extends StatefulWidget {
   @override
@@ -23,6 +23,8 @@ class _WordState extends State<Word> {
   List<String> remainingWords = [];
   late SharedPreferences prefs;
   String currentWord = "";
+  bool _showGameElements = false;
+  bool _isUploading = false; // Prevent multiple confirm presses
 
   final FirebaseServices _firebaseServices = FirebaseServices();
   final FirebaseSave _firebaseSave = FirebaseSave();
@@ -52,7 +54,6 @@ class _WordState extends State<Word> {
   Future<void> _loadWords() async {
     prefs = await SharedPreferences.getInstance();
 
-    // Define word lists for both languages
     final Map<String, List<String>> wordLists = {
       "english": [
         "Wonder",
@@ -82,26 +83,122 @@ class _WordState extends State<Word> {
         "Idea"
       ],
       "hindi": [
-        "बकरी","सफाई","तरीका","जंगल","अपनी","जामुन","रसोई","कढ़ाई","गर्मी","तेंदुआ","टीचर","मटोल","पक्षी","जमीन","कंबल","दीवार","बिजली","अम्बर", "बाहर", "आवाज","सुझाव","गौशाला","बछिया","सपना","रोशनी","दीपक","हिसया","घुमाओ","जहाज","दातून","बिलख","पर्वत","पापड़","खटिया","आंगन","मैदान","करेला","अधिक","स्कूल","चाहिए","समुद","फसल","पकौड़ी","मेमना","सर्कस","ईश्वर","जल्दी","पृथ्वी","केचुआ","बरखा","समझ","अमर","खबर","गमला","मंजीर","औरत","पालक","मचान","परदा","गुलाब","बालक","लगन","लड़की","अमीर","काजल","उधार","कितना","भलाई","कोशिश","गाजर","आदमी","गरीब","आराम","कागज","दानव","सूरत","महल","इमली","गरम","बदन","चमन","अपना","बहुत","कपड़ा","तितली","झलक","मलाई","सफ़ेद","कछुआ","जगह","कमल","सुराही","दहाड़","गठरी","योजना"
+        "बकरी",
+        "सफाई",
+        "तरीका",
+        "जंगल",
+        "अपनी",
+        "जामुन",
+        "रसोई",
+        "कढ़ाई",
+        "गर्मी",
+        "तेंदुआ",
+        "टीचर",
+        "मटोल",
+        "पक्षी",
+        "जमीन",
+        "कंबल",
+        "दीवार",
+        "बिजली",
+        "अम्बर",
+        "बाहर",
+        "आवाज",
+        "सुझाव",
+        "गौशाला",
+        "बछिया",
+        "सपना",
+        "रोशनी",
+        "दीपक",
+        "हिसया",
+        "घुमाओ",
+        "जहाज",
+        "दातून",
+        "बिलख",
+        "पर्वत",
+        "पापड़",
+        "खटिया",
+        "आंगन",
+        "मैदान",
+        "करेला",
+        "अधिक",
+        "स्कूल",
+        "चाहिए",
+        "समुद",
+        "फसल",
+        "पकौड़ी",
+        "मेमना",
+        "सर्कस",
+        "ईश्वर",
+        "जल्दी",
+        "पृथ्वी",
+        "केचुआ",
+        "बरखा",
+        "समझ",
+        "अमर",
+        "खबर",
+        "गमला",
+        "मंजीर",
+        "औरत",
+        "पालक",
+        "मचान",
+        "परदा",
+        "गुलाब",
+        "बालक",
+        "लगन",
+        "लड़की",
+        "अमीर",
+        "काजल",
+        "उधार",
+        "कितना",
+        "भलाई",
+        "कोशिश",
+        "गाजर",
+        "आदमी",
+        "गरीब",
+        "आराम",
+        "कागज",
+        "दानव",
+        "सूरत",
+        "महल",
+        "इमली",
+        "गरम",
+        "बदन",
+        "चमन",
+        "अपना",
+        "बहुत",
+        "कपड़ा",
+        "तितली",
+        "झलक",
+        "मलाई",
+        "सफ़ेद",
+        "कछुआ",
+        "जगह",
+        "कमल",
+        "सुराही",
+        "दहाड़",
+        "गठरी",
+        "योजना"
       ]
     };
 
-    // Select words based on the fetched user language
-    List<String> selectedWords =
-        wordLists[userLanguage.toLowerCase()] ?? wordLists["english"]!;
-
-    // Load stored words or reset
-    List<String>? savedWords =
-        prefs.getStringList('remainingWords_$userLanguage');
-
-    if (savedWords == null || savedWords.isEmpty) {
-      await _resetWords(selectedWords);
-    } else {
-      setState(() {
-        remainingWords = savedWords;
-        currentWord = remainingWords.first;
-      });
+    // Ensure userLanguage is valid
+    userLanguage = userLanguage.toLowerCase();
+    print("Selected Language for Words: $userLanguage"); // Debugging output
+    if (!wordLists.containsKey(userLanguage)) {
+      userLanguage =
+          "english"; // Default to English if an invalid language is set
     }
+
+    List<String> selectedWords = wordLists[userLanguage]!;
+    print("Selected Words List: $selectedWords");
+    // ✅ **Update remainingWords and currentWord**
+    setState(() {
+      remainingWords = List.from(selectedWords);
+      currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
+    });
+
+    print("Remaining Words: $remainingWords");
+    print("Current Word: $currentWord");
   }
 
   Future<void> _saveWords() async {
@@ -109,10 +206,13 @@ class _WordState extends State<Word> {
   }
 
   Future<void> _resetWords(List<String> selectedWords) async {
+    await prefs.remove('remainingWords_$userLanguage'); // Clear stored words
+
     setState(() {
       remainingWords = List.from(selectedWords);
       currentWord = remainingWords.first;
     });
+
     await _saveWords();
   }
 
@@ -172,10 +272,19 @@ class _WordState extends State<Word> {
   }
 
   void _onConfirm() async {
+    if (_isUploading) {
+      print("Upload already in progress. Please wait.");
+      return;
+    }
+
     if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
       print("No recording available to upload.");
       return;
     }
+
+    setState(() {
+      _isUploading = true; // Start upload
+    });
 
     File audioFile = File(_recordingPath!);
     String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
@@ -183,25 +292,33 @@ class _WordState extends State<Word> {
     if (uploadedUrl != null) {
       print("File uploaded successfully: $uploadedUrl");
 
-      // ✅ Save the word answer
       await _firebaseSave.saveAnswer_word(
           uploadedUrl, userLanguage, currentWord);
 
-      // Update words
       if (remainingWords.isNotEmpty) {
         setState(() {
           remainingWords.removeAt(0);
-          if (remainingWords.isEmpty) {
-            _showCompletionDialog();
-          } else {
-            currentWord = remainingWords.first;
-          }
+          currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
         });
         await _saveWords();
+      }
+
+      setState(() {
+        _showGameElements = false;
+        _recordingAvailable = false;
+        _recordingPath = null;
+      });
+
+      if (remainingWords.isEmpty) {
+        _showCompletionDialog();
       }
     } else {
       print("File upload failed.");
     }
+
+    setState(() {
+      _isUploading = false; // Reset flag after upload
+    });
   }
 
   void _showCompletionDialog() {
@@ -252,7 +369,7 @@ class _WordState extends State<Word> {
           S.of(context).game_word,
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: Container(
@@ -292,26 +409,58 @@ class _WordState extends State<Word> {
                 ),
               ),
               SizedBox(height: 20),
-              if (currentWord.isNotEmpty)
-                Text(
-                  currentWord,
-                  style: TextStyle(
-                      fontSize: 50,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+              if (!_showGameElements) // Show this button only when game elements are hidden
+                Container(
+                  margin: EdgeInsets.all(20),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showGameElements = true; // Show game elements
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColorDark,
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: Text(S.of(context).click_here_to_start,
+                            style:
+                                TextStyle(fontSize: 20, color: Colors.white)),
+                      ),
+                    ),
+                  ),
                 ),
-              SizedBox(height: 40),
-              StartRecordingButton(
-                  onPressed: _toggleRecording, isRecording: _isRecording),
-              SizedBox(height: 15),
-              PlayAudioButton(
-                  onPressed: _isPlaying ? null : _playRecording,
-                  isPlaying: _isPlaying,
-                  isEnabled: _recordingAvailable),
-              SizedBox(height: 15),
-              ConfirmButton(
-                  onPressed: _recordingAvailable ? _onConfirm : null,
-                  isEnabled: _recordingAvailable),
+              if (_showGameElements) // Only show game elements if _showGameElements is true
+                ...[
+                SizedBox(height: 20),
+                if (currentWord.isNotEmpty)
+                  Text(
+                    currentWord,
+                    style: TextStyle(
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                SizedBox(height: 40),
+                StartRecordingButton(
+                    onPressed: _toggleRecording, isRecording: _isRecording),
+                SizedBox(height: 15),
+                PlayAudioButton(
+                    onPressed: _isPlaying ? null : _playRecording,
+                    isPlaying: _isPlaying,
+                    isEnabled: _recordingAvailable),
+                SizedBox(height: 15),
+                ConfirmButton(
+                  onPressed: (_recordingAvailable && !_isUploading)
+                      ? _onConfirm
+                      : null,
+                  isEnabled: _recordingAvailable && !_isUploading,
+                ),
+              ],
             ],
           ),
         ),

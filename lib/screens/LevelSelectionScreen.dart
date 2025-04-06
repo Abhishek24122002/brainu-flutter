@@ -11,6 +11,7 @@ import 'Phonemene_deletetion_final.dart';
 import 'Phonemene_deletetion_initial.dart';
 import 'Phonemene_substitution_final.dart';
 import 'Phonemene_substitution_initial.dart';
+import 'LevelSelection.dart';
 import 'Word.dart';
 import 'Listen.dart';
 import 'Story.dart';
@@ -163,8 +164,11 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                       case 8:
                         page = Ph_substitution_final();
                         break;
+                      // case 9:
+                      //   page = Ph_substitution_initial();
+                      //   break;
                       case 9:
-                        page = Ph_substitution_initial();
+                        page = LevelSelection();
                         break;
                       default:
                         return;

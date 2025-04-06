@@ -19,19 +19,20 @@ class Identify extends StatefulWidget {
 
 class _IdentifyState extends State<Identify> {
   int _iteration = 0;
+  bool _showGameElements = false; // Control visibility
   List<List<String>> iterations = [
-  // Iteration 1 (Common)
-  ['star', 'triangle', 'circle', 'rectangle'],
+    // Iteration 1 (Common)
+    ['star', 'triangle', 'circle', 'rectangle'],
 
-  // Iteration 2 (Common)
-  ['ship', 'color_star', 'fish', 'table', 'key'],
+    // Iteration 2 (Common)
+    ['ship', 'color_star', 'fish', 'table', 'key'],
 
-  // Iteration 3 (Hindi Only)
-  ['g', 'f', 'v', 'j', 'k'],
+    // Iteration 3 (Hindi Only)
+    ['g', 'f', 'v', 'j', 'k'],
 
-  // Iteration 4 (Hindi Only)
-  ['p', 'k', 'v']
-];
+    // Iteration 4 (Hindi Only)
+    ['p', 'k', 'v']
+  ];
 
   final List<String> _imageNames = [
     'fish',
@@ -48,8 +49,7 @@ class _IdentifyState extends State<Identify> {
 
   List<String> _images = [];
 
-  final FileUploader _fileUploader =
-      FileUploader(); 
+  final FileUploader _fileUploader = FileUploader();
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
@@ -68,30 +68,29 @@ class _IdentifyState extends State<Identify> {
   }
 
   void _randomizeImages() {
-  Random random = Random();
+    Random random = Random();
 
-  // Determine the correct iteration list
-  List<List<String>> allowedIterations = (userLanguage == "hindi") 
-      ? iterations 
-      : iterations.sublist(0, 2);
+    // Determine the correct iteration list
+    List<List<String>> allowedIterations =
+        (userLanguage == "hindi") ? iterations : iterations.sublist(0, 2);
 
-  int currentIteration = _iteration % allowedIterations.length; // Ensure it loops back
+    int currentIteration =
+        _iteration % allowedIterations.length; // Ensure it loops back
 
-  List<String> availableImages = allowedIterations[currentIteration];
+    List<String> availableImages = allowedIterations[currentIteration];
 
-  _images = List.generate(15, (index) {
-    return 'assets/img/ic_r_${availableImages[random.nextInt(availableImages.length)]}.png';
-  });
+    _images = List.generate(15, (index) {
+      return 'assets/img/ic_r_${availableImages[random.nextInt(availableImages.length)]}.png';
+    });
 
-  setState(() {});
-}
+    setState(() {});
+  }
 
-Future<void> _fetchUserLanguage() async {
-  userLanguage = await _firebaseServices.getUserLanguage();
-  
-  _randomizeImages();
-}
+  Future<void> _fetchUserLanguage() async {
+    userLanguage = await _firebaseServices.getUserLanguage();
 
+    _randomizeImages();
+  }
 
   Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
@@ -109,45 +108,52 @@ Future<void> _fetchUserLanguage() async {
   }
 
   Future<void> _uploadAudioAndNavigate() async {
-  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("No recording found!")),
-    );
-    return;
-  }
-
-  File audioFile = File(_recordingPath!);
-  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-  if (uploadedUrl != null) {
-    print("Audio uploaded: $uploadedUrl");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Upload successful!")),
-    );
-
-    await _firebaseSave.saveAnswer_Identify(uploadedUrl, userLanguage, _imageNamesString);
-
-    // **Increment Iteration Counter**
     setState(() {
-      _iteration++;
-    });
+        _iteration++;
+        _showGameElements = false;
+      });
+    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No recording found!")),
+      );
+      return;
+    }
 
-    _randomizeImages(); // Refresh with new iteration images
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+    
 
-    // Navigate to next screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LevelSelectionScreen(),
-      ),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Upload failed! Please try again.")),
-    );
+    if (uploadedUrl != null) {
+      print("Audio uploaded: $uploadedUrl");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload successful!")),
+      );
+
+      await _firebaseSave.saveAnswer_Identify(
+          uploadedUrl, userLanguage, _imageNamesString);
+
+      // Determine the max number of iterations allowed based on the language
+      int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
+
+      
+
+      if (_iteration < maxIterations) {
+        _randomizeImages(); // Refresh with new iteration images
+      } else {
+        // Navigate to Level Selection Screen after all iterations
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LevelSelectionScreen(),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed! Please try again.")),
+      );
+    }
   }
-}
-
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
@@ -196,118 +202,150 @@ Future<void> _fetchUserLanguage() async {
     super.dispose();
   }
 
-  
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown, // **Board-Like Background**
+      // backgroundColor: Colors.brown,
       appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: const Color.fromARGB(255, 255, 255, 255),
-        ),
-        title: Text(
-          S.of(context).game_identify,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.blueAccent,
+        iconTheme: IconThemeData(color: Colors.white),
+        title: Text(S.of(context).game_identify,
+            style: TextStyle(color: Colors.white)),
+        backgroundColor: Theme.of(context).primaryColorDark,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-      
-    
-          child: Column(
-            children: [
-              CustomContainer(text: S.of(context).ran_question),
-              
-              // **Board-Like Grid Container**
+        child: Column(
+          children: [
+            CustomContainer(text: S.of(context).ran_question),
+            // Show this button only if game elements are hidden
+            if (!_showGameElements)
               Container(
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.brown[300], // Light brown board color
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: Colors.brown[200]!, width: 10), // Thick border
-                ),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: _images.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                            offset: Offset(2, 4),
-                          ),
-                        ],
-                      ),
-                      child: Image.asset(
-                        _images[index],
-                        fit: BoxFit.cover,
-                      ),
-                    );
+                margin: EdgeInsets.all(20),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                      _recordingPath = null; // Clear the last recording
+                      _recordingAvailable = false;
+                    });
+                    
+
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Center(
+                      child: Text(S.of(context).click_here_to_start,
+                          style: TextStyle(fontSize: 20, color: Colors.white)),
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: 20),
-              Column(
+
+            // Game elements become visible after clicking the button
+            Visibility(
+              visible: _showGameElements,
+              child: Column(
                 children: [
-                  _buildStyledButton(
-                    onPressed: _toggleRecording,
-                    label: _isRecording
-                        ? S.of(context).stop_recording
-                        : S.of(context).start_recording,
-                    icon: _isRecording ? Icons.stop : Icons.mic,
-                    color: _isRecording ? Colors.red : Colors.blue,
+                  
+
+                  Container(
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.brown,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black!, width: 10),
+                    ),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemCount: _images.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                                offset: Offset(2, 4),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            _images[index],
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  SizedBox(height: 15),
-                  _buildStyledButton(
-                    onPressed: _isPlaying ? null : _playRecording,
-                    label: S.of(context).play_audio,
-                    icon: Icons.play_arrow,
-                    color: Colors.amberAccent,
-                  ),
-                  SizedBox(height: 15),
-                  _buildStyledButton(
-                    onPressed:
-                        _recordingAvailable ? _uploadAudioAndNavigate : null,
-                    label: S.of(context).confirm,
-                    icon: Icons.send,
-                    color: _recordingAvailable ? Colors.green : Colors.grey,
+                  SizedBox(height: 20),
+
+                  // Buttons for recording and submitting answers
+                  Column(
+                    children: [
+                      _buildStyledButton(
+                        onPressed: _toggleRecording,
+                        label: _isRecording
+                            ? S.of(context).stop_recording
+                            : S.of(context).start_recording,
+                        icon: _isRecording ? Icons.stop : Icons.mic,
+                        color: _isRecording ? Colors.red : Colors.blue,
+                      ),
+                      SizedBox(height: 15),
+                      _buildStyledButton(
+                        onPressed: _isPlaying ? null : _playRecording,
+                        label: S.of(context).play_audio,
+                        icon: Icons.play_arrow,
+                        color: Colors.amberAccent,
+                      ),
+                      SizedBox(height: 15),
+                      _buildStyledButton(
+                        onPressed: _recordingAvailable
+                            ? _uploadAudioAndNavigate
+                            : null,
+                        label: S.of(context).confirm,
+                        icon: Icons.send,
+                        color: _recordingAvailable ? Colors.green : Colors.grey,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        )
-  );}
-
-  Widget _buildStyledButton({
-    required VoidCallback? onPressed,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(label, style: TextStyle(fontSize: 18, color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(double.infinity, 50),
-        backgroundColor: color,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+Widget _buildStyledButton({
+  required VoidCallback? onPressed,
+  required String label,
+  required IconData icon,
+  required Color color,
+}) {
+  return ElevatedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, color: Colors.white),
+    label: Text(label, style: TextStyle(fontSize: 18, color: Colors.white)),
+    style: ElevatedButton.styleFrom(
+      minimumSize: Size(double.infinity, 50),
+      backgroundColor: color,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+    ),
+  );
 }
