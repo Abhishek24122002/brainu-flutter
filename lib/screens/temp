@@ -7,8 +7,6 @@ import 'dart:io';
 
 import '../components/audio_buttons.dart';
 
-import '../components/question_container.dart';
-import '../components/start_button.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
@@ -365,89 +363,110 @@ class _WordState extends State<Word> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      // 🖼 Background image covering the entire screen
-      Positioned.fill(
-        child: Image.asset(
-          'assets/img/Word_bg.png',
-          fit: BoxFit.cover,
+    return Stack(
+      children: [
+        // 🖼 Background image covering the entire screen
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Letter_bg.png',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
 
-      // 🧠 Main UI with transparent background
-      Scaffold(
-        backgroundColor: Colors.transparent, // Important!
-        appBar: CustomAppBar(titleKey: 'word'),
+        // 🧠 Main UI with transparent background
+        Scaffold(
+          backgroundColor: Colors.transparent, // Important!
+          appBar: CustomAppBar(titleKey: 'letter'),
 
-        body: Column(
-          children: [
-            CustomContainer(text: S.of(context).word_reading_question),
-            if (!_showGameElements)
-              StartButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
-              ),
-            if (_showGameElements)
-              Expanded(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Spacer(
-                              flex: 3), // Push the word slightly upward
-                          Text(
-                            currentWord,
-                            style: const TextStyle(
-                              fontSize: 60,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF7B2F00),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const Spacer(flex: 5), // More space below
-                        ],
+          body: Column(
+            children: [
+              CustomContainer(text: S.of(context).vc_starting_question),
+              if (!_showGameElements)
+                Container(
+                  margin: EdgeInsets.all(20),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showGameElements = true;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF7B2F00),
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-
-                    // ✅ Buttons aligned to bottom
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StartRecordingButton(
-                            onPressed: _toggleRecording,
-                            isRecording: _isRecording,
-                          ),
-                          const SizedBox(height: 10),
-                          PlayAudioButton(
-                            onPressed: _isPlaying ? null : _playRecording,
-                            isPlaying: _isPlaying,
-                            isEnabled: _recordingAvailable,
-                          ),
-                          const SizedBox(height: 10),
-                          ConfirmButton(
-                            onPressed: (_recordingAvailable && !_isUploading)
-                                ? _onConfirm
-                                : null,
-                            isEnabled: _recordingAvailable && !_isUploading,
-                          ),
-                        ],
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: Text(
+                          S.of(context).click_here_to_start,
+                          style: TextStyle(fontSize: 20, color: Colors.white),
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-          ],
+              if (!_showGameElements) // Show this button only when game elements are hidden
+                Container(
+                  margin: EdgeInsets.all(20),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showGameElements = true; // Show game elements
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColorDark,
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: Text(S.of(context).click_here_to_start,
+                            style:
+                                TextStyle(fontSize: 20, color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ),
+              if (_showGameElements) // Only show game elements if _showGameElements is true
+                ...[
+                SizedBox(height: 20),
+                if (currentWord.isNotEmpty)
+                  Text(
+                    currentWord,
+                    style: TextStyle(
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                SizedBox(height: 40),
+                StartRecordingButton(
+                    onPressed: _toggleRecording, isRecording: _isRecording),
+                SizedBox(height: 15),
+                PlayAudioButton(
+                    onPressed: _isPlaying ? null : _playRecording,
+                    isPlaying: _isPlaying,
+                    isEnabled: _recordingAvailable),
+                SizedBox(height: 15),
+                ConfirmButton(
+                  onPressed: (_recordingAvailable && !_isUploading)
+                      ? _onConfirm
+                      : null,
+                  isEnabled: _recordingAvailable && !_isUploading,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
-    ]);
+    );
   }
 }
+
+appBar: CustomAppBar(titleKey: 'word'),
+S.of(context).word_reading_question,

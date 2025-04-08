@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../generated/l10n.dart'; // Import localization file
 
 class CustomContainer extends StatelessWidget {
@@ -26,10 +27,12 @@ class CustomContainer extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+        style: GoogleFonts.fredokaOne(
+          textStyle: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF7B2F00),
+          ),
         ),
       ),
     );

@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../components/appbar.dart';
 import '../components/option_button.dart';
 import '../components/question_container.dart';
+import '../components/start_button.dart';
 import '../components/submit_button.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Letter extends StatefulWidget {
   @override
@@ -64,22 +67,80 @@ class _LetterState extends State<Letter> {
   ];
 
   List<List<String>> hindiWordPairs = [
-  ['आ', 'aa'], ['च', 'ch'], ['छ', 'chh'], ['ई', 'ee'], ['ग', 'g'],
-  ['घ', 'gh'], ['ज', 'j'], ['झ', 'jh'], ['क', 'k'], ['ख', 'kh'],
-  ['ओ', 'o'], ['ऊ', 'oo'], ['ट', 'ta'], ['ठ', 'tha'], ['औ', 'aou'],
-  ['क्ष', 'sha'], ['ढ', 'dha'], ['त', 't'], ['ड', 'da'], ['थ', 'th'],
-  ['न', 'n'], ['फ', 'ph'], ['ल', 'l'], ['र', 'r'], ['इ', 'ee'],
-  ['द', 'd'], ['प', 'p'], ['म', 'm'], ['स', 's'], ['ह', 'h'],
-  ['य', 'y'], ['ब', 'b'], ['ण', 'n_n'], ['ष', 'sh_s'], ['भ', 'bh'],
-  ['श', 'sh_sh'], ['त्र', 'tra'], ['ऐ', 'a'], ['ऋ', 'ri'], ['ज्ञ', 'gya'],
-  ['अं', 'am'], ['ए', 'ae'], ['री', 'ree'], ['सि', 'si'], ['कु', 'ku'],
-  ['मू', 'mu'], ['उ', 'u'], ['खी', 'khi'], ['चू', 'chu'], ['मि', 'mi'],
-  ['हु', 'hu'], ['बी', 'bi'], ['ले', 'le'], ['म्रे', 'mre'], ['चि', 'chi'],
-  ['ने', 'ne'], ['जा', 'jaa'], ['टी', 'ti'], ['डा', 'da'], ['थे', 'the'],
-  ['से', 'se'], ['बा', 'baa'], ['गु', 'gu'], ['फै', 'fai'], ['ती', 'tii'],
-  ['रा', 'ra'], ['पु', 'pu'], ['सो', 'so'], ['वी', 'vi'], ['शू', 'shu'],
-  ['र्म', 'mre'], ['प्र', 'pr'], ['कृ', 'kre']
-];
+    ['आ', 'aa'],
+    ['च', 'ch'],
+    ['छ', 'chh'],
+    ['ई', 'ee'],
+    ['ग', 'g'],
+    ['घ', 'gh'],
+    ['ज', 'j'],
+    ['झ', 'jh'],
+    ['क', 'k'],
+    ['ख', 'kh'],
+    ['ओ', 'o'],
+    ['ऊ', 'oo'],
+    ['ट', 'ta'],
+    ['ठ', 'tha'],
+    ['औ', 'aou'],
+    ['क्ष', 'sha'],
+    ['ढ', 'dha'],
+    ['त', 't'],
+    ['ड', 'da'],
+    ['थ', 'th'],
+    ['न', 'n'],
+    ['फ', 'ph'],
+    ['ल', 'l'],
+    ['र', 'r'],
+    ['इ', 'ee'],
+    ['द', 'd'],
+    ['प', 'p'],
+    ['म', 'm'],
+    ['स', 's'],
+    ['ह', 'h'],
+    ['य', 'y'],
+    ['ब', 'b'],
+    ['ण', 'n_n'],
+    ['ष', 'sh_s'],
+    ['भ', 'bh'],
+    ['श', 'sh_sh'],
+    ['त्र', 'tra'],
+    ['ऐ', 'a'],
+    ['ऋ', 'ri'],
+    ['ज्ञ', 'gya'],
+    ['अं', 'am'],
+    ['ए', 'ae'],
+    ['री', 'ree'],
+    ['सि', 'si'],
+    ['कु', 'ku'],
+    ['मू', 'mu'],
+    ['उ', 'u'],
+    ['खी', 'khi'],
+    ['चू', 'chu'],
+    ['मि', 'mi'],
+    ['हु', 'hu'],
+    ['बी', 'bi'],
+    ['ले', 'le'],
+    ['म्रे', 'mre'],
+    ['चि', 'chi'],
+    ['ने', 'ne'],
+    ['जा', 'jaa'],
+    ['टी', 'ti'],
+    ['डा', 'da'],
+    ['थे', 'the'],
+    ['से', 'se'],
+    ['बा', 'baa'],
+    ['गु', 'gu'],
+    ['फै', 'fai'],
+    ['ती', 'tii'],
+    ['रा', 'ra'],
+    ['पु', 'pu'],
+    ['सो', 'so'],
+    ['वी', 'vi'],
+    ['शू', 'shu'],
+    ['र्म', 'mre'],
+    ['प्र', 'pr'],
+    ['कृ', 'kre']
+  ];
 
   @override
   void initState() {
@@ -196,13 +257,13 @@ class _LetterState extends State<Letter> {
 
   late List<List<String>> wordPairs = englishWordPairs; // Default is English
 
-Future<void> _fetchUserLanguage() async {
-  userLanguage = await _firebaseServices.getUserLanguage();
-  setState(() {
-    wordPairs = userLanguage == "hindi" ? hindiWordPairs : englishWordPairs;
-    generateQuestionAndOptions(); // Regenerate based on the new list
-  });
-}
+  Future<void> _fetchUserLanguage() async {
+    userLanguage = await _firebaseServices.getUserLanguage();
+    setState(() {
+      wordPairs = userLanguage == "hindi" ? hindiWordPairs : englishWordPairs;
+      generateQuestionAndOptions(); // Regenerate based on the new list
+    });
+  }
 
   Future<void> saveAnswer_Letter(bool isCorrect) async {
     await _firebaseSave.saveAnswer_Letter(question, isCorrect, userLanguage);
@@ -274,72 +335,85 @@ Future<void> _fetchUserLanguage() async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(S.of(context).letter, style: TextStyle(color: Colors.white)),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            CustomContainer(text: S.of(context).vc_starting_question),
-            if (!_showGameElements)
-              Container(
-                margin: EdgeInsets.all(20),
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _showGameElements = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColorDark,
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text(S.of(context).click_here_to_start,
-                          style: TextStyle(fontSize: 20, color: Colors.white)),
-                    ),
+    return Stack(
+      children: [
+        // 🖼 Background image covering the entire screen
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Letter_bg.png',
+            fit: BoxFit.cover,
+          ),
+        ),
+
+        // 🧠 Main UI with transparent background
+        Scaffold(
+          backgroundColor: Colors.transparent, // Important!
+          appBar: CustomAppBar(titleKey: 'letter'),
+
+          body: Column(
+            children: [
+              CustomContainer(text: S.of(context).vc_starting_question),
+              if (!_showGameElements)
+              StartButton(
+                onPressed: () {
+                  setState(() {
+                    _showGameElements = true;
+                  });
+                },
+              ),
+              if (_showGameElements)
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/img/Letter_brainu.png',
+                            width: 220,
+                            height: 220,
+                            fit: BoxFit.contain,
+                          ),
+                          Positioned(
+                            bottom: 20,
+                            child: Text(
+                              question.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 60,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF7B2F00),
+                                backgroundColor: Colors.white.withOpacity(1),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Wrap(
+                        spacing: 20,
+                        children: options.asMap().entries.map((entry) {
+                          int index = entry.key + 1;
+                          String option = entry.value;
+
+                          return OptionButton(
+                            index: index,
+                            isSelected: selectedOption == option,
+                            clickCount: clickCountMap[option] ?? 0,
+                            onPressed: () => handleClick(option),
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 20),
+                      SubmitButton(
+                          isEnabled: isSubmitEnabled, onPressed: handleSubmit),
+                    ],
                   ),
                 ),
-              ),
-            SizedBox(height: 20),
-            if (_showGameElements) ...[
-              Text(
-                question.toUpperCase(),
-                style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange),
-              ),
-              SizedBox(height: 40),
-              Wrap(
-                spacing: 20,
-                children: options.asMap().entries.map((entry) {
-                  int index = entry.key + 1;
-                  String option = entry.value;
-
-                  return OptionButton(
-                    index: index,
-                    isSelected: selectedOption == option,
-                    clickCount: clickCountMap[option] ?? 0,
-                    onPressed: () => handleClick(option),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 20),
-              SubmitButton(isEnabled: isSubmitEnabled, onPressed: handleSubmit),
             ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -17,207 +17,242 @@ import 'Listen.dart';
 import 'Story.dart';
 import 'swap.dart';
 
+import 'package:vibration/vibration.dart';
+import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
+
 class LevelSelectionScreen extends StatefulWidget {
-  @override
-  _LevelSelectionScreenState createState() => _LevelSelectionScreenState();
   final User? user;
 
   const LevelSelectionScreen({Key? key, this.user}) : super(key: key);
+
+  @override
+  _LevelSelectionScreenState createState() => _LevelSelectionScreenState();
 }
 
 class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
-  List<bool> selectedLevels = List.generate(10, (_) => true); // Default all levels enabled
-  final List<Color> numberColors = [
-    Colors.red, Colors.orange, Colors.green, Colors.blue, Colors.purple,
-    Colors.pink, Colors.teal, Colors.amber, Colors.deepPurple, Colors.lime
+  List<bool> selectedLevels = List.generate(10, (_) => true);
+  int? _tappedButtonIndex;
+
+  final List<Widget> levels = [
+    Letter(),
+    Identify(),
+    Word(),
+    Listen(),
+    Story(),
+    Swap(),
+    Ph_deletion_final(),
+    Ph_deletion_initial(),
+    Ph_substitution_final(),
+    Ph_substitution_initial(),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final filteredIndices = selectedLevels
-        .asMap()
-        .entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .toList();
+Widget build(BuildContext context) {
+  final visibleIndices = selectedLevels
+      .asMap()
+      .entries
+      .where((entry) => entry.value)
+      .map((entry) => entry.key)
+      .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.white,
-        ),
-        title: Text(
-          S.of(context).games,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.deepPurpleAccent,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.remove('uid'); // Clear stored UID
-              Navigator.pushReplacement(
-                context,
-                Navigation.generateRoute(RouteSettings(name: '/login')),
-              );
-            },
+  return Stack(
+    children: [
+      // 🖼 Background image
+      Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/img/background.jpeg"),
+            fit: BoxFit.cover,
           ),
-          IconButton(
-            icon: Icon(Icons.menu, color: Colors.white),
-            onPressed: () async {
-              final result = await showDialog<List<bool>>(
-                context: context,
-                builder: (context) {
-                  return SelectGameDialog(initialSelectedLevels: selectedLevels);
-                },
-              );
-              if (result != null) {
-                setState(() {
-                  selectedLevels = result;
-                });
-              }
-            },
-          ),
-        ],
+        ),
       ),
-      body: Stack(
-        children: [
-          /// **🔹 Navy Blue Gradient Background**
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.deepPurple.shade700, Color.fromARGB(255, 100, 25, 176)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
 
-          /// **🔸 Random Star Decorations**
-          for (int i = 0; i < 15; i++)
-            Positioned(
-              left: Random().nextDouble() * MediaQuery.of(context).size.width,
-              top: Random().nextDouble() * MediaQuery.of(context).size.height,
-              child: Icon(
-                Icons.star,
-                color: Colors.yellow.shade600,
-                size: Random().nextDouble() * 20 + 10, // Varying sizes
-              ),
-            ),
-
-          /// **🧠 Brainu Icon at Bottom Right**
-          Positioned(
-            bottom: 10,
-            right: 10,
-            child: Image.asset(
-              "assets/img/Brainu_icon.png",
-              width: 110,
-              height: 110,
-            ),
-          ),
-
-          Padding(
-            padding: EdgeInsets.all(20),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                childAspectRatio: 1.5,
-              ),
-              itemCount: filteredIndices.length,
-              itemBuilder: (context, index) {
-                final levelIndex = filteredIndices[index]; // Original level index
-                final displayedNumber = index + 1; // Sequential numbering (1, 2, 3...)
-
-                return GestureDetector(
-                  onTap: () {
-                    Widget page;
-                    switch (levelIndex) {
-                      case 0:
-                        page = Letter();
-                        break;
-                      case 1:
-                        page = Identify();
-                        break;
-                      case 2:
-                        page = Word();
-                        break;
-                      case 3:
-                        page = Listen();
-                        break;
-                      case 4:
-                        page = Story();
-                        break;
-                      case 5:
-                        page = Swap();
-                        break;
-                      case 6:
-                        page = Ph_deletion_final();
-                        break;
-                      case 7:
-                        page = Ph_deletion_initial();
-                        break;
-                      case 8:
-                        page = Ph_substitution_final();
-                        break;
-                      // case 9:
-                      //   page = Ph_substitution_initial();
-                      //   break;
-                      case 9:
-                        page = LevelSelection();
-                        break;
-                      default:
-                        return;
-                    }
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-                  },
-                  
-                  /// **🎨 Circular Buttons with White Center Gradient**
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [Colors.white, Colors.lightBlueAccent.shade100, Colors.blue],
-                        stops: [0.2, 0.6, 1.0],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(2, 3),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$displayedNumber', // Shows sequential number
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: numberColors[index % numberColors.length], // Uses index for color
-                        ),
-                      ),
-                    ),
+      // 🧠 Main UI
+      Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.white.withOpacity(0.3),
+          elevation: 0,
+          title: Stack(
+            children: [
+              Text(
+                S.of(context).games,
+                style: GoogleFonts.fredokaOne(
+                  textStyle: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 3
+                      ..color = Color(0xFF954305),
                   ),
+                ),
+              ),
+              Text(
+                S.of(context).games,
+                style: GoogleFonts.fredokaOne(
+                  textStyle: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFFDA748),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.logout, color: Color(0xFFEE5B03)),
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.remove('uid');
+                Navigator.pushReplacement(
+                  context,
+                  Navigation.generateRoute(RouteSettings(name: '/login')),
                 );
               },
             ),
+            IconButton(
+              icon: Icon(Icons.menu, color: Color(0xFFEE5B03)),
+              onPressed: () async {
+                final result = await showDialog<List<bool>>(
+                  context: context,
+                  builder: (context) => SelectGameDialog(initialSelectedLevels: selectedLevels),
+                );
+                if (result != null) {
+                  setState(() => selectedLevels = result);
+                }
+              },
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.only(bottom: 40),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: _buildButtonRows(context, visibleIndices),
+            ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  );
+}
+
+
+  List<Widget> _buildButtonRows(BuildContext context, List<int> visibleIndices) {
+    List<Widget> rows = [];
+    int total = visibleIndices.length;
+    int number = 1;
+    List<int> config;
+
+    switch (total) {
+      case 1:
+        config = [0, 1];
+        break;
+      case 2:
+        config = [0, 2];
+        break;
+      case 3:
+        config = [0, 3];
+        break;
+      case 4:
+        config = [0, 2, 2];
+        break;
+      case 5:
+        config = [0, 3, 2];
+        break;
+      case 6:
+        config = [0, 3, 3];
+        break;
+      case 7:
+        config = [3, 2, 2];
+        break;
+      case 8:
+        config = [3, 3, 2];
+        break;
+      case 9:
+        config = [3, 3, 3];
+        break;
+      default:
+        config = [3, 3, 3, 1];
+    }
+
+    int current = 0;
+    for (int rowCount in config) {
+      if (rowCount == 0) continue;
+      List<Widget> row = [];
+      for (int i = 0; i < rowCount; i++) {
+        if (current >= total) break;
+        int index = visibleIndices[current];
+        row.add(_buildNumberedButton(context, index, number));
+        current++;
+        number++;
+      }
+      rows.add(Row(
+        mainAxisAlignment:
+            rowCount < 3 ? MainAxisAlignment.center : MainAxisAlignment.spaceEvenly,
+        children: row,
+      ));
+      rows.add(SizedBox(height: 16));
+    }
+    return rows;
   }
 
-  /// **✨ Helper Method for Star Icons**
-  Widget _starIcon({double size = 20}) {
-    return Icon(
-      Icons.star,
-      color: Colors.yellow.shade600,
-      size: size,
+  Widget _buildNumberedButton(BuildContext context, int levelIndex, int number) {
+    bool isTapped = _tappedButtonIndex == levelIndex;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: GestureDetector(
+        onTapDown: (_) async {
+          if (await Vibration.hasVibrator() ?? false) {
+            Vibration.vibrate(duration: 50);
+          }
+          setState(() => _tappedButtonIndex = levelIndex);
+        },
+        onTapUp: (_) async {
+          await Future.delayed(Duration(milliseconds: 100));
+          setState(() => _tappedButtonIndex = null);
+        },
+        onTapCancel: () {
+          setState(() => _tappedButtonIndex = null);
+        },
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => levels[levelIndex]),
+          );
+        },
+        child: AnimatedScale(
+          scale: isTapped ? 0.9 : 1.0,
+          duration: Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.asset(
+                'assets/img/button.png',
+                width: 80,
+                height: 80,
+              ),
+              Text(
+                number.toString(),
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF7B2F00),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

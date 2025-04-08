@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vibration/vibration.dart';
 
 class OptionButton extends StatelessWidget {
   final int index;
@@ -13,39 +14,60 @@ class OptionButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  Color getButtonColor() {
+  String getImageAsset() {
     if (clickCount >= 2) {
-      return Colors.green; // Second click → Green
+      return 'assets/img/green_btn_round.png';
     } else if (clickCount == 1) {
-      return Colors.red; // First click → Red
+      return 'assets/img/red_btn_round.png';
     }
-    return Colors.blueAccent; // Default state → Blue
+    return 'assets/img/default_btn_round.png';
+  }
+
+  Color getTextColor() {
+    if (clickCount >= 2) return Colors.white;
+    if (clickCount == 1) return Colors.white;
+    return Colors.brown.shade700;
+  }
+
+  Future<void> _handleTap() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 30); // quick vibrational feedback
+    }
+    onPressed();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(2, 4),
-          ),
-        ],
-        shape: BoxShape.circle,
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: getButtonColor(),
-          foregroundColor: Colors.white,
-          shape: CircleBorder(),
-          padding: EdgeInsets.all(20),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          '$index',
-          style: TextStyle(fontSize: 18),
+    return GestureDetector(
+      onTap: _handleTap,
+      child: Container(
+        width: 90,
+        height: 90,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              getImageAsset(),
+              width: 90,
+              height: 90,
+              fit: BoxFit.contain,
+            ),
+            Text(
+              '$index',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: getTextColor(),
+                shadows: [
+                  Shadow(
+                    offset: Offset(1, 1),
+                    blurRadius: 2,
+                    color: Colors.black26,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

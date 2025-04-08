@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-
 import '../generated/l10n.dart';
 
 class SubmitButton extends StatelessWidget {
   final bool isEnabled;
   final VoidCallback onPressed;
 
-  SubmitButton({
+  const SubmitButton({
     required this.isEnabled,
     required this.onPressed,
+    super.key,
   });
 
   @override
@@ -16,15 +16,22 @@ class SubmitButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: isEnabled ? onPressed : null,
       style: ElevatedButton.styleFrom(
+        backgroundColor: isEnabled ? const Color(0xFF8B3A00) : Colors.grey,
         foregroundColor: Colors.white,
-        backgroundColor: isEnabled ? Colors.green : Colors.grey,
+        shadowColor: Colors.black.withOpacity(0.4),
+        elevation: 8,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(80), // pill shape
         ),
-        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 50),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 120),
       ),
-      child: Text(S.of(context).submit,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child: Text(
+        S.of(context).submit,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
       ),
     );
   }
