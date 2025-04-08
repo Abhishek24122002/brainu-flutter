@@ -2,6 +2,10 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import '../components/appbar.dart';
+import '../components/question_container.dart';
+import '../components/start_button.dart';
+import '../components/submit_button.dart';
 import '../generated/l10n.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
@@ -19,9 +23,13 @@ class _ListenState extends State<Listen> {
   final FirebaseSave _firebaseSave = FirebaseSave();
   late String userLanguage = "english"; // Default to English
   late AudioPlayer _audioPlayer;
+  bool _isDrawingDone = false;
+
   List<String> _remainingWords = [];
   String _currentWord = "";
   List<Offset> _points = [];
+  bool _showGameElements = false;
+
   String currentLocale = "en"; // Default language
   FileUploader fileUploader =
       FileUploader(); // Create an instance of FileUploader
@@ -51,7 +59,31 @@ class _ListenState extends State<Listen> {
   void _loadWords() {
     final Map<String, List<String>> wordLists = {
       "en": [
-        "amaze","avoid","book","cage","cake","cooky","credit","cycle","dinner","edit","fear","fruit","head","invite","kind","mood","note","phone","plan","plate","play","select","soft","vanish","yellow"
+        "amaze",
+        "avoid",
+        "book",
+        "cage",
+        "cake",
+        "cooky",
+        "credit",
+        "cycle",
+        "dinner",
+        "edit",
+        "fear",
+        "fruit",
+        "head",
+        "invite",
+        "kind",
+        "mood",
+        "note",
+        "phone",
+        "plan",
+        "plate",
+        "play",
+        "select",
+        "soft",
+        "vanish",
+        "yellow"
       ],
       "hi": [
         "dosti",
@@ -74,7 +106,7 @@ class _ListenState extends State<Listen> {
     };
 
     _remainingWords = List.from(wordLists[currentLocale] ?? wordLists["en"]!);
-    _playNextWordAudio();
+    // _playNextWordAudio();
   }
 
   @override
@@ -82,10 +114,10 @@ class _ListenState extends State<Listen> {
     _audioPlayer.dispose();
     super.dispose();
   }
+
   Future<void> _fetchUserLanguage() async {
-  userLanguage = await _firebaseServices.getUserLanguage();
-  
-}
+    userLanguage = await _firebaseServices.getUserLanguage();
+  }
 
   Future<void> _saveCanvasAsImage() async {
     try {
@@ -124,8 +156,8 @@ class _ListenState extends State<Listen> {
 
         // ✅ Save file URL to Firebase
         // await saveAnswer_Listen(uploadedUrl);
-        await _firebaseSave.saveAnswer_Listen(uploadedUrl, userLanguage, _currentWord);
-  
+        await _firebaseSave.saveAnswer_Listen(
+            uploadedUrl, userLanguage, _currentWord);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -205,93 +237,123 @@ class _ListenState extends State<Listen> {
 
     setState(() {
       _points.clear();
+      _isDrawingDone = false;
+      _showGameElements = false; // 👈 Show Start button again
     });
-    _playNextWordAudio();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
-          S.of(context).game_listen,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        S.of(context).dictation_consonent,
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w600),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Expanded(
-                child: GestureDetector(
-                  onPanUpdate: (details) {
-                    setState(() {
-                      RenderBox renderBox = _canvasKey.currentContext!
-                          .findRenderObject() as RenderBox;
-                      _points
-                          .add(renderBox.globalToLocal(details.globalPosition));
-                    });
-                  },
-                  onPanEnd: (_) => _points.add(Offset.zero),
-                  child: RepaintBoundary(
-                    key: _canvasKey,
-                    child: CustomPaint(
-                      painter: CanvasPainter(_points),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border:
-                              Border.all(color: Colors.blueAccent, width: 2),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _onSubmit,
-                icon: Icon(Icons.check, color: Colors.white),
-                label: Text(
-                  S.of(context).submit,
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 50),
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-            ],
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Listen_bg.png',
+            fit: BoxFit.cover,
           ),
         ),
-      ),
+        Scaffold(
+          backgroundColor: Colors.transparent, // Important!
+          appBar: CustomAppBar(titleKey: 'listen'),
+          body: Container(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  CustomContainer(text: S.of(context).dictation_consonent),
+                  SizedBox(height: 20),
+                  if (!_showGameElements)
+                    StartButton(
+                      onPressed: () {
+                        setState(() {
+                          _showGameElements = true;
+                        });
+                        _playNextWordAudio();
+                      },
+                    ),
+                  if (_showGameElements)
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                setState(() {
+                                  RenderBox renderBox = _canvasKey
+                                      .currentContext!
+                                      .findRenderObject() as RenderBox;
+                                  _points.add(renderBox
+                                      .globalToLocal(details.globalPosition));
+                                });
+                              },
+                              onPanEnd: (_) {
+                                _points.add(Offset.zero);
+                                bool hasMeaningfulDrawing = _points
+                                        .where((p) => p != Offset.zero)
+                                        .length >
+                                    2;
+                                setState(() {
+                                  _isDrawingDone = hasMeaningfulDrawing;
+                                });
+                              },
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/img/board.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                  RepaintBoundary(
+                                    key: _canvasKey,
+                                    child: CustomPaint(
+                                      painter: CanvasPainter(_points),
+                                      child: Container(
+                                        color: Colors.transparent,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _points.clear();
+                                    _isDrawingDone = false;
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Color(0xFFE40808), // Red color
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  "Clear",
+                                  style: TextStyle(
+                                      color: Colors.white), // White text
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              SubmitButton(
+                                isEnabled: _isDrawingDone,
+                                onPressed: _onSubmit,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -306,7 +368,7 @@ class CanvasPainter extends CustomPainter {
     final paint = Paint()
       ..color = Colors.black
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 4.0;
+      ..strokeWidth = 6.0;
 
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != Offset.zero && points[i + 1] != Offset.zero) {

@@ -55,6 +55,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       case 'word':
         return s.Word;
+      
+      case 'listen':
+        return s.game_listen;
       // Add more keys and localizations as needed
       default:
         return titleKey;

@@ -354,13 +354,13 @@ class _LetterState extends State<Letter> {
             children: [
               CustomContainer(text: S.of(context).vc_starting_question),
               if (!_showGameElements)
-              StartButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
-              ),
+                StartButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                    });
+                  },
+                ),
               if (_showGameElements)
                 Expanded(
                   child: Column(
