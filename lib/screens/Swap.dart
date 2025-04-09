@@ -5,7 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../components/appbar.dart';
 import '../components/question_container.dart';
+import '../components/start_button.dart';
 import '../firebase/firebase_services.dart'; // Import your FirebaseServices file
 
 import '../components/option_button.dart';
@@ -423,95 +425,75 @@ class _SwapState extends State<Swap> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: const Color.fromARGB(255, 255, 255, 255),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Spoonerism_bg.png',
+            fit: BoxFit.cover,
+          ),
         ),
-        title: Text(
-          S.of(context).game_swapping,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            CustomContainer(text: S.of(context).spoonerism_question),
-            if (!_showGameElements)
-              Container(
-                margin: EdgeInsets.all(20),
-                child: ElevatedButton(
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: CustomAppBar(titleKey: 'spoonerism'),
+          body: Column(
+            children: [
+              CustomContainer(text: S.of(context).spoonerism_question),
+              if (!_showGameElements)
+                StartButton(
                   onPressed: () {
                     setState(() {
                       _showGameElements = true;
                       generateWords(); // Generate words when the game starts
                     });
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColorDark,
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Center(
-                      child: Text(S.of(context).click_here_to_start,
-                          style: TextStyle(fontSize: 20, color: Colors.white)),
+                ),
+              // Main game content
+              if (_showGameElements)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () => playAudio(word3),
+                              child: _buildWordContainer(word1),
+                            ),
+                            SizedBox(width: 30),
+                            GestureDetector(
+                              onTap: () => playAudio(word4),
+                              child: _buildWordContainer(word2),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Wrap(
+                          spacing: 20,
+                          children: options.map((option) {
+                            return OptionButton(
+                              index: options.indexOf(option) + 1,
+                              isSelected: selectedOption == option,
+                              clickCount: clickCountMap[option] ?? 0,
+                              onPressed: () => handleClick(option),
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: 20),
+                        SubmitButton(
+                          isEnabled: isSubmitEnabled,
+                          onPressed: handleSubmit,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            SizedBox(height: 20),
-            // Main game content
-            Expanded(
-              child: Center(
-                child: _showGameElements
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              GestureDetector(
-                                onTap: () => playAudio(word3),
-                                child: _buildWordContainer(word1),
-                              ),
-                              SizedBox(width: 30),
-                              GestureDetector(
-                                onTap: () => playAudio(word4),
-                                child: _buildWordContainer(word2),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20),
-                          Wrap(
-                            spacing: 20,
-                            children: options.map((option) {
-                              return OptionButton(
-                                index: options.indexOf(option) + 1,
-                                isSelected: selectedOption == option,
-                                clickCount: clickCountMap[option] ?? 0,
-                                onPressed: () => handleClick(option),
-                              );
-                            }).toList(),
-                          ),
-                          SizedBox(height: 20),
-                          SubmitButton(
-                            isEnabled: isSubmitEnabled,
-                            onPressed: handleSubmit,
-                          ),
-                        ],
-                      )
-                    : Container(), // Hide elements when not started
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

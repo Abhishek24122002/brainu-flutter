@@ -12,7 +12,6 @@ import '../components/start_button.dart';
 import '../components/submit_button.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class Letter extends StatefulWidget {
   @override
