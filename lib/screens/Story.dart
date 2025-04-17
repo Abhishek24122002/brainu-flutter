@@ -9,6 +9,13 @@ import '../firebase/firebase_services.dart';
 
 import '../generated/l10n.dart';
 
+import '../components/appbar.dart';
+
+import '../components/audio_buttons.dart';
+
+import '../components/question_container.dart';
+import '../components/start_button.dart';
+
 class Story extends StatefulWidget {
   @override
   _StoryState createState() => _StoryState();
@@ -77,46 +84,46 @@ class _StoryState extends State<Story> {
   }
 
   void _confirmStory() async {
-  if (_recordingPath == null) {
-    print("No recording found.");
-    return;
-  }
-
-  File recordedFile = File(_recordingPath!);
-  if (!recordedFile.existsSync()) {
-    print("Recorded file does not exist.");
-    return;
-  }
-
-  File audioFile = File(_recordingPath!);
-  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-  if (uploadedUrl != null) {
-    print("File uploaded successfully: $uploadedUrl");
-
-    // Extract first 5 words from the story
-    String currentStory = stories[currentStoryIndex];
-    List<String> words = currentStory.split(" ");
-    String firstFiveWords = words.take(5).join(" "); // Get first 3 words
-
-    // Call saveAnswer_Story with only the first 3 words
-    await _firebaseSave.saveAnswer_Story(uploadedUrl, userLanguage, firstFiveWords);
-    // Proceed to the next story
-    if (currentStoryIndex < stories.length - 1) {
-      setState(() {
-        _recordingAvailable = false;
-        currentStoryIndex++;
-        _recordingPath = null;
-        _showGameElements = false;
-      });
-    } else {
-      showAllWordsDoneDialog();
+    if (_recordingPath == null) {
+      print("No recording found.");
+      return;
     }
-  } else {
-    print("File upload failed.");
-  }
-}
 
+    File recordedFile = File(_recordingPath!);
+    if (!recordedFile.existsSync()) {
+      print("Recorded file does not exist.");
+      return;
+    }
+
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+    if (uploadedUrl != null) {
+      print("File uploaded successfully: $uploadedUrl");
+
+      // Extract first 5 words from the story
+      String currentStory = stories[currentStoryIndex];
+      List<String> words = currentStory.split(" ");
+      String firstFiveWords = words.take(5).join(" "); // Get first 3 words
+
+      // Call saveAnswer_Story with only the first 3 words
+      await _firebaseSave.saveAnswer_Story(
+          uploadedUrl, userLanguage, firstFiveWords);
+      // Proceed to the next story
+      if (currentStoryIndex < stories.length - 1) {
+        setState(() {
+          _recordingAvailable = false;
+          currentStoryIndex++;
+          _recordingPath = null;
+          _showGameElements = false;
+        });
+      } else {
+        showAllWordsDoneDialog();
+      }
+    } else {
+      print("File upload failed.");
+    }
+  }
 
   void showAllWordsDoneDialog() {
     showDialog(
@@ -185,145 +192,100 @@ class _StoryState extends State<Story> {
   Widget build(BuildContext context) {
     stories = getStories(context); // Fetch localized stories
 
-    return Scaffold(
-        appBar: AppBar(
-          iconTheme: IconThemeData(color: Colors.white),
-          title: Text(S.of(context).game_story,
-              style: TextStyle(color: Colors.white)),
-          backgroundColor: Theme.of(context).primaryColorDark,
-          centerTitle: true,
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.purple.shade100, Colors.blue.shade100],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Listen_bg.png',
+            fit: BoxFit.cover,
           ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Question Section
-                  Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    elevation: 8,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                        S.of(context).paragraph_reading_question,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w600),
+        ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: CustomAppBar(titleKey: 'story'),
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start, // Align to start instead of center
+              children: [
+                // Question Section
+                CustomContainer(text: S.of(context).paragraph_reading_question),
+
+                // Story Section with Scroll only for text
+                if (_showGameElements && currentStoryIndex < stories.length)
+                  Container(
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * 0.40,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/img/Story_container.png'),
+                        fit: BoxFit.fill,
                       ),
                     ),
-                  ),
-
-                  SizedBox(height: 20),
-
-                  // Story Section with Scrollbar and Dynamic Height
-                  if (_showGameElements && currentStoryIndex < stories.length)
-                    Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                      elevation: 8,
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height *
-                              0.28, // 30% of screen height
-                          child: Scrollbar(
-                            thumbVisibility: true, // Always show the scrollbar
-                            child: SingleChildScrollView(
-                              child: Text(
-                                stories[currentStoryIndex],
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.black87),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(50, 60, 50, 60),
+                      child: ScrollbarTheme(
+                        data: ScrollbarThemeData(
+                          thumbColor:
+                              MaterialStateProperty.all(Colors.brown[400]),
+                          trackColor:
+                              MaterialStateProperty.all(Colors.brown[100]),
+                          thickness: MaterialStateProperty.all(6),
+                          radius: Radius.circular(10),
+                        ),
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            child: Text(
+                              stories[currentStoryIndex],
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color.fromRGBO(114, 64, 23, 1),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
+                  ),
 
-                  SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                  // Start Button
-                  if (!_showGameElements)
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showGameElements = true;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColorDark,
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Center(
-                          child: Text(
-                            S.of(context).click_here_to_start,
-                            style: TextStyle(fontSize: 20, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
+                // Start Button
+                if (!_showGameElements)
+                  StartButton(
+                    onPressed: () {
+                      setState(() {
+                        _showGameElements = true;
+                      });
+                    },
+                  ),
 
-                  // Recording & Confirm Buttons
-                  if (_showGameElements) ...[
-                    SizedBox(height: 15),
-                    _buildStyledButton(
-                      onPressed: _toggleRecording,
-                      label: _isRecording
-                          ? S.of(context).stop_recording
-                          : S.of(context).start_recording,
-                      icon: _isRecording ? Icons.stop : Icons.mic,
-                      color: _isRecording ? Colors.red : Colors.blue,
-                    ),
-                    SizedBox(height: 15),
-                    _buildStyledButton(
-                      onPressed: _isPlaying ? null : _playRecording,
-                      label: S.of(context).play_audio,
-                      icon: Icons.play_arrow,
-                      color: Colors.amberAccent,
-                    ),
-                    SizedBox(height: 15),
-                    _buildStyledButton(
-                      onPressed: _recordingAvailable ? _confirmStory : null,
-                      label: S.of(context).confirm,
-                      icon: Icons.send,
-                      color: _recordingAvailable ? Colors.green : Colors.grey,
-                    ),
-                  ],
+                // Recording & Confirm Buttons
+                if (_showGameElements) ...[
+                  StartRecordingButton(
+                    onPressed: _toggleRecording,
+                    isRecording: _isRecording,
+                  ),
+                  const SizedBox(height: 5),
+                  PlayAudioButton(
+                    onPressed: _isPlaying ? null : _playRecording,
+                    isPlaying: _isPlaying,
+                    isEnabled: _recordingPath != null,
+                  ),
+                  const SizedBox(height: 5),
+                  ConfirmButton(
+                    onPressed: _recordingAvailable ? _confirmStory : null,
+                    isEnabled: _recordingAvailable,
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
-        ));
-  }
-
-  Widget _buildStyledButton(
-      {required VoidCallback? onPressed,
-      required String label,
-      required IconData icon,
-      required Color color}) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(label, style: TextStyle(fontSize: 18, color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(double.infinity, 50),
-        backgroundColor: color,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      ),
+        ),
+      ],
     );
   }
 }

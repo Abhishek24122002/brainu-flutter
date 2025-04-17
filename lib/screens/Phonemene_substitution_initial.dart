@@ -8,13 +8,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
-import '../components/StartRecordingButton.dart';
-import '../components/PlayAudioButton.dart';
-import '../components/ConfirmButton.dart';
+import '../components/audio_buttons.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../aws/FileUploader.dart';
+
+import '../components/appbar.dart';
+import '../components/question_container.dart';
+import '../components/start_button.dart';
 
 class Ph_substitution_initial extends StatefulWidget {
   @override
@@ -46,8 +48,6 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   String? _recordingPath;
   bool _showGameElements = false;
 
-
-
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
       ["b", "t", "bass"],
@@ -77,10 +77,10 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
       ["w", "s", "week"]
     ],
     "hindi": [
-      [ "kaam_k", "kaam_dha", "kaam"],
-      [ "naal_n","naal_da", "naal"],
-      ["Naam_n","Naam_k",  "naam"],
-      [ "raja_r","raja_a", "raja"],
+      ["kaam_k", "kaam_dha", "kaam"],
+      ["naal_n", "naal_da", "naal"],
+      ["Naam_n", "Naam_k", "naam"],
+      ["raja_r", "raja_a", "raja"],
       ["shaam_sha", "shaam_k", "shaam"],
     ]
   };
@@ -215,7 +215,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     List<String> selectedPair = availableWords.removeAt(index);
     usedWordPairs.add(selectedPair);
 
-   sound1 = selectedPair[0];
+    sound1 = selectedPair[0];
     sound2 = selectedPair[1];
     word = selectedPair[2];
 
@@ -238,43 +238,45 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   }
 
   Future<void> handleSubmit() async {
-  if (_recordingPath != null && File(_recordingPath!).existsSync()) {
-    File file = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(file);
+    if (_recordingPath != null && File(_recordingPath!).existsSync()) {
+      File file = File(_recordingPath!);
+      String? uploadedUrl = await _fileUploader.uploadFile(file);
 
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
+      if (uploadedUrl != null) {
+        print("File uploaded successfully: $uploadedUrl");
 
-      // Call the function to save the uploaded URL
-      await _firebaseSave.saveAnswer_Ph_substitution_initial(uploadedUrl, _userLanguage, sound2);
+        // Call the function to save the uploaded URL
+        await _firebaseSave.saveAnswer_Ph_substitution_initial(
+            uploadedUrl, _userLanguage, sound2);
 
-      setState(() {
-        questionCounter++;
-        _showGameElements = false;
-        _recordingAvailable = false;
-        isSubmitEnabled = false; // Disable confirm button until a new recording is made
-      });
+        setState(() {
+          questionCounter++;
+          _showGameElements = false;
+          _recordingAvailable = false;
+          isSubmitEnabled =
+              false; // Disable confirm button until a new recording is made
+        });
 
-      if (questionCounter == 5) {
-        iterationCounter++;
-        trophyCount++;
-        _saveTrophyCount();
-        questionCounter = 0;
-        showIterationCompleteDialog();
-      }
+        if (questionCounter == 5) {
+          iterationCounter++;
+          trophyCount++;
+          _saveTrophyCount();
+          questionCounter = 0;
+          showIterationCompleteDialog();
+        }
 
-      if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
-        generateWords();
+        if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+          generateWords();
+        } else {
+          showAllWordsDoneDialog();
+        }
       } else {
-        showAllWordsDoneDialog();
+        print("File upload failed.");
       }
     } else {
-      print("File upload failed.");
+      print("No recording available for upload.");
     }
-  } else {
-    print("No recording available for upload.");
   }
-}
 
   Future<bool> _checkForNewRecording() async {
     if (_recordingPath == null) return false;
@@ -374,73 +376,30 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: const Color.fromARGB(255, 255, 255, 255),
-        ),
-        title: Text(
-          S.of(context).game_word_game4,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        centerTitle: true,
-      ),
+    return Stack(
+      children: [
+        Positioned(
+          child: Image.asset(
+            'assets/img/Deletion_bg.png',
+            fit: BoxFit.cover,
+          ),),
+      
+    Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: CustomAppBar(titleKey: 'wordgame4'),
       body: Container(
-        color: Colors.white,
         child: Column(children: [
           // Question Container with shadow
-          Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Text(
-              S.of(context).phoneme_substitution_question,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
+          CustomContainer(
+            text: S.of(context).phoneme_substitution_question,
           ),
           if (!_showGameElements)
-            Container(
-              margin: EdgeInsets.all(20),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColorDark,// Button color
-                  padding: EdgeInsets.symmetric(vertical: 20), // Button height
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: SizedBox(
-                  width: double.infinity, // Full width button
-                  child: Center(
-                    child: Text(
-                      S.of(context).click_here_to_start,
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
+            StartButton(
+              onPressed: () {
+                setState(() {
+                  _showGameElements = true;
+                });
+              },
             ),
           // Main game content
           if (_showGameElements) ...[
@@ -644,44 +603,41 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 40),
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: Column(
-                          children: [
-                            StartRecordingButton(
-                              onPressed: _toggleRecording,
-                              isRecording: _isRecording,
-                            ),
-                            SizedBox(height: 15),
-                            PlayAudioButton(
-                              isEnabled: _recordingAvailable,
-                              onPressed: _isPlaying ? null : _playRecording,
-                              isPlaying: _isPlaying,
-                            ),
-                            SizedBox(height: 15),
-                            ConfirmButton(
-                              isEnabled:
-                                  _recordingAvailable, // Only enable when a new recording exists
-                              onPressed:
-                                  _recordingAvailable ? handleSubmit : null,
-                            ),
-                          ],
-                        ),
-                      ),
+                    SizedBox(height: 20),
+                        Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 25.0, vertical: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                StartRecordingButton(
+                                  onPressed: _toggleRecording,
+                                  isRecording: _isRecording,
+                                ),
+                                SizedBox(height: 15),
+                                PlayAudioButton(
+                                  isEnabled: _recordingAvailable,
+                                  onPressed: _isPlaying ? null : _playRecording,
+                                  isPlaying: _isPlaying,
+                                ),
+                                SizedBox(height: 15),
+                                ConfirmButton(
+                                  isEnabled:
+                                      _recordingAvailable, // Only enable when a new recording exists
+                                  onPressed:
+                                      _recordingAvailable ? handleSubmit : null,
+                                ),
+                              ],
+                            ))
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ]),
-      ),
+              ],
+            ]),
+          ),
+        ),
+      ],
     );
   }
 }

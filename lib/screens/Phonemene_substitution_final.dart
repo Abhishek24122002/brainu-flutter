@@ -8,13 +8,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
-import '../components/StartRecordingButton.dart';
-import '../components/PlayAudioButton.dart';
-import '../components/ConfirmButton.dart';
+import '../components/audio_buttons.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../aws/FileUploader.dart';
+
+import '../components/appbar.dart';
+import '../components/question_container.dart';
+import '../components/start_button.dart';
 
 class Ph_substitution_final extends StatefulWidget {
   @override
@@ -47,43 +49,42 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
-    ["t", "x", "box"],
-    ["t", "r", "car"],
-    ["n", "r", "chair"],
-    ["p", "t", "cheat"],
-    ["t", "l", "coal"],
-    ["g", "m", "drum"],
-    ["t", "g", "flag"],
-    ["l", "d", "food"],
-    ["g", "m", "from"],
-    ["d", "n", "main"],
-    ["d", "p", "map"],
-    ["l", "n", "mean"],
-    ["s", "t", "mist"],
-    ["n", "d", "mood"],
-    ["d", "g", "mug"],
-    ["r", "l", "peel"],
-    ["t", "n", "plan"],
-    ["m", "s", "plus"],
-    ["r", "l", "pool"],
-    ["l", "n", "rain"],
-    ["t", "d", "red"],
-    ["t", "m", "room"],
-    ["p", "t", "shot"],
-    ["t", "m", "slim"],
-    ["r", "l", "towel"]
+      ["t", "x", "box"],
+      ["t", "r", "car"],
+      ["n", "r", "chair"],
+      ["p", "t", "cheat"],
+      ["t", "l", "coal"],
+      ["g", "m", "drum"],
+      ["t", "g", "flag"],
+      ["l", "d", "food"],
+      ["g", "m", "from"],
+      ["d", "n", "main"],
+      ["d", "p", "map"],
+      ["l", "n", "mean"],
+      ["s", "t", "mist"],
+      ["n", "d", "mood"],
+      ["d", "g", "mug"],
+      ["r", "l", "peel"],
+      ["t", "n", "plan"],
+      ["m", "s", "plus"],
+      ["r", "l", "pool"],
+      ["l", "n", "rain"],
+      ["t", "d", "red"],
+      ["t", "m", "room"],
+      ["p", "t", "shot"],
+      ["t", "m", "slim"],
+      ["r", "l", "towel"]
     ],
     "hindi": [
-      [ "kaam_dha", "kaam_k","kaam"],
-      [ "naal_da","naal_n", "naal"],
-      [ "naam_k","naam_n", "naam"],
-      [ "raja_a","raja_r", "raja"],
-      [ "shaam_k","shaam_sha", "shaam"],
+      ["kaam_dha", "kaam_k", "kaam"],
+      ["naal_da", "naal_n", "naal"],
+      ["naam_k", "naam_n", "naam"],
+      ["raja_a", "raja_r", "raja"],
+      ["shaam_k", "shaam_sha", "shaam"],
     ]
   };
 
   List<List<String>> usedWordPairs = [];
-
 
   @override
   void initState() {
@@ -240,7 +241,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     List<String> selectedPair = availableWords.removeAt(index);
     usedWordPairs.add(selectedPair);
 
-   sound1 = selectedPair[0];
+    sound1 = selectedPair[0];
     sound2 = selectedPair[1];
     word = selectedPair[2];
 
@@ -282,43 +283,45 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
   }
 
   Future<void> handleSubmit() async {
-  if (_recordingPath != null && File(_recordingPath!).existsSync()) {
-    File file = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(file);
+    if (_recordingPath != null && File(_recordingPath!).existsSync()) {
+      File file = File(_recordingPath!);
+      String? uploadedUrl = await _fileUploader.uploadFile(file);
 
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
+      if (uploadedUrl != null) {
+        print("File uploaded successfully: $uploadedUrl");
 
-      // Call the function to save the uploaded URL
-      await _firebaseSave.saveAnswer_Ph_substitution_final(uploadedUrl, _userLanguage, sound1);
+        // Call the function to save the uploaded URL
+        await _firebaseSave.saveAnswer_Ph_substitution_final(
+            uploadedUrl, _userLanguage, sound1);
 
-      setState(() {
-        questionCounter++;
-        _showGameElements = false;
-        _recordingAvailable = false;
-        isSubmitEnabled = false; // Disable confirm button until a new recording is made
-      });
+        setState(() {
+          questionCounter++;
+          _showGameElements = false;
+          _recordingAvailable = false;
+          isSubmitEnabled =
+              false; // Disable confirm button until a new recording is made
+        });
 
-      if (questionCounter == 5) {
-        iterationCounter++;
-        trophyCount++;
-        _saveTrophyCount();
-        questionCounter = 0;
-        showIterationCompleteDialog();
-      }
+        if (questionCounter == 5) {
+          iterationCounter++;
+          trophyCount++;
+          _saveTrophyCount();
+          questionCounter = 0;
+          showIterationCompleteDialog();
+        }
 
-      if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
-        generateWords();
+        if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+          generateWords();
+        } else {
+          showAllWordsDoneDialog();
+        }
       } else {
-        showAllWordsDoneDialog();
+        print("File upload failed.");
       }
     } else {
-      print("File upload failed.");
+      print("No recording available for upload.");
     }
-  } else {
-    print("No recording available for upload.");
   }
-}
 
   Future<bool> _checkForNewRecording() async {
     if (_recordingPath == null) return false;
@@ -418,314 +421,287 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: const Color.fromARGB(255, 255, 255, 255),
-        ),
-        title: Text(
-          S.of(context).game_word_game3,
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.white,
-        child: Column(children: [
-          // Question Container with shadow
-          Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Text(
-              S.of(context).phoneme_substitution_question,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
+    return Stack(
+      children: [
+        Positioned(
+          child: Image.asset(
+            'assets/img/Deletion_bg.png',
+            fit: BoxFit.cover,
           ),
-          if (!_showGameElements)
-            Container(
-              margin: EdgeInsets.all(20),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColorDark,
-                  padding: EdgeInsets.symmetric(vertical: 20), // Button height
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: SizedBox(
-                  width: double.infinity, // Full width button
-                  child: Center(
-                    child: Text(
-                      S.of(context).click_here_to_start,
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                    ),
-                  ),
-                ),
+        ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: CustomAppBar(titleKey: 'wordgame3'),
+          body: Container(
+            child: Column(children: [
+              // Question Container with shadow
+              CustomContainer(
+                text: S.of(context).phoneme_substitution_question,
               ),
-            ),
-          // Main game content
-          if (_showGameElements) ...[
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Column(
+              if (!_showGameElements)
+                StartButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                    });
+                  },
+                ),
+              // Main game content
+              if (_showGameElements) ...[
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (_userLanguage !=
-                            "hindi") // Show "Substitute" at the top for English
-                          Column(
-                            children: [
-                              Text(
-                                S.of(context).substitute,
+                        Column(
+                          children: [
+                            if (_userLanguage !=
+                                "hindi") // Show "Substitute" at the top for English
+                              Column(
+                                children: [
+                                  Text(
+                                    S.of(context).substitute,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16.0),
+                              child: RichText(
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                  children: _userLanguage == "hindi"
+                                      ? [
+                                          // Word Button (First in Hindi)
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(word),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orangeAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).Word,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          TextSpan(text: "  "),
+                                          TextSpan(text: S.of(context).In),
+                                          TextSpan(text: "  "),
+                                          // Sound1 Button
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(sound2),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.lightBlueAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).sound2,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          TextSpan(text: "  "),
+                                          TextSpan(text: S.of(context).With),
+                                          TextSpan(text: "  "),
+                                          // Sound2 Button
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(sound1),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.lightBlueAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).sound1,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          TextSpan(text: "\n\n"),
+                                          // "Substitute" at the bottom for Hindi
+                                          WidgetSpan(
+                                            child: Text(
+                                              S.of(context).substitute,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ]
+                                      : [
+                                          // Sound1 Button (English order)
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(sound1),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.lightBlueAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).sound1,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          TextSpan(text: "  "),
+                                          TextSpan(text: S.of(context).With),
+                                          TextSpan(text: "  "),
+                                          // Sound2 Button
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(sound2),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.lightBlueAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).sound2,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          TextSpan(text: "  "),
+                                          TextSpan(text: S.of(context).In),
+                                          TextSpan(text: "  "),
+                                          // Word Button (Last in English)
+                                          WidgetSpan(
+                                            alignment:
+                                                PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              onTap: () => playAudio(word),
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orangeAccent,
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(10)),
+                                                ),
+                                                child: Text(
+                                                  S.of(context).Word,
+                                                  style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                 ),
                               ),
-                              SizedBox(height: 10),
-                            ],
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                              children: _userLanguage == "hindi"
-                                  ? [
-                                      // Word Button (First in Hindi)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(word),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orangeAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).Word,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(text: "  "),
-                                      TextSpan(text: S.of(context).In),
-                                      TextSpan(text: "  "),
-                                      // Sound1 Button
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(sound2),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.lightBlueAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).sound2,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(text: "  "),
-                                      TextSpan(text: S.of(context).With),
-                                      TextSpan(text: "  "),
-                                      // Sound2 Button
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(sound1),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.lightBlueAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).sound1,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(text: "\n\n"),
-                                      // "Substitute" at the bottom for Hindi
-                                      WidgetSpan(
-                                        child: Text(
-                                          S.of(context).substitute,
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    ]
-                                  : [
-                                      // Sound1 Button (English order)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(sound1),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.lightBlueAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).sound1,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(text: "  "),
-                                      TextSpan(text: S.of(context).With),
-                                      TextSpan(text: "  "),
-                                      // Sound2 Button
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(sound2),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.lightBlueAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).sound2,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(text: "  "),
-                                      TextSpan(text: S.of(context).In),
-                                      TextSpan(text: "  "),
-                                      // Word Button (Last in English)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: GestureDetector(
-                                          onTap: () => playAudio(word),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orangeAccent,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                            ),
-                                            child: Text(
-                                              S.of(context).Word,
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 40),
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: Column(
-                          children: [
-                            StartRecordingButton(
-                              onPressed: _toggleRecording,
-                              isRecording: _isRecording,
-                            ),
-                            SizedBox(height: 15),
-                            PlayAudioButton(
-                              isEnabled: _recordingAvailable,
-                              onPressed: _isPlaying ? null : _playRecording,
-                              isPlaying: _isPlaying,
-                            ),
-                            SizedBox(height: 15),
-                            ConfirmButton(
-                              isEnabled:
-                                  _recordingAvailable, // Only enable when a new recording exists
-                              onPressed:
-                                  _recordingAvailable ? handleSubmit : null,
                             ),
                           ],
                         ),
-                      ),
+                        SizedBox(height: 20),
+                        Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 25.0, vertical: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                StartRecordingButton(
+                                  onPressed: _toggleRecording,
+                                  isRecording: _isRecording,
+                                ),
+                                SizedBox(height: 15),
+                                PlayAudioButton(
+                                  isEnabled: _recordingAvailable,
+                                  onPressed: _isPlaying ? null : _playRecording,
+                                  isPlaying: _isPlaying,
+                                ),
+                                SizedBox(height: 15),
+                                ConfirmButton(
+                                  isEnabled:
+                                      _recordingAvailable, // Only enable when a new recording exists
+                                  onPressed:
+                                      _recordingAvailable ? handleSubmit : null,
+                                ),
+                              ],
+                            ))
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ]),
-      ),
+              ],
+            ]),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -13,6 +13,7 @@ import '../firebase/firebase_services.dart'; // Import your FirebaseServices fil
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
 import '../generated/l10n.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Swap extends StatefulWidget {
   @override
@@ -145,28 +146,38 @@ class _SwapState extends State<Swap> {
     ]
   };
   Widget _buildWordContainer(String word) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 7,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Text(
-        word,
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(
+          'assets/img/Spoonerism_btn.png',
+          height: 100,
+          fit: BoxFit.contain,
         ),
-      ),
+        // Stroke
+        Text(
+          word,
+          style: GoogleFonts.fredokaOne(
+            fontSize: 32,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.bold,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 4
+              ..color = Color(0xFF4C1C07), // Stroke color
+          ),
+        ),
+        // Fill
+        Text(
+          word,
+          style: GoogleFonts.fredokaOne(
+            fontSize: 32,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF954305), // Fill color
+          ),
+        ),
+      ],
     );
   }
 
@@ -451,43 +462,59 @@ class _SwapState extends State<Swap> {
               // Main game content
               if (_showGameElements)
                 Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    children: [
+                      // Positioning the two boards slightly upward and aligned to left/right
+                      // Left board (shift word slightly right and down)
+                      Positioned(
+                        top: MediaQuery.of(context).size.height * 0.15,
+                        left: 0,
+                        child: GestureDetector(
+                          onTap: () => playAudio(word3),
+                          child: _buildWordContainer(word1),
+                        ),
+                      ),
+
+// Right board (shift word slightly left and down)
+                      Positioned(
+                        top: MediaQuery.of(context).size.height * 0.15,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () => playAudio(word4),
+                          child: _buildWordContainer(word2),
+                        ),
+                      ),
+
+                      // Center options below boards
+                      Align(
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            GestureDetector(
-                              onTap: () => playAudio(word3),
-                              child: _buildWordContainer(word1),
+                            SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.25),
+                            Wrap(
+                              spacing: 20,
+                              alignment: WrapAlignment.center,
+                              children: options.map((option) {
+                                return OptionButton(
+                                  index: options.indexOf(option) + 1,
+                                  isSelected: selectedOption == option,
+                                  clickCount: clickCountMap[option] ?? 0,
+                                  onPressed: () => handleClick(option),
+                                );
+                              }).toList(),
                             ),
-                            SizedBox(width: 30),
-                            GestureDetector(
-                              onTap: () => playAudio(word4),
-                              child: _buildWordContainer(word2),
+                            SizedBox(height: 20),
+                            SubmitButton(
+                              isEnabled: isSubmitEnabled,
+                              onPressed: handleSubmit,
                             ),
                           ],
                         ),
-                        SizedBox(height: 20),
-                        Wrap(
-                          spacing: 20,
-                          children: options.map((option) {
-                            return OptionButton(
-                              index: options.indexOf(option) + 1,
-                              isSelected: selectedOption == option,
-                              clickCount: clickCountMap[option] ?? 0,
-                              onPressed: () => handleClick(option),
-                            );
-                          }).toList(),
-                        ),
-                        SizedBox(height: 20),
-                        SubmitButton(
-                          isEnabled: isSubmitEnabled,
-                          onPressed: handleSubmit,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
             ],
