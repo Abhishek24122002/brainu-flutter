@@ -62,7 +62,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "phoneme_deletion_question": MessageLookupByLibrary.simpleMessage(
             "ब्रेनु को यह बताने में मदद करें कि दिए गए शब्द से विशिष्ट ध्वनि निकालने के बाद शेष शब्द क्या होगा। ऑडियो सुनने के लिए ध्वनि और शब्द पर टैप करें।"),
         "phoneme_substitution_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू को यह बताने में मदद करें कि दिए गए शब्द में ध्वनि 1 को ध्वनि 2 के साथ बदले तो नया शब्द क्या होगा | \n ऑडियो के लिए बोर्ड पर ध्वनि 1, ध्वनि 2 और शब्द आइकन पर टैप करें।"),
+            "ब्रेनू को यह बताने में मदद करें कि दिए गए शब्द में ध्वनि 1 को ध्वनि 2 के साथ बदले तो नया शब्द क्या होगा | \n ऑडियो के लिए  ध्वनि 1, ध्वनि 2 और शब्द आइकन पर टैप करें।"),
         "play_audio": MessageLookupByLibrary.simpleMessage("ऑडियो सुने"),
         "ran_question": MessageLookupByLibrary.simpleMessage(
             "बोर्ड पर लगी पर्चियों को समझने में ब्रेनु की मदद कीजिये । इन पर्चियों पर दिखी जाने वाली चिजों को बाएं से दाये सही सही जोर से और जल्दी से पढ़े। "),

@@ -160,20 +160,20 @@ class S {
     );
   }
 
-  /// `Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons one the board to listen to the audio.`
+  /// `Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons to listen to the audio.`
   String get phoneme_deletion_question {
     return Intl.message(
-      'Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons one the board to listen to the audio.',
+      'Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons to listen to the audio.',
       name: 'phoneme_deletion_question',
       desc: '',
       args: [],
     );
   }
 
-  /// `Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons on the board for audio.`
+  /// `Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons for audio.`
   String get phoneme_substitution_question {
     return Intl.message(
-      'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons on the board for audio.',
+      'Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons for audio.',
       name: 'phoneme_substitution_question',
       desc: '',
       args: [],

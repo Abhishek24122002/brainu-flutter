@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../aws/FileUploader.dart';
+import '../components/WoodenButton.dart';
 import '../components/appbar.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
@@ -412,49 +413,87 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // REMOVE - Orange Container
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  S.of(context).Remove,
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white),
-                                ),
-                              ),
-
-                              // SOUND - Wooden Button
-                              AnimatedWoodenButton(
-                                label: S.of(context).sound,
-                                onPressed: () => playAudio(word2),
-                              ),
-
-                              // FROM THE - Orange Container
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  S.of(context).from_the,
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white),
-                                ),
-                              ),
-
-                              // WORD - Wooden Button
-                              AnimatedWoodenButton(
-                                label: S.of(context).Word,
-                                onPressed: () => playAudio(word1),
-                              ),
-                            ],
+                            children: _userLanguage == "hindi"
+                                ? [
+                                    // Hindi order: Word → From → Sound → Remove
+                                    AnimatedWoodenButton(
+                                      label: S.of(context).Word,
+                                      onPressed: () => playAudio(word1),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        S.of(context).from_the,
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    AnimatedWoodenButton(
+                                      label: S.of(context).sound,
+                                      onPressed: () => playAudio(word2),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        S.of(context).Remove,
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                    ),
+                                  ]
+                                : [
+                                    // Default order: Remove → Sound → From → Word
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        S.of(context).Remove,
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    AnimatedWoodenButton(
+                                      label: S.of(context).sound,
+                                      onPressed: () => playAudio(word2),
+                                    ),
+                                    SizedBox(height: 10),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        S.of(context).from_the,
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    AnimatedWoodenButton(
+                                      label: S.of(context).Word,
+                                      onPressed: () => playAudio(word1),
+                                    ),
+                                  ],
                           ),
                         ),
                         SizedBox(height: 10),
@@ -496,74 +535,3 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   }
 }
 
-class AnimatedWoodenButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onPressed;
-
-  const AnimatedWoodenButton({required this.label, required this.onPressed});
-
-  @override
-  _AnimatedWoodenButtonState createState() => _AnimatedWoodenButtonState();
-}
-
-class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
-    with SingleTickerProviderStateMixin {
-  double _scale = 1.0;
-
-  void _onTapDown(TapDownDetails details) async {
-    setState(() {
-      _scale = 0.9;
-    });
-
-    // Vibrate using vibration package
-    if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 40); // light tap vibration
-    }
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    setState(() {
-      _scale = 1.0;
-    });
-    widget.onPressed();
-  }
-
-  void _onTapCancel() {
-    setState(() {
-      _scale = 1.0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedScale(
-        scale: _scale,
-        duration: Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset(
-              'assets/img/Wooden_btn.png',
-              height: 80,
-              width: 160,
-              fit: BoxFit.contain,
-            ),
-            Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

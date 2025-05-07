@@ -174,7 +174,7 @@ class _SwapState extends State<Swap> {
             fontSize: 32,
             letterSpacing: 1.5,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF954305), // Fill color
+            color: Color.fromARGB(255, 227, 122, 42), // Fill color
           ),
         ),
       ],

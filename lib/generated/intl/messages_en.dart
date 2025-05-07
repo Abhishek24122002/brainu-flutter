@@ -58,9 +58,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "paragraph_reading_question": MessageLookupByLibrary.simpleMessage(
             "Brainu wants to listen to a story but he is not able to read. But you can help him! Please read out the short story from his story book. It will appear after you tap Start."),
         "phoneme_deletion_question": MessageLookupByLibrary.simpleMessage(
-            "Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons one the board to listen to the audio."),
+            "Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons to listen to the audio."),
         "phoneme_substitution_question": MessageLookupByLibrary.simpleMessage(
-            "Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons on the board for audio."),
+            "Help Brainu by telling him what new word will be formed when sound 1 is substituted with sound 2 in the given word. \nTap on sound 1, sound 2, and word icons for audio."),
         "play_audio": MessageLookupByLibrary.simpleMessage("Play Audio"),
         "ran_question": MessageLookupByLibrary.simpleMessage(
             "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can."),
