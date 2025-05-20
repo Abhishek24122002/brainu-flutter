@@ -316,6 +316,7 @@ class _ListenState extends State<Listen> {
                               ),
                             ),
                           ),
+                          SizedBox(height: 10),
                           Column(
                             children: [
                               ElevatedButton(
@@ -327,7 +328,9 @@ class _ListenState extends State<Listen> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
-                                      Color(0xFFE40808), // Red color
+                                      Color(0xFFE40808),
+                                       padding: EdgeInsets.symmetric(horizontal: 22, vertical: 10), // Padding // Red color
+                                      
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -335,7 +338,8 @@ class _ListenState extends State<Listen> {
                                 child: Text(
                                   "Clear",
                                   style: TextStyle(
-                                      color: Colors.white), // White text
+                                      color: Colors.white, fontSize: 20),
+                                       // White text
                                 ),
                               ),
                               SizedBox(height: 10),

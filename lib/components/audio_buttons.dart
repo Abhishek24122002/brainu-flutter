@@ -88,14 +88,27 @@ class CustomImageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    print('Screen width: $screenWidth'); // Temporary screen width check
+
+    final horizontalMargin = screenWidth * 0.03;
+    final isSmallScreen = screenWidth < 370;
+    final buttonHeight = isSmallScreen ? 40.0 : 60.0;
+    final fontSize = isSmallScreen ? 16.0 : 22.0;
+    final iconSize = isSmallScreen ? 20.0 : 28.0;
+    final verticalSpacing = isSmallScreen ? 3.0 : 8.0;
+
     return GestureDetector(
       onTap: onPressed,
       child: Opacity(
         opacity: onPressed != null ? 1.0 : 0.5,
         child: Container(
-          width: double.infinity,
-          height: 55,
-          margin: const EdgeInsets.symmetric(vertical: 6),
+          width: screenWidth - 2 * horizontalMargin,
+          height: buttonHeight,
+          margin: EdgeInsets.symmetric(
+            vertical: verticalSpacing,
+            horizontal: horizontalMargin,
+          ),
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(imagePath),
@@ -106,15 +119,15 @@ class CustomImageButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: Colors.white),
-                const SizedBox(width: 10),
+                Icon(icon, color: Colors.white, size: iconSize),
+                const SizedBox(width: 8),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 20,
+                  style: TextStyle(
+                    fontSize: fontSize,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
-                    shadows: [Shadow(blurRadius: 2, color: Colors.black)],
+                    shadows: const [Shadow(blurRadius: 2, color: Colors.black)],
                   ),
                 ),
               ],

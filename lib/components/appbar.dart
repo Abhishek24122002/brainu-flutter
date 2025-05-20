@@ -13,10 +13,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      // toolbarHeight: 60,
       backgroundColor: Colors.white.withOpacity(0.3),
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color: Color(0xFF7B2F00)),
+      iconTheme: IconThemeData(
+        color: Color(0xFF7B2F00),
+        size: 28, 
+      ),
       title: Stack(
         children: [
           Text(
@@ -55,7 +59,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       case 'word':
         return s.Word;
-      
+
       case 'listen':
         return s.game_listen;
 
@@ -64,7 +68,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       case 'story':
         return s.game_story;
-      
+
       case 'spoonerism':
         return s.game_swapping;
 

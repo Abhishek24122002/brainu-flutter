@@ -362,51 +362,71 @@ class _LetterState extends State<Letter> {
                 ),
               if (_showGameElements)
                 Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/img/Letter_brainu.png',
-                            width: 220,
-                            height: 220,
-                            fit: BoxFit.contain,
-                          ),
-                          Positioned(
-                            bottom: 20,
-                            child: Text(
-                              question.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 60,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF7B2F00),
-                                backgroundColor: Colors.white.withOpacity(1),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Wrap(
-                        spacing: 20,
-                        children: options.asMap().entries.map((entry) {
-                          int index = entry.key + 1;
-                          String option = entry.value;
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      double screenWidth = constraints.maxWidth;
+                      double imageSize =
+                          screenWidth * 0.55; // Scales for tablet
+                      double fontSize =
+                          screenWidth * 0.15; // Responsive font size
+                      double spacing =
+                          screenWidth * 0.04; // Spacing between options
 
-                          return OptionButton(
-                            index: index,
-                            isSelected: selectedOption == option,
-                            clickCount: clickCountMap[option] ?? 0,
-                            onPressed: () => handleClick(option),
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 20),
-                      SubmitButton(
-                          isEnabled: isSubmitEnabled, onPressed: handleSubmit),
-                    ],
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/img/Letter_brainu.png',
+                                  width: imageSize,
+                                  height: imageSize,
+                                  fit: BoxFit.contain,
+                                ),
+                                Positioned(
+                                  bottom: 20,
+                                  child: Text(
+                                    question.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF7B2F00),
+                                      backgroundColor:
+                                          Colors.white.withOpacity(1),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: spacing),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: spacing,
+                              runSpacing: spacing / 2,
+                              children: options.asMap().entries.map((entry) {
+                                int index = entry.key + 1;
+                                String option = entry.value;
+
+                                return OptionButton(
+                                  index: index,
+                                  isSelected: selectedOption == option,
+                                  clickCount: clickCountMap[option] ?? 0,
+                                  onPressed: () => handleClick(option),
+                                );
+                              }).toList(),
+                            ),
+                            SizedBox(height: spacing),
+                            SubmitButton(
+                              isEnabled: isSubmitEnabled,
+                              onPressed: handleSubmit,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
             ],

@@ -37,39 +37,46 @@ class OptionButton extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      child: Container(
-        width: 90,
-        height: 90,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset(
-              getImageAsset(),
-              width: 90,
-              height: 90,
-              fit: BoxFit.contain,
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
+
+  // Adjust button size relative to screen width (and optionally height)
+  double buttonSize = screenWidth * 0.2; // 20% of screen width
+  buttonSize = buttonSize.clamp(60.0, 100.0); // Clamp to a reasonable range
+
+  return GestureDetector(
+    onTap: _handleTap,
+    child: Container(
+      width: buttonSize,
+      height: buttonSize,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            getImageAsset(),
+            width: buttonSize,
+            height: buttonSize,
+            fit: BoxFit.contain,
+          ),
+          Text(
+            '$index',
+            style: TextStyle(
+              fontSize: buttonSize * 0.35, // Scales text size
+              fontWeight: FontWeight.bold,
+              color: getTextColor(),
+              shadows: [
+                Shadow(
+                  offset: Offset(1, 1),
+                  blurRadius: 2,
+                  color: Colors.black26,
+                ),
+              ],
             ),
-            Text(
-              '$index',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: getTextColor(),
-                shadows: [
-                  Shadow(
-                    offset: Offset(1, 1),
-                    blurRadius: 2,
-                    color: Colors.black26,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

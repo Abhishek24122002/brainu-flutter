@@ -234,8 +234,8 @@ class _IdentifyState extends State<Identify> {
                 Column(
                   children: [
                     Container(
-                      margin: EdgeInsets.all(15),
-                      padding: EdgeInsets.all(15),
+                      margin: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                      padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Color(0xFF00AAB3),
                         borderRadius: BorderRadius.circular(10),
@@ -247,8 +247,8 @@ class _IdentifyState extends State<Identify> {
                         shrinkWrap: true,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 5,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
                         ),
                         itemCount: _images.length,
                         itemBuilder: (context, index) {
@@ -271,13 +271,13 @@ class _IdentifyState extends State<Identify> {
                         },
                       ),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 5),
 
                     // Buttons for recording and submitting answers
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 20),
-                      child: Column(
+                    
+                      // padding: const EdgeInsets.symmetric(
+                      //     horizontal: 25.0, vertical: 20),
+                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           StartRecordingButton(
@@ -295,7 +295,7 @@ class _IdentifyState extends State<Identify> {
                           ),
                         ],
                       ),
-                    ),
+                    
                   ],
                 ),
             ],

@@ -397,23 +397,22 @@ class _WordState extends State<Word> {
                     const SizedBox(height: 20),
 
                     Expanded(
-                      child: Column(
-                        children: [
-                          const Spacer(
-                              flex: 3), // Push the word slightly upward
-                          Text(
-                            currentWord,
-                            style: const TextStyle(
-                              fontSize: 60,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF7B2F00),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const Spacer(flex: 5), // More space below
-                        ],
-                      ),
-                    ),
+  child: Center(
+    child: Transform.translate(
+      offset: Offset(0, -20), // Move word 40 pixels upward
+      child: Text(
+        currentWord,
+        style: const TextStyle(
+          fontSize: 50,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF7B2F00),
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ),
+  ),
+),
+
 
                     // ✅ Buttons aligned to bottom
                     Padding(

@@ -251,7 +251,7 @@ class _StoryState extends State<Story> {
                     ),
                   ),
 
-                const SizedBox(height: 20),
+                // const SizedBox(height: 10),
 
                 // Start Button
                 if (!_showGameElements)
@@ -269,13 +269,13 @@ class _StoryState extends State<Story> {
                     onPressed: _toggleRecording,
                     isRecording: _isRecording,
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 3),
                   PlayAudioButton(
                     onPressed: _isPlaying ? null : _playRecording,
                     isPlaying: _isPlaying,
                     isEnabled: _recordingPath != null,
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 3),
                   ConfirmButton(
                     onPressed: _recordingAvailable ? _confirmStory : null,
                     isEnabled: _recordingAvailable,

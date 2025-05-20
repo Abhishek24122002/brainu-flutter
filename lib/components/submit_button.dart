@@ -23,12 +23,12 @@ class SubmitButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(80), // pill shape
         ),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 120),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 120),
       ),
       child: Text(
         S.of(context).submit,
         style: const TextStyle(
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
         ),
