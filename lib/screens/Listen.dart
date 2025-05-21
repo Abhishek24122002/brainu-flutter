@@ -261,7 +261,7 @@ class _ListenState extends State<Listen> {
               child: Column(
                 children: [
                   CustomContainer(text: S.of(context).dictation_consonent),
-                  SizedBox(height: 20),
+                  SizedBox(height: 5),
                   if (!_showGameElements)
                     StartButton(
                       onPressed: () {
@@ -275,7 +275,9 @@ class _ListenState extends State<Listen> {
                     Expanded(
                       child: Column(
                         children: [
-                          Expanded(
+                          AspectRatio(
+                            aspectRatio:
+                                4 / 3, // Adjust based on desired canvas shape
                             child: GestureDetector(
                               onPanUpdate: (details) {
                                 setState(() {
@@ -296,27 +298,27 @@ class _ListenState extends State<Listen> {
                                   _isDrawingDone = hasMeaningfulDrawing;
                                 });
                               },
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/img/board.png',
-                                    fit: BoxFit.contain,
-                                  ),
-                                  RepaintBoundary(
-                                    key: _canvasKey,
-                                    child: CustomPaint(
+                              child: RepaintBoundary(
+                                key: _canvasKey,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.asset(
+                                      'assets/img/board.png',
+                                      fit: BoxFit.fill,
+                                    ),
+                                    CustomPaint(
                                       painter: CanvasPainter(_points),
                                       child: Container(
                                         color: Colors.transparent,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          SizedBox(height: 10),
+                          SizedBox(height: 5),
                           Column(
                             children: [
                               ElevatedButton(
@@ -327,10 +329,11 @@ class _ListenState extends State<Listen> {
                                   });
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Color(0xFFE40808),
-                                       padding: EdgeInsets.symmetric(horizontal: 22, vertical: 10), // Padding // Red color
-                                      
+                                  backgroundColor: Color(0xFFE40808),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5), // Padding // Red color
+
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -338,11 +341,11 @@ class _ListenState extends State<Listen> {
                                 child: Text(
                                   "Clear",
                                   style: TextStyle(
-                                      color: Colors.white, fontSize: 20),
-                                       // White text
+                                      color: Colors.white, fontSize: 18),
+                                  // White text
                                 ),
                               ),
-                              SizedBox(height: 10),
+                              
                               SubmitButton(
                                 isEnabled: _isDrawingDone,
                                 onPressed: _onSubmit,

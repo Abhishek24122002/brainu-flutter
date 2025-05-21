@@ -422,10 +422,10 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                       label: S.of(context).Word,
                                       onPressed: () => playAudio(word1),
                                     ),
-                                    SizedBox(height: 10),
+                                    SizedBox(height: 5),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
+                                          horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -436,7 +436,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             fontSize: 18, color: Colors.white),
                                       ),
                                     ),
-                                    SizedBox(height: 10),
+                                    SizedBox(height: 5),
                                     AnimatedWoodenButton(
                                       label: S.of(context).sound,
                                       onPressed: () => playAudio(word2),
@@ -444,7 +444,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                     SizedBox(height: 10),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
+                                          horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -460,7 +460,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                     // Default order: Remove → Sound → From → Word
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
+                                          horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -471,12 +471,12 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             fontSize: 18, color: Colors.white),
                                       ),
                                     ),
-                                    SizedBox(height: 10),
+                                    SizedBox(height: 5),
                                     AnimatedWoodenButton(
                                       label: S.of(context).sound,
                                       onPressed: () => playAudio(word2),
                                     ),
-                                    SizedBox(height: 10),
+                                    SizedBox(height: 5),
                                     Container(
                                       padding: EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 10),
@@ -498,10 +498,10 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                   ],
                           ),
                         ),
-                        SizedBox(height: 10),
+                       
                         Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 25.0, vertical: 20),
+                                horizontal: 25.0, vertical: 1),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -509,13 +509,13 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                   onPressed: _toggleRecording,
                                   isRecording: _isRecording,
                                 ),
-                                SizedBox(height: 5),
+                               
                                 PlayAudioButton(
                                   isEnabled: _recordingAvailable,
                                   onPressed: _isPlaying ? null : _playRecording,
                                   isPlaying: _isPlaying,
                                 ),
-                                SizedBox(height: 5),
+                                
                                 ConfirmButton(
                                   isEnabled:
                                       _recordingAvailable, // Only enable when a new recording exists

@@ -518,7 +518,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                 : [
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
+                                          horizontal: 10, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -535,7 +535,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
+                                          horizontal: 10, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -552,7 +552,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 15, vertical: 5),
+                                          horizontal: 15, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
