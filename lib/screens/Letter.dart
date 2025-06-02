@@ -254,6 +254,15 @@ class _LetterState extends State<Letter> {
     questionIndex++;
   }
 
+  String getHindiCharacterFromOption(String option) {
+    for (var pair in hindiWordPairs) {
+      if (pair[1] == option) {
+        return pair[0]; // Return the Hindi character
+      }
+    }
+    return option; // fallback
+  }
+
   late List<List<String>> wordPairs = englishWordPairs; // Default is English
 
   Future<void> _fetchUserLanguage() async {
@@ -264,8 +273,13 @@ class _LetterState extends State<Letter> {
     });
   }
 
-  Future<void> saveAnswer_Letter(bool isCorrect) async {
-    await _firebaseSave.saveAnswer_Letter(question, isCorrect, userLanguage);
+  Future<void> saveAnswer_Letter(bool isCorrect, String? selectedOption) async {
+    String optionToSend = selectedOption!;
+    if (userLanguage == "hindi") {
+      optionToSend = getHindiCharacterFromOption(selectedOption);
+    }
+    await _firebaseSave.saveAnswer_Letter(
+        question, isCorrect, optionToSend, userLanguage);
   }
 
   void handleClick(String option) {
@@ -296,7 +310,7 @@ class _LetterState extends State<Letter> {
 
   void handleSubmit() {
     bool isCorrect = selectedOption == wordPairs[questionIndex - 1][1];
-    saveAnswer_Letter(isCorrect);
+    saveAnswer_Letter(isCorrect, selectedOption);
 
     setState(() {
       questionCounter++;

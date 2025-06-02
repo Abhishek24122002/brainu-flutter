@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -456,7 +457,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(vertical: 5.0),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -468,7 +469,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
+                                          horizontal: 20, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -476,7 +477,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       child: Text(
                                         S.of(context).In,
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -485,7 +486,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
+                                          horizontal: 20, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -493,7 +494,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       child: Text(
                                         S.of(context).With,
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -503,7 +504,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                     SizedBox(height: 10),
                                     Container(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
+                                          horizontal: 20, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.orange,
                                         borderRadius: BorderRadius.circular(10),
@@ -511,7 +512,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       child: Text(
                                         S.of(context).substitute,
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                   ]
@@ -526,7 +527,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       child: Text(
                                         S.of(context).substitute,
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -543,7 +544,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       child: Text(
                                         S.of(context).With,
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -559,8 +560,9 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       ),
                                       child: Text(
                                         S.of(context).In,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                        // style: TextStyle(
+                                        //     fontSize: 18, color: Colors.white),
+                                        style: TextStyle(fontSize: 70.sp, color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(

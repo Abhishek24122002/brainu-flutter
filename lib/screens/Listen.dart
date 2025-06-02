@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../components/appbar.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
@@ -244,124 +245,120 @@ class _ListenState extends State<Listen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Listen_bg.png',
-            fit: BoxFit.cover,
-          ),
+    return Stack(children: [
+      Positioned.fill(
+        child: Image.asset(
+          'assets/img/Listen_bg.png',
+          fit: BoxFit.cover,
         ),
-        Scaffold(
-          backgroundColor: Colors.transparent, // Important!
-          appBar: CustomAppBar(titleKey: 'listen'),
-          body: Container(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  CustomContainer(text: S.of(context).dictation_consonent),
-                  SizedBox(height: 5),
-                  if (!_showGameElements)
-                    StartButton(
-                      onPressed: () {
-                        setState(() {
-                          _showGameElements = true;
-                        });
-                        _playNextWordAudio();
-                      },
-                    ),
-                  if (_showGameElements)
-                    Expanded(
-                      child: Column(
-                        children: [
-                          AspectRatio(
-                            aspectRatio:
-                                4 / 3, // Adjust based on desired canvas shape
-                            child: GestureDetector(
-                              onPanUpdate: (details) {
-                                setState(() {
-                                  RenderBox renderBox = _canvasKey
-                                      .currentContext!
-                                      .findRenderObject() as RenderBox;
-                                  _points.add(renderBox
-                                      .globalToLocal(details.globalPosition));
-                                });
-                              },
-                              onPanEnd: (_) {
-                                _points.add(Offset.zero);
-                                bool hasMeaningfulDrawing = _points
-                                        .where((p) => p != Offset.zero)
-                                        .length >
-                                    2;
-                                setState(() {
-                                  _isDrawingDone = hasMeaningfulDrawing;
-                                });
-                              },
-                              child: RepaintBoundary(
-                                key: _canvasKey,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Image.asset(
-                                      'assets/img/board.png',
-                                      fit: BoxFit.fill,
+      ),
+      Scaffold(
+        backgroundColor: Colors.transparent, // Important!
+        appBar: CustomAppBar(titleKey: 'listen'),
+        body: Container(
+          child: Column(
+            children: [
+              CustomContainer(text: S.of(context).dictation_consonent),
+              SizedBox(height: 5),
+              if (!_showGameElements)
+                StartButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGameElements = true;
+                    });
+                    _playNextWordAudio();
+                  },
+                ),
+              if (_showGameElements)
+                Expanded(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 25.w, vertical: 8.h),
+                        child: AspectRatio(
+                          aspectRatio: 4 / 3,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              setState(() {
+                                RenderBox renderBox = _canvasKey.currentContext!
+                                    .findRenderObject() as RenderBox;
+                                _points.add(renderBox
+                                    .globalToLocal(details.globalPosition));
+                              });
+                            },
+                            onPanEnd: (_) {
+                              _points.add(Offset.zero);
+                              bool hasMeaningfulDrawing = _points
+                                      .where((p) => p != Offset.zero)
+                                      .length >
+                                  2;
+                              setState(() {
+                                _isDrawingDone = hasMeaningfulDrawing;
+                              });
+                            },
+                            child: RepaintBoundary(
+                              key: _canvasKey,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.asset(
+                                    'assets/img/board.png',
+                                    fit: BoxFit.fill,
+                                  ),
+                                  CustomPaint(
+                                    painter: CanvasPainter(_points),
+                                    child: Container(
+                                      color: Colors.transparent,
                                     ),
-                                    CustomPaint(
-                                      painter: CanvasPainter(_points),
-                                      child: Container(
-                                        color: Colors.transparent,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Column(
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _points.clear();
-                                    _isDrawingDone = false;
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFFE40808),
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5), // Padding // Red color
+                        ),
+                      ),
+                      
+                      Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _points.clear();
+                                _isDrawingDone = false;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFFE40808),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5), // Padding // Red color
 
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Text(
-                                  "Clear",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18),
-                                  // White text
-                                ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              
-                              SubmitButton(
-                                isEnabled: _isDrawingDone,
-                                onPressed: _onSubmit,
-                              ),
-                            ],
+                            ),
+                            child: Text(
+                              "Clear",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
+                              // White text
+                            ),
+                          ),
+                          SubmitButton(
+                            isEnabled: _isDrawingDone,
+                            onPressed: _onSubmit,
                           ),
                         ],
                       ),
-                    ),
-                ],
-              ),
-            ),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 }
 

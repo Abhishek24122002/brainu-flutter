@@ -228,10 +228,10 @@ class _StoryState extends State<Story> {
                       child: ScrollbarTheme(
                         data: ScrollbarThemeData(
                           thumbColor:
-                              MaterialStateProperty.all(Colors.brown[400]),
+                              MaterialStateProperty.all(Color.fromARGB(154, 141, 110, 99)),
                           trackColor:
                               MaterialStateProperty.all(Colors.brown[100]),
-                          thickness: MaterialStateProperty.all(6),
+                          thickness: MaterialStateProperty.all(5),
                           radius: Radius.circular(10),
                         ),
                         child: Scrollbar(

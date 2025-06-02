@@ -89,7 +89,7 @@ class CustomImageButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    print('Screen width: $screenWidth'); // Temporary screen width check
+    
 
     final horizontalMargin = screenWidth * 0.03;
     final isSmallScreen = screenWidth < 370;

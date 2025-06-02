@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -49,53 +50,58 @@ class _BrainUAppState extends State<BrainUApp> {
   }
 
   Future<void> _fetchUserLanguage() async {
-  User? user = FirebaseAuth.instance.currentUser;
+    User? user = FirebaseAuth.instance.currentUser;
 
-  if (user != null) {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(user.uid)
-          .get();
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection("users")
+            .doc(user.uid)
+            .get();
 
-      if (userDoc.exists) {
-        String language = userDoc.get("language") ?? "en";
+        if (userDoc.exists) {
+          String language = userDoc.get("language") ?? "en";
 
-        // Mapping languages properly
-        Map<String, String> languageMap = {
-          "Hindi": "hi",
-          "English": "en",
-          "Spanish": "es",
-          "French": "fr",
-        };
+          Map<String, String> languageMap = {
+            "Hindi": "hi",
+            "English": "en",
+            "Spanish": "es",
+            "French": "fr",
+          };
 
-        String mappedLanguage = languageMap[language] ?? language;
+          String mappedLanguage = languageMap[language] ?? language;
 
-        setLocale(Locale(mappedLanguage));
-        print("Fetched language: $language, Mapped to: $mappedLanguage");
+          setLocale(Locale(mappedLanguage));
+          print("Fetched language: $language, Mapped to: $mappedLanguage");
+        }
+      } catch (e) {
+        print("Error fetching user language: $e");
       }
-    } catch (e) {
-      print("Error fetching user language: $e");
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'BrainU App',
-      theme: ThemeData(primarySwatch: Colors.brown),
-      locale: _locale,
-      supportedLocales: S.delegate.supportedLocales,
-      localizationsDelegates: [
-        S.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: widget.storedUid != null ? LevelSelectionScreen() : LoginPage(),
+    return ScreenUtilInit(
+      designSize: Size(1440, 1024), // Match this to your design mockup
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'BrainU App',
+          theme: ThemeData(primarySwatch: Colors.brown),
+          locale: _locale,
+          supportedLocales: S.delegate.supportedLocales,
+          localizationsDelegates: [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: widget.storedUid != null ? LevelSelectionScreen() : LoginPage(),
+        );
+      },
     );
   }
 }

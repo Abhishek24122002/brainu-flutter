@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../generated/l10n.dart'; // Import localization file
 
@@ -9,20 +10,17 @@ class CustomContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dynamicFontSize = screenWidth * 0.004; 
-
     return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(32.w),
+      margin: EdgeInsets.all(40.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.all(Radius.circular(10.r)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 7,
+            spreadRadius: 40.r,
+            blurRadius: 50.r,
             offset: const Offset(0, 3),
           ),
         ],
@@ -32,7 +30,7 @@ class CustomContainer extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.fredokaOne(
           textStyle: TextStyle(
-            fontSize: dynamicFontSize.clamp(14.0, 24.0), // min 16, max 28
+            fontSize: 60.sp, // Responsive font size
             fontWeight: FontWeight.bold,
             color: const Color.fromARGB(255, 138, 58, 9),
           ),

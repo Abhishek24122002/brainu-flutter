@@ -111,49 +111,65 @@ class _IdentifyState extends State<Identify> {
   }
 
   Future<void> _uploadAudioAndNavigate() async {
-    setState(() {
-      _iteration++;
-      _showGameElements = false;
-    });
-    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No recording found!")),
-      );
-      return;
-    }
+  setState(() {
+    _iteration++;
+    _showGameElements = false;
+  });
 
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-    if (uploadedUrl != null) {
-      print("Audio uploaded: $uploadedUrl");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload successful!")),
-      );
-
-      await _firebaseSave.saveAnswer_Identify(
-          uploadedUrl, userLanguage, _imageNamesString);
-
-      // Determine the max number of iterations allowed based on the language
-      int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
-
-      if (_iteration < maxIterations) {
-        _randomizeImages(); // Refresh with new iteration images
-      } else {
-        // Navigate to Level Selection Screen after all iterations
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LevelSelectionScreen(),
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload failed! Please try again.")),
-      );
-    }
+  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("No recording found!")),
+    );
+    return;
   }
+
+  File audioFile = File(_recordingPath!);
+  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+  if (uploadedUrl != null) {
+    print("Audio uploaded: $uploadedUrl");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Upload successful!")),
+    );
+
+    
+
+    // Extract just the names from the asset paths
+List<String> imageNamesForKey = _images.map((path) {
+  String name = path.split('_r_').last.replaceAll('.png', '');
+  return name;
+}).toList();
+
+String iterationKey = "iteration${_iteration}"; 
+
+// Save to Firebase as a proper JSON object
+await _firebaseSave.saveAnswer_Identify(
+  userLanguage,
+  iterationKey,
+  imageNamesForKey,
+  uploadedUrl
+);
+
+
+
+    // Determine max iterations based on language
+    int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
+
+    if (_iteration < maxIterations) {
+      _randomizeImages();
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+      );
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Upload failed! Please try again.")),
+    );
+  }
+}
+
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {

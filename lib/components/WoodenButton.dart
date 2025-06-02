@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vibration/vibration.dart';
 
 class AnimatedWoodenButton extends StatefulWidget {
@@ -20,9 +21,9 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
       _scale = 0.9;
     });
 
-    // Vibrate using vibration package
+    // Vibrate on press
     if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 40); // light tap vibration
+      Vibration.vibrate(duration: 40);
     }
   }
 
@@ -54,14 +55,14 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
           children: [
             Image.asset(
               'assets/img/Wooden_btn.png',
-              height: 60,
-              width: 160,
+              height: 60.h,   // Responsive height
+              width: 560.w,   // Responsive width
               fit: BoxFit.contain,
             ),
             Text(
               widget.label,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 84.sp,              // Responsive font
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

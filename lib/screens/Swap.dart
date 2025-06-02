@@ -255,8 +255,6 @@ class _SwapState extends State<Swap> {
     setState(() {
       options = optionsList;
     });
-
-    print('Generated options (shuffled): $options');
   }
 
 //using language variable
@@ -302,19 +300,24 @@ class _SwapState extends State<Swap> {
     });
   }
 
-  Future<void> _storeAnswer(String correctAnswer, bool isCorrect) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  Future<void> _storeAnswer(String correct, bool isCorrect, String selectedOption) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    String userId = user.uid;
+  String userId = user.uid;
+  String correct_option = correct + "_selected_option";
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(userId)
-        .collection("6 Swapping")
-        .doc(_userLanguage) // Store answer under the correct language
-        .set({correctAnswer: isCorrect}, SetOptions(merge: true));
-  }
+  // Remove `.wav` from selectedOption before storing
+  String selectedOptionWithoutWav = selectedOption.replaceAll(".wav", "");
+
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc(userId)
+      .collection("6 Swapping")
+      .doc(_userLanguage) // Store answer under the correct language
+      .set({correct: isCorrect, correct_option: selectedOptionWithoutWav}, SetOptions(merge: true));
+}
+
 
   void handleSubmit() async {
     String correctAnswer = '$correct.wav';
@@ -327,7 +330,7 @@ class _SwapState extends State<Swap> {
     }
 
     // Store answer in Firebase
-    await _storeAnswer(correctAnswer, isCorrect);
+    await _storeAnswer(correct, isCorrect, selectedOption!);
 
     setState(() {
       questionCounter++;
