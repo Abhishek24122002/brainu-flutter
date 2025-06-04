@@ -1,3 +1,4 @@
+import 'package:brainu/Authentication/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -127,6 +128,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             setState(() {
                               _passwordValidated = false;
                             });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                      'Password must be 8–15 characters, include upper/lowercase, number, and symbol')),
+                            );
                             return;
                           }
 
@@ -138,26 +144,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             return;
                           }
 
-                          try {
-                            int? age = int.tryParse(ageController.text.trim());
-                            if (age == null || age <= 0) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('Please enter a valid age.')),
-                              );
-                              return;
-                            }
+                          int? age = int.tryParse(ageController.text.trim());
+                          if (age == null || age <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Please enter a valid age.')),
+                            );
+                            return;
+                          }
 
-                            UserCredential userCredential = await FirebaseAuth
-                                .instance
+                          try {
+                            final userCredential = await FirebaseAuth.instance
                                 .createUserWithEmailAndPassword(
                               email: emailController.text.trim(),
                               password: passwordController.text.trim(),
                             );
 
+                            final uid = userCredential.user?.uid;
+                            if (uid == null)
+                              throw Exception('User UID is null');
+
                             await FirebaseFirestore.instance
                                 .collection('users')
-                                .doc(userCredential.user!.uid)
+                                .doc(uid)
                                 .set({
                               'name': nameController.text.trim(),
                               'email': emailController.text.trim(),
@@ -169,13 +178,47 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               SnackBar(
                                   content: Text('Registration Successful!')),
                             );
+                            // Wait a moment so the user sees the success message
+                            await Future.delayed(Duration(seconds: 2));
+
+// Navigate to login page
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginPage()),
+                            );
+                          } on FirebaseAuthException catch (e) {
+                            String errorMessage;
+                            switch (e.code) {
+                              case 'email-already-in-use':
+                                errorMessage =
+                                    'This email is already registered.';
+                                break;
+                              case 'invalid-email':
+                                errorMessage = 'Invalid email address.';
+                                break;
+                              case 'weak-password':
+                                errorMessage = 'Password is too weak.';
+                                break;
+                              case 'operation-not-allowed':
+                                errorMessage =
+                                    'Email/password registration is not enabled.';
+                                break;
+                              default:
+                                errorMessage =
+                                    'Registration failed: ${e.message ?? "Unknown error."}';
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage)),
+                            );
                           } catch (e) {
-                            print('Registration Error: $e');
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text(
-                                      'Registration failed. Please try again later.')),
+                                  content:
+                                      Text('An unexpected error occurred.')),
                             );
+                            print('Unexpected error: $e');
                           }
                         },
                         child: Text('Register'),
