@@ -101,14 +101,16 @@ class _StoryState extends State<Story> {
     if (uploadedUrl != null) {
       print("File uploaded successfully: $uploadedUrl");
 
-      // Extract first 5 words from the story
       String currentStory = stories[currentStoryIndex];
-      List<String> words = currentStory.split(" ");
-      String firstFiveWords = words.take(5).join(" "); // Get first 3 words
+      String iterationKey = 'iteration${currentStoryIndex + 1}';
 
-      // Call saveAnswer_Story with only the first 3 words
       await _firebaseSave.saveAnswer_Story(
-          uploadedUrl, userLanguage, firstFiveWords);
+        userLanguage,
+        iterationKey,
+        currentStory,
+        uploadedUrl,
+      );
+
       // Proceed to the next story
       if (currentStoryIndex < stories.length - 1) {
         setState(() {
@@ -227,8 +229,8 @@ class _StoryState extends State<Story> {
                       padding: const EdgeInsets.fromLTRB(50, 60, 50, 60),
                       child: ScrollbarTheme(
                         data: ScrollbarThemeData(
-                          thumbColor:
-                              MaterialStateProperty.all(Color.fromARGB(154, 141, 110, 99)),
+                          thumbColor: MaterialStateProperty.all(
+                              Color.fromARGB(154, 141, 110, 99)),
                           trackColor:
                               MaterialStateProperty.all(Colors.brown[100]),
                           thickness: MaterialStateProperty.all(5),

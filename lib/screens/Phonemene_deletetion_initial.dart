@@ -246,8 +246,8 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
         print("File uploaded successfully: $uploadedUrl");
 
         // Call the function to save the uploaded URL
-        await _firebaseSave.saveAnswer_Ph_deletion_final(
-            uploadedUrl, _userLanguage, word2);
+        await _firebaseSave.saveAnswer_Ph_deletion_initial(
+            uploadedUrl, _userLanguage, word1,word2);
 
         setState(() {
           questionCounter++;

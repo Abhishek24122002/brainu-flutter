@@ -244,7 +244,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
 
         // Call the function to save the uploaded URL
         await _firebaseSave.saveAnswer_Ph_deletion_final(
-            uploadedUrl, _userLanguage, word2);
+            uploadedUrl, _userLanguage,word1,word2);
 
         setState(() {
           questionCounter++;

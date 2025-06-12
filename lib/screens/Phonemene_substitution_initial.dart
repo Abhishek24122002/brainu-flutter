@@ -248,7 +248,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
 
         // Call the function to save the uploaded URL
         await _firebaseSave.saveAnswer_Ph_substitution_initial(
-            uploadedUrl, _userLanguage, sound2);
+            uploadedUrl, _userLanguage,word, sound1, sound2);
 
         setState(() {
           questionCounter++;

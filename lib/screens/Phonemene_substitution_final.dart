@@ -294,7 +294,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
 
         // Call the function to save the uploaded URL
         await _firebaseSave.saveAnswer_Ph_substitution_final(
-            uploadedUrl, _userLanguage, sound1);
+            uploadedUrl, _userLanguage, word, sound1, sound2);
 
         setState(() {
           questionCounter++;
