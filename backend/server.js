@@ -48,6 +48,21 @@ app.post("/upload", (req, res, next) => {
   });
 });
 
+// 🖼️ Generate Signed URL for image
+app.get("/get-image-url", async (req, res) => {
+  const { key } = req.query;
+  if (!key) {
+    return res.status(400).json({ error: "Missing 'key' query parameter" });
+  }
+
+  const url = await getSignedAudioUrl(key);
+  if (!url) {
+    return res.status(500).json({ error: "Failed to generate signed URL" });
+  }
+
+  res.json({ signedUrl: url });
+});
+
 // 🎵 Upload Audio to S3
 app.post("/upload-audio", (req, res, next) => {
   uploadAudio.single("audio")(req, res, (err) => {
