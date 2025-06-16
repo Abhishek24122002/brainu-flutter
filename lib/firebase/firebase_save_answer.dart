@@ -102,20 +102,39 @@ class FirebaseSave {
   }
 
   Future<void> saveAnswer_Listen(
-      String uploadedUrl, String userLanguage, String _currentWord) async {
+      String uploadedUrl, String userLanguage, String currentWord) async {
     final user = _auth.currentUser;
     if (user == null) return;
+
     String userId = user.uid;
 
     await _firestore
         .collection("users")
         .doc(userId)
         .collection("4 Listen")
-        .doc(userLanguage) // Stores based on language
+        .doc(userLanguage) // Grouped by language
         .set({
-      _currentWord: uploadedUrl, // ✅ Save URL under the word
-    }, SetOptions(merge: true)); // ✅ Merge data instead of overwriting
+      currentWord: {
+        'imageUrl': uploadedUrl,
+      }
+    }, SetOptions(merge: true)); // Merge to keep existing data
   }
+
+  // Future<void> saveAnswer_Listen(
+  //     String uploadedUrl, String userLanguage, String currentWord) async {
+  //   final user = _auth.currentUser;
+  //   if (user == null) return;
+  //   String userId = user.uid;
+
+  //   await _firestore
+  //       .collection("users")
+  //       .doc(userId)
+  //       .collection("4 Listen")
+  //       .doc(userLanguage) // Stores based on language
+  //       .set({
+  //     currentWord: uploadedUrl, // ✅ Save URL under the word
+  //   }, SetOptions(merge: true)); // ✅ Merge data instead of overwriting
+  // }
 
   Future<void> saveAnswer_Story(
     String language,

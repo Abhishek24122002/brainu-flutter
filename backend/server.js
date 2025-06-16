@@ -20,20 +20,61 @@ const s3 = new S3Client({
 });
 
 // 🔐 Function to generate signed URL
-async function getSignedAudioUrl(key) {
+// async function getSignedAudioUrl(key) {
+//   const command = new GetObjectCommand({
+//     Bucket: process.env.AWS_S3_BUCKET_NAME,
+//     Key: key,
+//   });
+
+//   try {
+//     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
+//     return signedUrl;
+//   } catch (err) {
+//     console.error("Error generating signed URL:", err);
+//     return null;
+//   }
+// }
+
+// ✅ Rename function for both audio & image
+async function getSignedS3Url(key) {
   const command = new GetObjectCommand({
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     Key: key,
   });
 
   try {
-    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 hour
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
     return signedUrl;
   } catch (err) {
     console.error("Error generating signed URL:", err);
     return null;
   }
 }
+
+app.get("/get-audio-url", async (req, res) => {
+  const { key } = req.query;
+  if (!key) return res.status(400).json({ error: "Missing 'key'" });
+
+  const url = await getSignedS3Url(key);
+  if (!url) return res.status(500).json({ error: "Failed to generate signed URL" });
+  console.log("Fetching signed URL for key:", key);
+
+
+  res.json({ signedUrl: url });
+});
+
+app.get("/get-image-url", async (req, res) => {
+  const { key } = req.query;
+  if (!key) return res.status(400).json({ error: "Missing 'key'" });
+  console.log("Fetching signed URL for key:", key);
+
+
+  const url = await getSignedS3Url(key);
+
+  if (!url) return res.status(500).json({ error: "Failed to generate signed URL" });
+
+  res.json({ signedUrl: url });
+});
 
 // 📦 Upload Image to S3
 app.post("/upload", (req, res, next) => {
@@ -49,19 +90,19 @@ app.post("/upload", (req, res, next) => {
 });
 
 // 🖼️ Generate Signed URL for image
-app.get("/get-image-url", async (req, res) => {
-  const { key } = req.query;
-  if (!key) {
-    return res.status(400).json({ error: "Missing 'key' query parameter" });
-  }
+// app.get("/get-image-url", async (req, res) => {
+//   const { key } = req.query;
+//   if (!key) {
+//     return res.status(400).json({ error: "Missing 'key' query parameter" });
+//   }
 
-  const url = await getSignedAudioUrl(key);
-  if (!url) {
-    return res.status(500).json({ error: "Failed to generate signed URL" });
-  }
+//   const url = await getSignedAudioUrl(key);
+//   if (!url) {
+//     return res.status(500).json({ error: "Failed to generate signed URL" });
+//   }
 
-  res.json({ signedUrl: url });
-});
+//   res.json({ signedUrl: url });
+// });
 
 // 🎵 Upload Audio to S3
 app.post("/upload-audio", (req, res, next) => {
@@ -77,19 +118,19 @@ app.post("/upload-audio", (req, res, next) => {
 });
 
 // 🔗 Generate Signed URL for audio access
-app.get("/get-audio-url", async (req, res) => {
-  const { key } = req.query;
-  if (!key) {
-    return res.status(400).json({ error: "Missing 'key' query parameter" });
-  }
+// app.get("/get-audio-url", async (req, res) => {
+//   const { key } = req.query;
+//   if (!key) {
+//     return res.status(400).json({ error: "Missing 'key' query parameter" });
+//   }
 
-  const url = await getSignedAudioUrl(key);
-  if (!url) {
-    return res.status(500).json({ error: "Failed to generate signed URL" });
-  }
+//   const url = await getSignedAudioUrl(key);
+//   if (!url) {
+//     return res.status(500).json({ error: "Failed to generate signed URL" });
+//   }
 
-  res.json({ signedUrl: url });
-});
+//   res.json({ signedUrl: url });
+// });
 
 // ❗ Global Error Handling Middleware
 app.use((err, req, res, next) => {
