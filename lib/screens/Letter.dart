@@ -12,6 +12,8 @@ import '../components/start_button.dart';
 import '../components/submit_button.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
+import 'package:showcaseview/showcaseview.dart';
+
 
 class Letter extends StatefulWidget {
   @override
@@ -35,6 +37,10 @@ class _LetterState extends State<Letter> {
   bool _showGameElements = false;
   int questionIndex = 0;
   int trophyCount = 0;
+
+  final GlobalKey _startButtonKey = GlobalKey();
+  bool _hasShownShowcase = false;
+
 
   List<List<String>> englishWordPairs = [
     ['A', 'a'],
@@ -140,11 +146,24 @@ class _LetterState extends State<Letter> {
     ['प्र', 'pr'],
     ['कृ', 'kre']
   ];
+  Future<void> _checkAndShowShowcase() async {
+  final prefs = await SharedPreferences.getInstance();
+  bool seen = prefs.getBool('seen_vc_start_showcase') ?? false;
+
+  if (!seen) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ShowCaseWidget.of(context).startShowCase([_startButtonKey]);
+    });
+    await prefs.setBool('seen_vc_start_showcase', true);
+  }
+}
 
   @override
   void initState() {
     super.initState();
     _fetchUserLanguage();
+    _checkAndShowShowcase();
+
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
@@ -158,6 +177,8 @@ class _LetterState extends State<Letter> {
         });
       }
     });
+
+    
   }
 
   Future<void> playAudio(String alphabet) async {
@@ -348,19 +369,15 @@ class _LetterState extends State<Letter> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // 🖼 Background image covering the entire screen
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Letter_bg.png',
-            fit: BoxFit.cover,
+    return ShowCaseWidget(
+    builder: Builder(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset('assets/img/Letter_bg.png', fit: BoxFit.cover),
           ),
-        ),
-
-        // 🧠 Main UI with transparent background
-        Scaffold(
-          backgroundColor: Colors.transparent, // Important!
+          Scaffold(
+            backgroundColor: Colors.transparent, // Important!
           appBar: CustomAppBar(titleKey: 'letter'),
 
           body: Column(
@@ -447,6 +464,6 @@ class _LetterState extends State<Letter> {
           ),
         ),
       ],
-    );
+    )));
   }
 }
