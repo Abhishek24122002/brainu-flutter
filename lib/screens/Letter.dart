@@ -14,7 +14,6 @@ import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import 'package:showcaseview/showcaseview.dart';
 
-
 class Letter extends StatefulWidget {
   @override
   _LetterState createState() => _LetterState();
@@ -40,7 +39,6 @@ class _LetterState extends State<Letter> {
 
   final GlobalKey _startButtonKey = GlobalKey();
   bool _hasShownShowcase = false;
-
 
   List<List<String>> englishWordPairs = [
     ['A', 'a'],
@@ -147,16 +145,16 @@ class _LetterState extends State<Letter> {
     ['कृ', 'kre']
   ];
   Future<void> _checkAndShowShowcase() async {
-  final prefs = await SharedPreferences.getInstance();
-  bool seen = prefs.getBool('seen_vc_start_showcase') ?? false;
+    final prefs = await SharedPreferences.getInstance();
+    bool seen = prefs.getBool('seen_vc_start_showcase') ?? false;
 
-  if (!seen) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ShowCaseWidget.of(context).startShowCase([_startButtonKey]);
-    });
-    await prefs.setBool('seen_vc_start_showcase', true);
+    if (!seen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ShowCaseWidget.of(context).startShowCase([_startButtonKey]);
+      });
+      await prefs.setBool('seen_vc_start_showcase', true);
+    }
   }
-}
 
   @override
   void initState() {
@@ -177,9 +175,25 @@ class _LetterState extends State<Letter> {
         });
       }
     });
-
-    
+    loadProgress().then((_) {
+       loadTrophyCount().then((_) {
+      generateQuestionAndOptions();});
+    });
   }
+
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('V_C_questionIndex', questionIndex);
+  }
+
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    questionIndex = prefs.getInt('V_C_questionIndex') ?? 0;
+  }
+  Future<void> loadTrophyCount() async {
+  final prefs = await SharedPreferences.getInstance();
+  trophyCount = prefs.getInt('V_C_trophyCount') ?? 0;
+}
 
   Future<void> playAudio(String alphabet) async {
     try {
@@ -234,9 +248,13 @@ class _LetterState extends State<Letter> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
                 // generateWords();
+                final prefs = await SharedPreferences.getInstance();
+                if (questionIndex >= wordPairs.length) {
+                  await prefs.setInt('V_C_questionIndex', 0);
+                }
               },
               child: Text(
                 'Continue',
@@ -272,7 +290,6 @@ class _LetterState extends State<Letter> {
     clickCountMap = {for (var option in options) option: 0};
     clickTimers = {for (var option in options) option: null};
 
-    questionIndex++;
   }
 
   String getHindiCharacterFromOption(String option) {
@@ -330,12 +347,14 @@ class _LetterState extends State<Letter> {
   }
 
   void handleSubmit() {
-    bool isCorrect = selectedOption == wordPairs[questionIndex - 1][1];
+     bool isCorrect = selectedOption == wordPairs[questionIndex][1];
     saveAnswer_Letter(isCorrect, selectedOption);
 
     setState(() {
       questionCounter++;
       _showGameElements = false;
+      questionIndex++;
+      saveProgress();
 
       if (questionCounter == 5) {
         iterationCounter++;
@@ -370,100 +389,109 @@ class _LetterState extends State<Letter> {
   @override
   Widget build(BuildContext context) {
     return ShowCaseWidget(
-    builder: Builder(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset('assets/img/Letter_bg.png', fit: BoxFit.cover),
-          ),
-          Scaffold(
-            backgroundColor: Colors.transparent, // Important!
-          appBar: CustomAppBar(titleKey: 'letter'),
+        builder: Builder(
+            builder: (context) => Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset('assets/img/Letter_bg.png',
+                          fit: BoxFit.cover),
+                    ),
+                    Scaffold(
+                      backgroundColor: Colors.transparent, // Important!
+                      appBar: CustomAppBar(titleKey: 'letter'),
 
-          body: Column(
-            children: [
-              CustomContainer(text: S.of(context).vc_starting_question),
-              if (!_showGameElements)
-                StartButton(
-                  onPressed: () {
-                    setState(() {
-                      _showGameElements = true;
-                    });
-                  },
-                ),
-              if (_showGameElements)
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      double screenWidth = constraints.maxWidth;
-                      double imageSize =
-                          screenWidth * 0.55; // Scales for tablet
-                      double fontSize =
-                          screenWidth * 0.15; // Responsive font size
-                      double spacing =
-                          screenWidth * 0.04; // Spacing between options
+                      body: Column(
+                        children: [
+                          CustomContainer(
+                              text: S.of(context).vc_starting_question),
+                          if (!_showGameElements)
+                            StartButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showGameElements = true;
+                                });
+                              },
+                            ),
+                          if (_showGameElements)
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  double screenWidth = constraints.maxWidth;
+                                  double imageSize =
+                                      screenWidth * 0.55; // Scales for tablet
+                                  double fontSize = screenWidth *
+                                      0.15; // Responsive font size
+                                  double spacing = screenWidth *
+                                      0.04; // Spacing between options
 
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/img/Letter_brainu.png',
-                                  width: imageSize,
-                                  height: imageSize,
-                                  fit: BoxFit.contain,
-                                ),
-                                Positioned(
-                                  bottom: 20,
-                                  child: Text(
-                                    question.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: fontSize,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF7B2F00),
-                                      backgroundColor:
-                                          Colors.white.withOpacity(1),
+                                  return Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/img/Letter_brainu.png',
+                                              width: imageSize,
+                                              height: imageSize,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            Positioned(
+                                              bottom: 20,
+                                              child: Text(
+                                                question.toUpperCase(),
+                                                style: TextStyle(
+                                                  fontSize: fontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF7B2F00),
+                                                  backgroundColor: Colors.white
+                                                      .withOpacity(1),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: spacing),
+                                        Wrap(
+                                          alignment: WrapAlignment.center,
+                                          spacing: spacing,
+                                          runSpacing: spacing / 2,
+                                          children: options
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            int index = entry.key + 1;
+                                            String option = entry.value;
+
+                                            return OptionButton(
+                                              index: index,
+                                              isSelected:
+                                                  selectedOption == option,
+                                              clickCount:
+                                                  clickCountMap[option] ?? 0,
+                                              onPressed: () =>
+                                                  handleClick(option),
+                                            );
+                                          }).toList(),
+                                        ),
+                                        SizedBox(height: spacing),
+                                        SubmitButton(
+                                          isEnabled: isSubmitEnabled,
+                                          onPressed: handleSubmit,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ),
-                              ],
+                                  );
+                                },
+                              ),
                             ),
-                            SizedBox(height: spacing),
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: spacing,
-                              runSpacing: spacing / 2,
-                              children: options.asMap().entries.map((entry) {
-                                int index = entry.key + 1;
-                                String option = entry.value;
-
-                                return OptionButton(
-                                  index: index,
-                                  isSelected: selectedOption == option,
-                                  clickCount: clickCountMap[option] ?? 0,
-                                  onPressed: () => handleClick(option),
-                                );
-                              }).toList(),
-                            ),
-                            SizedBox(height: spacing),
-                            SubmitButton(
-                              isEnabled: isSubmitEnabled,
-                              onPressed: handleSubmit,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    )));
+                        ],
+                      ),
+                    ),
+                  ],
+                )));
   }
 }
