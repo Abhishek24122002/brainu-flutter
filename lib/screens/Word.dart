@@ -14,7 +14,6 @@ import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
 import '../screens/LevelSelectionScreen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/appbar.dart';
 

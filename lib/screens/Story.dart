@@ -7,6 +7,8 @@ import '../aws/FileUploader.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../generated/l10n.dart';
 
 import '../components/appbar.dart';
@@ -29,6 +31,8 @@ class _StoryState extends State<Story> {
   bool _recordingAvailable = false;
   bool _showGameElements = false;
   String? _recordingPath;
+  int questionIndex = 0;
+  int trophyCount = 0;
 
   final FirebaseServices _firebaseServices = FirebaseServices();
   final FirebaseSave _firebaseSave = FirebaseSave();
@@ -44,6 +48,8 @@ class _StoryState extends State<Story> {
     _initializeRecorder();
     _player.openPlayer();
     _fetchUserLanguage();
+    loadTrophyCount();
+    loadProgress();
   }
 
   Future<void> _initializeRecorder() async {
@@ -66,6 +72,21 @@ class _StoryState extends State<Story> {
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
   }
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Story_questionIndex', questionIndex);
+  }
+
+  Future<void> loadProgress() async {
+  final prefs = await SharedPreferences.getInstance();
+  questionIndex = prefs.getInt('Story_questionIndex') ?? 0;
+}
+
+  Future<void> loadTrophyCount() async {
+  final prefs = await SharedPreferences.getInstance();
+  trophyCount = prefs.getInt('Story_trophyCount') ?? 0;
+}
+
 
   Future<void> _playRecording() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
@@ -82,49 +103,116 @@ class _StoryState extends State<Story> {
       });
     }
   }
-
+  
   void _confirmStory() async {
-    if (_recordingPath == null) {
-      print("No recording found.");
-      return;
+  if (_recordingPath == null) {
+    print("No recording found.");
+    return;
+  }
+
+  File recordedFile = File(_recordingPath!);
+  if (!recordedFile.existsSync()) {
+    print("Recorded file does not exist.");
+    return;
+  }
+
+  File audioFile = File(_recordingPath!);
+  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+  if (uploadedUrl != null) {
+    print("File uploaded successfully: $uploadedUrl");
+
+    String currentStory = stories[currentStoryIndex];
+    String iterationKey = 'iteration${currentStoryIndex + 1}';
+
+    await _firebaseSave.saveAnswer_Story(
+      userLanguage,
+      iterationKey,
+      currentStory,
+      uploadedUrl,
+    );
+
+    // ✅ INCREMENT first
+    questionIndex++;
+    await saveProgress();
+
+    // ✅ Trophy only after every 5 stories (5, 10, 15, ...)
+    if (questionIndex % 5 == 0) {
+      trophyCount++;
+      await _saveTrophyCount();
+      showIterationCompleteDialog();
+      return; // Stop here to avoid advancing to next story before dialog
     }
 
-    File recordedFile = File(_recordingPath!);
-    if (!recordedFile.existsSync()) {
-      print("Recorded file does not exist.");
-      return;
-    }
-
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
-
-      String currentStory = stories[currentStoryIndex];
-      String iterationKey = 'iteration${currentStoryIndex + 1}';
-
-      await _firebaseSave.saveAnswer_Story(
-        userLanguage,
-        iterationKey,
-        currentStory,
-        uploadedUrl,
-      );
-
-      // Proceed to the next story
-      if (currentStoryIndex < stories.length - 1) {
-        setState(() {
-          _recordingAvailable = false;
-          currentStoryIndex++;
-          _recordingPath = null;
-          _showGameElements = false;
-        });
-      } else {
-        showAllWordsDoneDialog();
-      }
+    // ✅ Proceed to next story if not the end
+    if (currentStoryIndex < stories.length - 1) {
+      setState(() {
+        _recordingAvailable = false;
+        currentStoryIndex++;
+        _recordingPath = null;
+        _showGameElements = false;
+      });
     } else {
-      print("File upload failed.");
+      showAllWordsDoneDialog();
     }
+  } else {
+    print("File upload failed.");
+  }
+}
+
+  Future<void> _saveTrophyCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Story_trophyCount', trophyCount); // Save the trophy count
+  }
+  void showIterationCompleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.all(20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'You Won!!!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 69, 20, 153),
+                ),
+              ),
+              SizedBox(height: 20),
+              Icon(
+                Icons.emoji_events,
+                color: Colors.amber,
+                size: 80,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '$trophyCount', // Display the number of trophies
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+  onPressed: () {
+    Navigator.of(context).pop();
+  },
+  child: Text(
+    'Continue',
+    style: TextStyle(fontSize: 18),
+  ),
+),
+
+          ],
+        );
+      },
+    );
   }
 
   void showAllWordsDoneDialog() {
@@ -193,6 +281,9 @@ class _StoryState extends State<Story> {
   @override
   Widget build(BuildContext context) {
     stories = getStories(context); // Fetch localized stories
+    // ✅ Set the currentStoryIndex based on saved progress
+  currentStoryIndex = questionIndex.clamp(0, stories.length - 1);
+
 
     return Stack(
       children: [
@@ -240,6 +331,7 @@ class _StoryState extends State<Story> {
                           thumbVisibility: true,
                           child: SingleChildScrollView(
                             child: Text(
+                              
                               stories[currentStoryIndex],
                               style: TextStyle(
                                 fontSize: 16,
