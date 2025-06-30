@@ -39,6 +39,8 @@ class _SwapState extends State<Swap> {
   int iterationCounter = 0;
   int trophyCount = 0; // Track total trophies
   bool _showGameElements = false;
+  int currentIndex = 0;
+
   Map<String, int> clickCountMap = {};
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
@@ -188,6 +190,7 @@ class _SwapState extends State<Swap> {
     super.initState();
     _loadTrophyCount(); // Load the trophy count when the level is loaded
     _fetchUserLanguage();
+    _loadProgress();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -196,6 +199,18 @@ class _SwapState extends State<Swap> {
       _userLanguage = language;
       generateWords(); // Call generateWords() after setting language
     });
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      currentIndex = prefs.getInt('spoonerism_currentIndex') ?? 0;
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('spoonerism_currentIndex', currentIndex);
   }
 
   Future<void> _loadTrophyCount() async {
@@ -212,17 +227,13 @@ class _SwapState extends State<Swap> {
   }
 
   void generateWords() {
-    if (wordPairsByLanguage[_userLanguage] == null ||
-        wordPairsByLanguage[_userLanguage]!.isEmpty) {
+    final wordList = wordPairsByLanguage[_userLanguage];
+    if (wordList == null || currentIndex >= wordList.length) {
       showAllWordsDoneDialog();
       return;
     }
 
-    Random random = Random();
-    int index = random.nextInt(wordPairsByLanguage[_userLanguage]!.length);
-    List<String> selectedPair =
-        List.from(wordPairsByLanguage[_userLanguage]![index]);
-    usedWordPairs.add(selectedPair);
+    List<String> selectedPair = List.from(wordList[currentIndex]);
 
     word1 = selectedPair[0];
     word2 = selectedPair[1];
@@ -300,37 +311,37 @@ class _SwapState extends State<Swap> {
     });
   }
 
-  Future<void> _storeAnswer(String correct, bool isCorrect, String selectedOption) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+  Future<void> _storeAnswer(
+      String correct, bool isCorrect, String selectedOption) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  String userId = user.uid;
-  String correct_option = correct + "_selected_option";
+    String userId = user.uid;
+    String correct_option = correct + "_selected_option";
 
-  // Remove `.wav` from selectedOption before storing
-  String selectedOptionWithoutWav = selectedOption.replaceAll(".wav", "");
+    // Remove `.wav` from selectedOption before storing
+    String selectedOptionWithoutWav = selectedOption.replaceAll(".wav", "");
 
-  await FirebaseFirestore.instance
-      .collection("users")
-      .doc(userId)
-      .collection("6 Swapping")
-      .doc(_userLanguage) // Store answer under the correct language
-      .set({correct: isCorrect, correct_option: selectedOptionWithoutWav}, SetOptions(merge: true));
-}
-
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(userId)
+        .collection("6 Swapping")
+        .doc(_userLanguage) // Store answer under the correct language
+        .set({correct: isCorrect, correct_option: selectedOptionWithoutWav},
+            SetOptions(merge: true));
+  }
 
   void handleSubmit() async {
     String correctAnswer = '$correct.wav';
     bool isCorrect = selectedOption == correctAnswer;
 
-    // Increase trophy count for correct answers
-    if (isCorrect) {
-      trophyCount++;
-      _saveTrophyCount();
-    }
+    
 
     // Store answer in Firebase
     await _storeAnswer(correct, isCorrect, selectedOption!);
+// ⬇️ Move to next word and save
+    currentIndex++;
+    await _saveProgress();
 
     setState(() {
       questionCounter++;
@@ -339,22 +350,27 @@ class _SwapState extends State<Swap> {
       if (questionCounter == 5) {
         iterationCounter++;
         questionCounter = 0;
-        showIterationCompleteDialog();
+         trophyCount++;
+      _saveTrophyCount();
+
+        // Show trophy dialog, then wait for user to dismiss before continuing
+        Future.delayed(Duration.zero, () {
+          showIterationCompleteDialog();
+        });
       } else {
         generateWords();
       }
     });
   }
 
-  void resetLevel() {
+  void resetLevel() async {
     setState(() {
-      if (usedWordPairs.isNotEmpty) {
-        wordPairsByLanguage[_userLanguage]?.addAll(usedWordPairs);
-        usedWordPairs.clear();
-      }
       questionCounter = 0;
       iterationCounter = 0;
+      currentIndex = 0;
     });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('spoonerism_currentIndex');
     generateWords();
   }
 

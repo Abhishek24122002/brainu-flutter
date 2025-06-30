@@ -46,7 +46,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   bool _isPlaying = false;
   bool _recordingAvailable = false;
   String? _recordingPath;
-  bool _showGameElements = false; // Initially hide the game elements
+  bool _showGameElements = false;
+  int questionIndex = 0;
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
