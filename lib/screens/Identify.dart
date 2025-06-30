@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../aws/FileUploader.dart';
 import '../components/appbar.dart';
@@ -64,10 +65,12 @@ class _IdentifyState extends State<Identify> {
   void initState() {
     super.initState();
     _initializeRecorder();
-    _fetchUserLanguage();
     _player.openPlayer();
     // Convert list to string for Firebase
     _imageNamesString = _imageNames.join(', ');
+    _loadIteration().then((_) {
+    _fetchUserLanguage(); // Only after iteration is loaded
+  });
   }
 
   void _randomizeImages() {
@@ -94,6 +97,16 @@ class _IdentifyState extends State<Identify> {
 
     _randomizeImages();
   }
+  Future<void> _saveIteration() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('identify_iteration', _iteration);
+}
+Future<void> _loadIteration() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    _iteration = prefs.getInt('identify_iteration') ?? 0;
+  });
+}
 
   Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
@@ -115,6 +128,7 @@ class _IdentifyState extends State<Identify> {
     _iteration++;
     _showGameElements = false;
   });
+  await _saveIteration(); // 👈 Save after updating
 
   if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -155,14 +169,17 @@ await _firebaseSave.saveAnswer_Identify(
     // Determine max iterations based on language
     int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
 
-    if (_iteration < maxIterations) {
-      _randomizeImages();
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
-      );
-    }
+   if (_iteration < maxIterations) {
+  _randomizeImages();
+} else {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('identify_iteration', 0); // ✅ Reset iteration
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+  );
+}
+
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Upload failed! Please try again.")),

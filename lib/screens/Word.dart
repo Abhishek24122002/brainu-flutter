@@ -14,6 +14,7 @@ import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
 import '../screens/LevelSelectionScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/appbar.dart';
 
@@ -40,6 +41,8 @@ class _WordState extends State<Word> {
   bool _isPlaying = false;
   bool _recordingAvailable = false;
   String? _recordingPath;
+  int questionIndex = 0;
+  int trophyCount = 0;
 
   @override
   void initState() {
@@ -47,6 +50,8 @@ class _WordState extends State<Word> {
     _initializeRecorder();
     _player.openPlayer();
     _fetchUserLanguage();
+    loadTrophyCount();
+
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -195,14 +200,36 @@ class _WordState extends State<Word> {
     List<String> selectedWords = wordLists[userLanguage]!;
     print("Selected Words List: $selectedWords");
     // ✅ **Update remainingWords and currentWord**
+
+    // 👇 Load saved progress
+  questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
+
+  // 👇 Skip words based on progress
+  if (questionIndex < selectedWords.length) {
+    remainingWords = selectedWords.sublist(questionIndex);
+  } else {
+    remainingWords = [];
+  }
     setState(() {
-      remainingWords = List.from(selectedWords);
-      currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
-    });
+    currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
+  });
 
     print("Remaining Words: $remainingWords");
     print("Current Word: $currentWord");
   }
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Word_questionIndex', questionIndex);
+  }
+
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
+  }
+  Future<void> loadTrophyCount() async {
+  final prefs = await SharedPreferences.getInstance();
+  trophyCount = prefs.getInt('Word_trophyCount') ?? 0;
+}
 
   Future<void> _saveWords() async {
     await prefs.setStringList('remainingWords_$userLanguage', remainingWords);
@@ -275,53 +302,119 @@ class _WordState extends State<Word> {
   }
 
   void _onConfirm() async {
-    if (_isUploading) {
-      print("Upload already in progress. Please wait.");
-      return;
-    }
+  if (_isUploading) {
+    print("Upload already in progress. Please wait.");
+    return;
+  }
 
-    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-      print("No recording available to upload.");
-      return;
-    }
+  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+    print("No recording available to upload.");
+    return;
+  }
 
-    setState(() {
-      _isUploading = true; // Start upload
-    });
+  setState(() {
+    _isUploading = true;
+  });
 
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+  File audioFile = File(_recordingPath!);
+  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
 
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
+  if (uploadedUrl != null) {
+    await _firebaseSave.saveAnswer_word(
+        uploadedUrl, userLanguage, currentWord);
 
-      await _firebaseSave.saveAnswer_word(
-          uploadedUrl, userLanguage, currentWord);
-
-      if (remainingWords.isNotEmpty) {
-        setState(() {
-          remainingWords.removeAt(0);
-          currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
-        });
-        await _saveWords();
-      }
-
+    if (remainingWords.isNotEmpty) {
       setState(() {
-        _showGameElements = false;
-        _recordingAvailable = false;
-        _recordingPath = null;
+        remainingWords.removeAt(0);
+        currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
       });
-
-      if (remainingWords.isEmpty) {
-        _showCompletionDialog();
-      }
-    } else {
-      print("File upload failed.");
+      await _saveWords();
     }
 
     setState(() {
-      _isUploading = false; // Reset flag after upload
+      _showGameElements = false;
+      _recordingAvailable = false;
+      _recordingPath = null;
     });
+
+    questionIndex++;
+    await saveProgress();
+
+    // 🏆 Check for trophy every 5 words
+    if (questionIndex % 5 == 0) {
+      trophyCount++;
+      await _saveTrophyCount();
+      showIterationCompleteDialog();
+    }
+
+    if (remainingWords.isEmpty) {
+      _showCompletionDialog();
+    }
+  } else {
+    print("File upload failed.");
+  }
+
+  setState(() {
+    _isUploading = false;
+  });
+}
+
+   Future<void> _saveTrophyCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Word_trophyCount', trophyCount); // Save the trophy count
+  }
+  void showIterationCompleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.all(20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'You Won!!!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 69, 20, 153),
+                ),
+              ),
+              SizedBox(height: 20),
+              Icon(
+                Icons.emoji_events,
+                color: Colors.amber,
+                size: 80,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '$trophyCount', // Display the number of trophies
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                // generateWords();
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setInt('Word_questionIndex', 0);
+
+              },
+              child: Text(
+                'Continue',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showCompletionDialog() {
@@ -397,22 +490,21 @@ class _WordState extends State<Word> {
                     const SizedBox(height: 20),
 
                     Expanded(
-  child: Center(
-    child: Transform.translate(
-      offset: Offset(0, -20), // Move word 40 pixels upward
-      child: Text(
-        currentWord,
-        style: const TextStyle(
-          fontSize: 50,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF7B2F00),
-        ),
-        textAlign: TextAlign.center,
-      ),
-    ),
-  ),
-),
-
+                      child: Center(
+                        child: Transform.translate(
+                          offset: Offset(0, -20), // Move word 40 pixels upward
+                          child: Text(
+                            currentWord,
+                            style: const TextStyle(
+                              fontSize: 50,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF7B2F00),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
 
                     // ✅ Buttons aligned to bottom
                     Padding(

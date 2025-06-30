@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
+import 'package:brainu/screens/LevelSelectionScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,7 @@ import 'dart:ui' as ui;
 import 'dart:typed_data';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Listen extends StatefulWidget {
   @override
@@ -30,6 +32,8 @@ class _ListenState extends State<Listen> {
   String _currentWord = "";
   List<Offset> _points = [];
   bool _showGameElements = false;
+  int questionIndex = 0;
+  int trophyCount = 0;
 
   String currentLocale = "en"; // Default language
   FileUploader fileUploader =
@@ -37,6 +41,7 @@ class _ListenState extends State<Listen> {
   @override
   void initState() {
     _fetchUserLanguage();
+    loadTrophyCount();
     super.initState();
     _audioPlayer = AudioPlayer();
   }
@@ -57,7 +62,8 @@ class _ListenState extends State<Listen> {
     _loadWords();
   }
 
-  void _loadWords() {
+  void _loadWords() async {
+    final prefs = await SharedPreferences.getInstance();
     final Map<String, List<String>> wordLists = {
       "en": [
         "amaze",
@@ -106,8 +112,13 @@ class _ListenState extends State<Listen> {
       ]
     };
 
-    _remainingWords = List.from(wordLists[currentLocale] ?? wordLists["en"]!);
-    // _playNextWordAudio();
+    questionIndex = prefs.getInt('Listen_questionIndex') ?? 0;
+    List<String> fullList = wordLists[currentLocale] ?? wordLists["en"]!;
+    if (questionIndex < fullList.length) {
+      _remainingWords = fullList.sublist(questionIndex);
+    } else {
+      _remainingWords = [];
+    }
   }
 
   @override
@@ -118,6 +129,21 @@ class _ListenState extends State<Listen> {
 
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
+  }
+
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Listen_questionIndex', questionIndex);
+  }
+
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    questionIndex = prefs.getInt('Listen_questionIndex') ?? 0;
+  }
+
+  Future<void> loadTrophyCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    trophyCount = prefs.getInt('Listen_trophyCount') ?? 0;
   }
 
   Future<void> _saveCanvasAsImage() async {
@@ -222,7 +248,7 @@ class _ListenState extends State<Listen> {
     }
   }
 
-  void _onSubmit() {
+  Future<void> _onSubmit() async {
     if (_points.isEmpty || _points.every((point) => point == Offset.zero)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -241,6 +267,105 @@ class _ListenState extends State<Listen> {
       _isDrawingDone = false;
       _showGameElements = false; // 👈 Show Start button again
     });
+
+    questionIndex++;
+    await saveProgress();
+
+    // 🏆 Check for trophy every 5 words
+    if (questionIndex % 5 == 0) {
+      trophyCount++;
+      await _saveTrophyCount();
+      showIterationCompleteDialog();
+    }
+  }
+
+  Future<void> _saveTrophyCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('Listen_trophyCount', trophyCount);
+  }
+
+  void showIterationCompleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.all(20),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'You Won!!!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 69, 20, 153),
+                ),
+              ),
+              SizedBox(height: 20),
+              Icon(
+                Icons.emoji_events,
+                color: Colors.amber,
+                size: 80,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '$trophyCount', // Display the number of trophies
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Continue',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Congratulations!'),
+          content: Text('You have completed all words.'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setInt('Listen_questionIndex', 0); // reset index
+                Navigator.of(context).pop();
+                _loadWords();
+              },
+              child: Text('Reset Words'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => LevelSelectionScreen()),
+                );
+              },
+              child: Text('Next Level'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -318,7 +443,6 @@ class _ListenState extends State<Listen> {
                           ),
                         ),
                       ),
-                      
                       Column(
                         children: [
                           ElevatedButton(
