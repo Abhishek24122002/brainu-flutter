@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "vc_starting_question":"Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one.",
+  "vc_starting_question":"Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.",
   "click_here_to_start": "Click here to Start",
   "submit":"Submit",
   "letter": "Letter",
@@ -8,7 +8,7 @@
   "select_your_games": "Select Your Games",
   "ran_question": "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can.",
   "word_reading_question":"Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap.",
-  "dictation_consonent":"Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brain by typing the word that is dictated!",
+  "dictation_consonent":"Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!",
   "paragraph_reading_question":"Brainu wants to listen to a story but he is not able to read. But you can help him! Please read out the short story from his story book. It will appear after you tap Start.",
   "spoonerism_question":"To help Brainu perform the Spoonerism Step, exchange the first letters of the pair of words and tell Brainu what the new pair is! Tap on the words to listen. Tap START to begin",
   "phoneme_deletion_question":"Help Brainu by telling him what the remaining word would be, after you remove the specific sound from the given word. Tap on sound and  word icons to listen to the audio.",
