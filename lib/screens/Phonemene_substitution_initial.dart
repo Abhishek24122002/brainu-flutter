@@ -117,7 +117,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   Future<String> _getFilePath() async {
     final directory = await getApplicationDocumentsDirectory();
     final phonemeDir =
-        Directory('${directory.path}/Phoneme_substitution_final');
+        Directory('${directory.path}/Phoneme_substitution_initial');
 
     if (!phonemeDir.existsSync()) {
       phonemeDir.createSync(recursive: true);
@@ -230,7 +230,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   Future<void> playAudio(String option) async {
     try {
       String audioPath =
-          'audio/$_userLanguage/phoneme_substitution/final/${option.toLowerCase()}.wav';
+          'audio/$_userLanguage/phoneme_substitution/initial/${option.toLowerCase()}.wav';
       print('Playing audio: $audioPath');
       await audioPlayer.play(AssetSource(audioPath));
     } catch (e) {

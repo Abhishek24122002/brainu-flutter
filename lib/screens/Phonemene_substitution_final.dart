@@ -531,8 +531,8 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       ),
                                     ),
                                     AnimatedWoodenButton(
-                                      label: S.of(context).sound1,
-                                      onPressed: () => playAudio(sound1),
+                                      label: S.of(context).sound2,
+                                      onPressed: () => playAudio(sound2),
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(
@@ -548,8 +548,8 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                       ),
                                     ),
                                     AnimatedWoodenButton(
-                                      label: S.of(context).sound2,
-                                      onPressed: () => playAudio(sound2),
+                                      label: S.of(context).sound1,
+                                      onPressed: () => playAudio(sound1),
                                     ),
                                     Container(
                                       padding: EdgeInsets.symmetric(

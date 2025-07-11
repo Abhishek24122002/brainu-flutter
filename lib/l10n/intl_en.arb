@@ -47,5 +47,32 @@
   "With":"With",
   "In":"in",
   "Remove" :"Remove",
-  "from_the":"From the"
+  "from_the":"From the",
+
+  "Read_Question" : "Read Question",
+  "Read_Text" : "Read Text",
+  "read_the_text_loudly" : "read the text loudly",
+  "Select_Correct_one" : "Select Correct one",
+  "double_click_to_select" : "double click to select",
+  "Identify_and_Speak" : "Identify and Speak",
+
+  "Click_here_to_record" : "Click here to record",
+  "Click_here_to_stop" : "Click here to stop",
+  "Click_here_to_listen" : "Click here to listen",
+  "Click_here_to_submit" : "Click here to submit",
+
+  
+  "Click_here_to_start_and_listen_to_audiocarefully" : "Click here to start and listen to audio carefully",
+  "Click_here_to_write" : "Click here to write",
+  "write_here" : "write here"
+
+
+
+
+
+
+
+
+
+
 }

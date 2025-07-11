@@ -50,10 +50,10 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
-  /// `Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one.`
+  /// `Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.`
   String get vc_starting_question {
     return Intl.message(
-      'Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one.',
+      'Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.',
       name: 'vc_starting_question',
       desc: '',
       args: [],
@@ -130,10 +130,10 @@ class S {
     );
   }
 
-  /// `Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brain by typing the word that is dictated!`
+  /// `Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!`
   String get dictation_consonent {
     return Intl.message(
-      'Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brain by typing the word that is dictated!',
+      'Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!',
       name: 'dictation_consonent',
       desc: '',
       args: [],
@@ -485,6 +485,136 @@ class S {
     return Intl.message(
       'From the',
       name: 'from_the',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Read Question`
+  String get Read_Question {
+    return Intl.message(
+      'Read Question',
+      name: 'Read_Question',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Read Text`
+  String get Read_Text {
+    return Intl.message(
+      'Read Text',
+      name: 'Read_Text',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `read the text loudly`
+  String get read_the_text_loudly {
+    return Intl.message(
+      'read the text loudly',
+      name: 'read_the_text_loudly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select Correct one`
+  String get Select_Correct_one {
+    return Intl.message(
+      'Select Correct one',
+      name: 'Select_Correct_one',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `double click to select`
+  String get double_click_to_select {
+    return Intl.message(
+      'double click to select',
+      name: 'double_click_to_select',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Identify and Speak`
+  String get Identify_and_Speak {
+    return Intl.message(
+      'Identify and Speak',
+      name: 'Identify_and_Speak',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to record`
+  String get Click_here_to_record {
+    return Intl.message(
+      'Click here to record',
+      name: 'Click_here_to_record',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to stop`
+  String get Click_here_to_stop {
+    return Intl.message(
+      'Click here to stop',
+      name: 'Click_here_to_stop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to listen`
+  String get Click_here_to_listen {
+    return Intl.message(
+      'Click here to listen',
+      name: 'Click_here_to_listen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to submit`
+  String get Click_here_to_submit {
+    return Intl.message(
+      'Click here to submit',
+      name: 'Click_here_to_submit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to start and listen to audio carefully`
+  String get Click_here_to_start_and_listen_to_audiocarefully {
+    return Intl.message(
+      'Click here to start and listen to audio carefully',
+      name: 'Click_here_to_start_and_listen_to_audiocarefully',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click here to write`
+  String get Click_here_to_write {
+    return Intl.message(
+      'Click here to write',
+      name: 'Click_here_to_write',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `write here`
+  String get write_here {
+    return Intl.message(
+      'write here',
+      name: 'write_here',
       desc: '',
       args: [],
     );

@@ -22,16 +22,37 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "Click_here_to_listen":
+            MessageLookupByLibrary.simpleMessage("Click here to listen"),
+        "Click_here_to_record":
+            MessageLookupByLibrary.simpleMessage("Click here to record"),
+        "Click_here_to_start_and_listen_to_audiocarefully":
+            MessageLookupByLibrary.simpleMessage(
+                "Click here to start and listen to audio carefully"),
+        "Click_here_to_stop":
+            MessageLookupByLibrary.simpleMessage("Click here to stop"),
+        "Click_here_to_submit":
+            MessageLookupByLibrary.simpleMessage("Click here to submit"),
+        "Click_here_to_write":
+            MessageLookupByLibrary.simpleMessage("Click here to write"),
+        "Identify_and_Speak":
+            MessageLookupByLibrary.simpleMessage("Identify and Speak"),
         "In": MessageLookupByLibrary.simpleMessage("in"),
+        "Read_Question": MessageLookupByLibrary.simpleMessage("Read Question"),
+        "Read_Text": MessageLookupByLibrary.simpleMessage("Read Text"),
         "Remove": MessageLookupByLibrary.simpleMessage("Remove"),
+        "Select_Correct_one":
+            MessageLookupByLibrary.simpleMessage("Select Correct one"),
         "With": MessageLookupByLibrary.simpleMessage("With"),
         "Word": MessageLookupByLibrary.simpleMessage("Word"),
         "click_here_to_start":
             MessageLookupByLibrary.simpleMessage("Click here to Start"),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
-            "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brain by typing the word that is dictated!"),
+            "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!"),
         "done": MessageLookupByLibrary.simpleMessage("Done"),
+        "double_click_to_select":
+            MessageLookupByLibrary.simpleMessage("double click to select"),
         "from_the": MessageLookupByLibrary.simpleMessage("From the"),
         "game_identify": MessageLookupByLibrary.simpleMessage("Identify"),
         "game_letter": MessageLookupByLibrary.simpleMessage("Letter"),
@@ -64,6 +85,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "play_audio": MessageLookupByLibrary.simpleMessage("Play Audio"),
         "ran_question": MessageLookupByLibrary.simpleMessage(
             "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can."),
+        "read_the_text_loudly":
+            MessageLookupByLibrary.simpleMessage("read the text loudly"),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("Select Your Games"),
         "sound": MessageLookupByLibrary.simpleMessage("Sound"),
@@ -79,8 +102,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "submit": MessageLookupByLibrary.simpleMessage("Submit"),
         "substitute": MessageLookupByLibrary.simpleMessage("substitute"),
         "vc_starting_question": MessageLookupByLibrary.simpleMessage(
-            "Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different consonants too. Listen to the options given and choose the correct one."),
+            "Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one."),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(
-            "Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap.")
+            "Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap."),
+        "write_here": MessageLookupByLibrary.simpleMessage("write here")
       };
 }

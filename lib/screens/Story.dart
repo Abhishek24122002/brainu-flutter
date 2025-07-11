@@ -236,6 +236,12 @@ class _StoryState extends State<Story> {
       },
     );
   }
+  @override
+  void dispose() {
+    _recorder.closeRecorder();
+    _player.closePlayer();
+    super.dispose();
+  }
 
   Future<String> _getFilePath() async {
     final directory = await getApplicationDocumentsDirectory();

@@ -22,8 +22,24 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "Click_here_to_listen":
+            MessageLookupByLibrary.simpleMessage("सुनने के लिए यहा क्लिक करे"),
+        "Click_here_to_record": MessageLookupByLibrary.simpleMessage(
+            "रिकॉर्ड करने के लिए यहा क्लिक करे"),
+        "Click_here_to_stop":
+            MessageLookupByLibrary.simpleMessage("रुकने के लिए यहा क्लिक करे"),
+        "Click_here_to_submit":
+            MessageLookupByLibrary.simpleMessage("पुष्टि करे"),
+        "Click_here_to_write":
+            MessageLookupByLibrary.simpleMessage("लिखने के लिए यहा क्लिक करे"),
+        "Identify_and_Speak":
+            MessageLookupByLibrary.simpleMessage("पहचाने और बोले"),
         "In": MessageLookupByLibrary.simpleMessage("में"),
+        "Read_Question": MessageLookupByLibrary.simpleMessage("प्रश्न पढे"),
+        "Read_Text": MessageLookupByLibrary.simpleMessage("इसे पढे"),
         "Remove": MessageLookupByLibrary.simpleMessage("निकाले"),
+        "Select_Correct_one":
+            MessageLookupByLibrary.simpleMessage("सही जवाब चुने"),
         "With": MessageLookupByLibrary.simpleMessage("के साथ"),
         "Word": MessageLookupByLibrary.simpleMessage("शब्द"),
         "click_here_to_start": MessageLookupByLibrary.simpleMessage(
@@ -32,6 +48,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
             "ब्रेनु एक शांतिपूर्ण जंगल में है, पक्षियों और प्रकृति की आवाज़ों को सुननें के लिए। ब्रेनु की सहायता करे शब्द को टाइप करके जो आपको सुनाई देगा !"),
         "done": MessageLookupByLibrary.simpleMessage("आगे बढ़े |"),
+        "double_click_to_select": MessageLookupByLibrary.simpleMessage(
+            "उत्तर चुनने के लिए दो-बार क्लिक करे"),
         "from_the": MessageLookupByLibrary.simpleMessage("से"),
         "game_identify": MessageLookupByLibrary.simpleMessage("पहचान कौन"),
         "game_letter": MessageLookupByLibrary.simpleMessage("अक्षर"),
@@ -83,6 +101,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "vc_starting_question": MessageLookupByLibrary.simpleMessage(
             "ब्रेनू एक घने जंगल में है, जहाँ उसे विभिन्न प्रकार की पत्तियों और फूलों की पहचान करनी है। \n \n ब्रेनू को विभिन्न व्यंजनों की पहचान करने में सहायता करें। दिए गए विकल्पों को सुनें और सही विकल्प चुनें।"),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू समुद्र तट पर है। वह एक बोर्ड पकडे हुए है। जिसमें कुछ शब्द दिखाई देंगे। अपना उत्तर रिकॉर्ड कर के उसे शब्द पढ़ने में मदद करें। आपके टैप करने पर ही शब्द दिखाई देगा।")
+            "ब्रेनू समुद्र तट पर है। वह एक बोर्ड पकडे हुए है। जिसमें कुछ शब्द दिखाई देंगे। अपना उत्तर रिकॉर्ड कर के उसे शब्द पढ़ने में मदद करें। आपके टैप करने पर ही शब्द दिखाई देगा।"),
+        "write_here": MessageLookupByLibrary.simpleMessage("यहा लिखे")
       };
 }

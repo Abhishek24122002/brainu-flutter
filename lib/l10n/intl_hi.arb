@@ -47,6 +47,23 @@
   "With":"के साथ",
   "In":"में",
   "Remove" :"निकाले",
-  "from_the":"से"
+  "from_the":"से",
+
+  "Read_Question" : "प्रश्न पढे",
+  "Read_Text" : "इसे पढे",
+  "read_the_text loudly" : "इसे ज़ोर से पढे",
+  "Select_Correct_one" : "सही जवाब चुने",
+  "double_click_to_select" : "उत्तर चुनने के लिए दो-बार क्लिक करे",
+  "Identify_and_Speak" : "पहचाने और बोले",
+
+  "Click_here_to_record" : "रिकॉर्ड करने के लिए यहा क्लिक करे",
+  "Click_here_to_stop" : "रुकने के लिए यहा क्लिक करे",
+  "Click_here_to_listen" : "सुनने के लिए यहा क्लिक करे",
+  "Click_here_to_submit" : "पुष्टि करे",
+
+  
+  "Click_here_to_start_and_listen_to_audio_carefully" : "शुरू करने के लिए क्लिक करे और औडियो ध्यान से सुने",
+  "Click_here_to_write" : "लिखने के लिए यहा क्लिक करे",
+  "write_here" : "यहा लिखे"
 
 }
