@@ -48,104 +48,106 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
   ];
 
   @override
-Widget build(BuildContext context) {
-  final visibleIndices = selectedLevels
-      .asMap()
-      .entries
-      .where((entry) => entry.value)
-      .map((entry) => entry.key)
-      .toList();
+  Widget build(BuildContext context) {
+    final visibleIndices = selectedLevels
+        .asMap()
+        .entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
 
-  return Stack(
-    children: [
-      // 🖼 Background image
-      Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/img/background.jpeg"),
-            fit: BoxFit.cover,
+    return Stack(
+      children: [
+        // 🖼 Background image
+        Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("assets/img/background.jpeg"),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
-      ),
 
-      // 🧠 Main UI
-      Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.white.withOpacity(0.3),
-          elevation: 0,
-          title: Stack(
-            children: [
-              Text(
-                S.of(context).games,
-                style: GoogleFonts.fredokaOne(
-                  textStyle: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 3
-                      ..color = Color(0xFF954305),
+        // 🧠 Main UI
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.white.withOpacity(0.3),
+            elevation: 0,
+            title: Stack(
+              children: [
+                Text(
+                  S.of(context).games,
+                  style: GoogleFonts.fredokaOne(
+                    textStyle: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      foreground: Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 3
+                        ..color = Color(0xFF954305),
+                    ),
                   ),
                 ),
+                Text(
+                  S.of(context).games,
+                  style: GoogleFonts.fredokaOne(
+                    textStyle: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFFDA748),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.logout, color: Color(0xFFEE5B03)),
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  await prefs.remove('uid');
+                  Navigator.pushReplacement(
+                    context,
+                    Navigation.generateRoute(RouteSettings(name: '/login')),
+                  );
+                },
               ),
-              Text(
-                S.of(context).games,
-                style: GoogleFonts.fredokaOne(
-                  textStyle: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFDA748),
-                  ),
-                ),
+              IconButton(
+                icon: Icon(Icons.menu, color: Color(0xFFEE5B03)),
+                onPressed: () async {
+                  final result = await showDialog<List<bool>>(
+                    context: context,
+                    builder: (context) =>
+                        SelectGameDialog(initialSelectedLevels: selectedLevels),
+                  );
+                  if (result != null) {
+                    setState(() => selectedLevels = result);
+                  }
+                },
               ),
             ],
           ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.logout, color: Color(0xFFEE5B03)),
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.remove('uid');
-                Navigator.pushReplacement(
-                  context,
-                  Navigation.generateRoute(RouteSettings(name: '/login')),
-                );
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.menu, color: Color(0xFFEE5B03)),
-              onPressed: () async {
-                final result = await showDialog<List<bool>>(
-                  context: context,
-                  builder: (context) => SelectGameDialog(initialSelectedLevels: selectedLevels),
-                );
-                if (result != null) {
-                  setState(() => selectedLevels = result);
-                }
-              },
-            ),
-          ],
-        ),
-        body: Padding(
-          padding: const EdgeInsets.only(bottom: 40),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: _buildButtonRows(context, visibleIndices),
+          body: Padding(
+            padding: const EdgeInsets.only(bottom: 40),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: _buildButtonRows(context, visibleIndices),
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-
-  List<Widget> _buildButtonRows(BuildContext context, List<int> visibleIndices) {
+  List<Widget> _buildButtonRows(
+      BuildContext context, List<int> visibleIndices) {
     List<Widget> rows = [];
     int total = visibleIndices.length;
     int number = 1;
@@ -195,8 +197,9 @@ Widget build(BuildContext context) {
         number++;
       }
       rows.add(Row(
-        mainAxisAlignment:
-            rowCount < 3 ? MainAxisAlignment.center : MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: rowCount < 3
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.spaceEvenly,
         children: row,
       ));
       rows.add(SizedBox(height: 16));
@@ -204,7 +207,8 @@ Widget build(BuildContext context) {
     return rows;
   }
 
-  Widget _buildNumberedButton(BuildContext context, int levelIndex, int number) {
+  Widget _buildNumberedButton(
+      BuildContext context, int levelIndex, int number) {
     bool isTapped = _tappedButtonIndex == levelIndex;
 
     return Padding(

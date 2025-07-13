@@ -13,6 +13,8 @@ import '../components/submit_button.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
 
 class Letter extends StatefulWidget {
   @override
@@ -176,8 +178,9 @@ class _LetterState extends State<Letter> {
       }
     });
     loadProgress().then((_) {
-       loadTrophyCount().then((_) {
-      generateQuestionAndOptions();});
+      loadTrophyCount().then((_) {
+        generateQuestionAndOptions();
+      });
     });
   }
 
@@ -190,10 +193,12 @@ class _LetterState extends State<Letter> {
     final prefs = await SharedPreferences.getInstance();
     questionIndex = prefs.getInt('V_C_questionIndex') ?? 0;
   }
+
   Future<void> loadTrophyCount() async {
-  final prefs = await SharedPreferences.getInstance();
-  trophyCount = prefs.getInt('V_C_trophyCount') ?? 0;
-}
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    int trophyC = trophyManager.trophyCount;
+    trophyCount = trophyC;
+  }
 
   Future<void> playAudio(String alphabet) async {
     try {
@@ -208,8 +213,16 @@ class _LetterState extends State<Letter> {
   }
 
   Future<void> _saveTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('V_C_trophyCount', trophyCount); // Save the trophy count
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // this updates the provider
+
+    // Now refresh local trophyCount from provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+
+    // Optionally also save to Firebase if needed:
+    await trophyManager.saveToFirebase();
   }
 
   void showIterationCompleteDialog() {
@@ -289,7 +302,6 @@ class _LetterState extends State<Letter> {
 
     clickCountMap = {for (var option in options) option: 0};
     clickTimers = {for (var option in options) option: null};
-
   }
 
   String getHindiCharacterFromOption(String option) {
@@ -347,7 +359,7 @@ class _LetterState extends State<Letter> {
   }
 
   void handleSubmit() {
-     bool isCorrect = selectedOption == wordPairs[questionIndex][1];
+    bool isCorrect = selectedOption == wordPairs[questionIndex][1];
     saveAnswer_Letter(isCorrect, selectedOption);
 
     setState(() {
@@ -358,7 +370,7 @@ class _LetterState extends State<Letter> {
 
       if (questionCounter == 5) {
         iterationCounter++;
-        trophyCount++;
+
         _saveTrophyCount();
         questionCounter = 0;
 

@@ -1,4 +1,5 @@
 import 'package:brainu/Authentication/login_page.dart';
+import 'package:brainu/managers/trophy_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'generated/l10n.dart';
+import 'package:provider/provider.dart';
 
 import 'screens/LevelSelectionScreen.dart';
 
@@ -17,7 +19,17 @@ void main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? storedUid = prefs.getString('uid');
 
-  runApp(BrainUApp(storedUid: storedUid));
+  TrophyManager trophyManager = TrophyManager(userId: storedUid ?? '');
+  await trophyManager.loadFromPrefs();
+  if (storedUid != null) {
+    await trophyManager.loadFromFirebase();
+  }
+  runApp(
+    ChangeNotifierProvider.value(
+      value: trophyManager,
+      child: BrainUApp(storedUid: storedUid),
+    ),
+  );
 }
 
 class BrainUApp extends StatefulWidget {
@@ -34,13 +46,30 @@ class BrainUApp extends StatefulWidget {
   _BrainUAppState createState() => _BrainUAppState();
 }
 
-class _BrainUAppState extends State<BrainUApp> {
+class _BrainUAppState extends State<BrainUApp> with WidgetsBindingObserver {
   Locale _locale = Locale('en'); // Default to English
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _fetchUserLanguage();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+      trophyManager.saveToPrefs();
+      trophyManager.saveToFirebase();
+    }
   }
 
   void setLocale(Locale locale) {
