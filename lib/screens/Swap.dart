@@ -9,11 +9,13 @@ import '../components/appbar.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_services.dart'; // Import your FirebaseServices file
-
 import '../components/option_button.dart';
 import '../components/submit_button.dart';
 import '../generated/l10n.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
 
 class Swap extends StatefulWidget {
   @override
@@ -188,7 +190,7 @@ class _SwapState extends State<Swap> {
   @override
   void initState() {
     super.initState();
-    _loadTrophyCount(); // Load the trophy count when the level is loaded
+    loadTrophyCount(); // Load the trophy count when the level is loaded
     _fetchUserLanguage();
     _loadProgress();
   }
@@ -213,17 +215,23 @@ class _SwapState extends State<Swap> {
     await prefs.setInt('spoonerism_currentIndex', currentIndex);
   }
 
-  Future<void> _loadTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      trophyCount = prefs.getInt('trophyCount') ??
-          0; // Default to 0 if no trophy count is stored
-    });
+  Future<void> loadTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    int trophyC = trophyManager.trophyCount;
+    trophyCount = trophyC;
   }
 
   Future<void> _saveTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('trophyCount', trophyCount); // Save the trophy count
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // this updates the provider
+
+    // Now refresh local trophyCount from provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+
+    // Optionally also save to Firebase if needed:
+    await trophyManager.saveToFirebase();
   }
 
   void generateWords() {
@@ -399,7 +407,7 @@ class _SwapState extends State<Swap> {
               ),
               SizedBox(height: 20),
               Text(
-                '$trophyCount', // Display the number of trophies
+                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

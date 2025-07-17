@@ -18,6 +18,9 @@ import '../components/audio_buttons.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
+
 class Story extends StatefulWidget {
   @override
   _StoryState createState() => _StoryState();
@@ -83,9 +86,10 @@ class _StoryState extends State<Story> {
 }
 
   Future<void> loadTrophyCount() async {
-  final prefs = await SharedPreferences.getInstance();
-  trophyCount = prefs.getInt('Story_trophyCount') ?? 0;
-}
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    int trophyC = trophyManager.trophyCount;
+    trophyCount = trophyC;
+  }
 
 
   Future<void> _playRecording() async {
@@ -161,8 +165,16 @@ class _StoryState extends State<Story> {
 }
 
   Future<void> _saveTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('Story_trophyCount', trophyCount); // Save the trophy count
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // this updates the provider
+
+    // Now refresh local trophyCount from provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+
+    // Optionally also save to Firebase if needed:
+    await trophyManager.saveToFirebase();
   }
   void showIterationCompleteDialog() {
     showDialog(
@@ -189,7 +201,7 @@ class _StoryState extends State<Story> {
               ),
               SizedBox(height: 20),
               Text(
-                '$trophyCount', // Display the number of trophies
+                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

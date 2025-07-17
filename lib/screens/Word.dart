@@ -4,9 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
-
 import '../components/audio_buttons.dart';
-
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_save_answer.dart';
@@ -14,8 +12,10 @@ import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
 import '../screens/LevelSelectionScreen.dart';
-
 import '../components/appbar.dart';
+
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
 
 class Word extends StatefulWidget {
   @override
@@ -226,9 +226,10 @@ class _WordState extends State<Word> {
     questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
   }
   Future<void> loadTrophyCount() async {
-  final prefs = await SharedPreferences.getInstance();
-  trophyCount = prefs.getInt('Word_trophyCount') ?? 0;
-}
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    int trophyC = trophyManager.trophyCount;
+    trophyCount = trophyC;
+  }
 
   Future<void> _saveWords() async {
     await prefs.setStringList('remainingWords_$userLanguage', remainingWords);
@@ -359,8 +360,16 @@ class _WordState extends State<Word> {
 }
 
    Future<void> _saveTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('Word_trophyCount', trophyCount); // Save the trophy count
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // this updates the provider
+
+    // Now refresh local trophyCount from provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+
+    // Optionally also save to Firebase if needed:
+    await trophyManager.saveToFirebase();
   }
   void showIterationCompleteDialog() {
     showDialog(
@@ -387,7 +396,7 @@ class _WordState extends State<Word> {
               ),
               SizedBox(height: 20),
               Text(
-                '$trophyCount', // Display the number of trophies
+                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

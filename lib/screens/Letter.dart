@@ -250,7 +250,7 @@ class _LetterState extends State<Letter> {
               ),
               SizedBox(height: 20),
               Text(
-                '$trophyCount', // Display the number of trophies
+                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

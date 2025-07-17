@@ -20,6 +20,9 @@ import '../components/appbar.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
+
 class Ph_substitution_final extends StatefulWidget {
   @override
   _Ph_substitution_finalState createState() => _Ph_substitution_finalState();
@@ -91,7 +94,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
   @override
   void initState() {
     super.initState();
-    _loadTrophyCount(); // Load the trophy count when the level is loaded
+    loadTrophyCount(); // Load the trophy count when the level is loaded
     _fetchUserLanguage();
     _initializeRecorder();
     _player.openPlayer();
@@ -183,18 +186,23 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     }
   }
 
-  Future<void> _loadTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      trophyCount = prefs.getInt('ph_subs_fin_trophyCount') ??
-          0; // Default to 0 if no trophy count is stored
-    });
+  Future<void> loadTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    int trophyC = trophyManager.trophyCount;
+    trophyCount = trophyC;
   }
+  
+Future<void> _saveTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // this updates the provider
 
-  Future<void> _saveTrophyCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(
-        'ph_subs_fin_trophyCount', trophyCount); // Save the trophy count
+    // Now refresh local trophyCount from provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+
+    // Optionally also save to Firebase if needed:
+    await trophyManager.saveToFirebase();
   }
 
   // void generateWords() {
@@ -365,7 +373,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
               ),
               SizedBox(height: 20),
               Text(
-                '$trophyCount', // Display the number of trophies
+                '${Provider.of<TrophyManager>(context).trophyCount}',// Display the number of trophies
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
