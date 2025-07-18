@@ -23,6 +23,9 @@ import '../components/start_button.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+
 class Ph_substitution_final extends StatefulWidget {
   @override
   _Ph_substitution_finalState createState() => _Ph_substitution_finalState();
@@ -191,8 +194,8 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     int trophyC = trophyManager.trophyCount;
     trophyCount = trophyC;
   }
-  
-Future<void> _saveTrophyCount() async {
+
+  Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
     trophyManager.increase(); // this updates the provider
 
@@ -315,15 +318,27 @@ Future<void> _saveTrophyCount() async {
         if (questionCounter == 5) {
           iterationCounter++;
           trophyCount++;
-          _saveTrophyCount();
+          await _saveTrophyCount();
           questionCounter = 0;
-          showIterationCompleteDialog();
-        }
 
-        if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
-          generateWords();
+          // Show TrophyDialog first
+          await showIterationCompleteDialog();
+
+
+          // After TrophyDialog is closed, check if any words remain
+          if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+            generateWords();
+          } else {
+            // Show CompletionDialog after TrophyDialog is dismissed
+            showAllWordsDoneDialog();
+          }
         } else {
-          showAllWordsDoneDialog();
+          // If it's not the 5th question, proceed normally
+          if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+            generateWords();
+          } else {
+            showAllWordsDoneDialog();
+          }
         }
       } else {
         print("File upload failed.");
@@ -348,76 +363,23 @@ Future<void> _saveTrophyCount() async {
     generateWords();
   }
 
-  void showIterationCompleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}',// Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                generateWords();
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  Future<void> showIterationCompleteDialog() async {
+  await showDialog(
+    context: context,
+    builder: (context) => const TrophyDialog(),
+  );
+}
+
 
   void showAllWordsDoneDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('All Words Done!'),
-          content: Text(
-              'You have completed all words in this level. Reset to play again.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                resetLevel();
-              },
-              child: Text('Reset Level'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => CompletionDialog(
+        onReset: () {
+          Navigator.of(context).pop();
+          resetLevel();
+        },
+      ),
     );
   }
 
@@ -485,7 +447,8 @@ Future<void> _saveTrophyCount() async {
                                       child: Text(
                                         S.of(context).In,
                                         style: TextStyle(
-                                            fontSize: 70.sp, color: Colors.white),
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -502,7 +465,8 @@ Future<void> _saveTrophyCount() async {
                                       child: Text(
                                         S.of(context).With,
                                         style: TextStyle(
-                                            fontSize: 70.sp, color: Colors.white),
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -520,7 +484,8 @@ Future<void> _saveTrophyCount() async {
                                       child: Text(
                                         S.of(context).substitute,
                                         style: TextStyle(
-                                            fontSize: 70.sp, color: Colors.white),
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                   ]
@@ -535,7 +500,8 @@ Future<void> _saveTrophyCount() async {
                                       child: Text(
                                         S.of(context).substitute,
                                         style: TextStyle(
-                                            fontSize: 70.sp, color: Colors.white),
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -552,7 +518,8 @@ Future<void> _saveTrophyCount() async {
                                       child: Text(
                                         S.of(context).With,
                                         style: TextStyle(
-                                            fontSize: 70.sp, color: Colors.white),
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -570,7 +537,9 @@ Future<void> _saveTrophyCount() async {
                                         S.of(context).In,
                                         // style: TextStyle(
                                         //     fontSize: 18, color: Colors.white),
-                                        style: TextStyle(fontSize: 70.sp, color: Colors.white),
+                                        style: TextStyle(
+                                            fontSize: 70.sp,
+                                            color: Colors.white),
                                       ),
                                     ),
                                     AnimatedWoodenButton(
@@ -590,7 +559,6 @@ Future<void> _saveTrophyCount() async {
                                   onPressed: _toggleRecording,
                                   isRecording: _isRecording,
                                 ),
-                                
                                 PlayAudioButton(
                                   isEnabled: _recordingAvailable,
                                   onPressed: _isPlaying ? null : _playRecording,

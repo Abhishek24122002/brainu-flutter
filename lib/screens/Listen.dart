@@ -18,6 +18,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+
 class Listen extends StatefulWidget {
   @override
   _ListenState createState() => _ListenState();
@@ -273,7 +276,13 @@ class _ListenState extends State<Listen> {
     });
 
     questionIndex++;
-    await saveProgress();
+await saveProgress();
+
+if (_remainingWords.isEmpty) {
+  showCompletionDialog();
+  return;
+}
+
 
     // 🏆 Check for trophy every 5 words
     if (questionIndex % 5 == 0) {
@@ -299,86 +308,27 @@ class _ListenState extends State<Listen> {
   void showIterationCompleteDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (context) => const TrophyDialog(),
     );
   }
 
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Congratulations!'),
-          content: Text('You have completed all words.'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setInt('Listen_questionIndex', 0); // reset index
-                Navigator.of(context).pop();
-                _loadWords();
-              },
-              child: Text('Reset Words'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => LevelSelectionScreen()),
-                );
-              },
-              child: Text('Next Level'),
-            ),
-          ],
-        );
+  void showCompletionDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => CompletionDialog(
+      onReset: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('Listen_questionIndex', 0);
+        setState(() {
+          questionIndex = 0;
+          _detectLocaleAndLoadWords(); // Reset word list
+        });
       },
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

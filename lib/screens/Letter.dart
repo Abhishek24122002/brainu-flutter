@@ -19,7 +19,6 @@ import 'package:provider/provider.dart';
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
 
-
 class Letter extends StatefulWidget {
   @override
   _LetterState createState() => _LetterState();
@@ -230,29 +229,27 @@ class _LetterState extends State<Letter> {
   }
 
   void showIterationCompleteDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
-void showCompletionDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => CompletionDialog(
-      onReset: () {
-        setState(() {
-          questionIndex = 0;
-          saveProgress(); // optional: reset progress in SharedPreferences
-          generateQuestionAndOptions();
-        });
-      },
-    ),
-  );
-}
-
-
+  void showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CompletionDialog(
+        onReset: () {
+          setState(() {
+            questionIndex = 0;
+            saveProgress(); // optional: reset progress in SharedPreferences
+            generateQuestionAndOptions();
+          });
+        },
+      ),
+    );
+  }
 
   void generateQuestionAndOptions() {
     if (questionIndex >= wordPairs.length) {
@@ -333,41 +330,40 @@ void showCompletionDialog() {
   }
 
   void handleSubmit() {
-  bool isCorrect = selectedOption == wordPairs[questionIndex][1];
-  saveAnswer_Letter(isCorrect, selectedOption);
+    bool isCorrect = selectedOption == wordPairs[questionIndex][1];
+    saveAnswer_Letter(isCorrect, selectedOption);
 
-  setState(() {
-    questionCounter++;
-    _showGameElements = false;
-    questionIndex++;
-    saveProgress();
+    setState(() {
+      questionCounter++;
+      _showGameElements = false;
+      questionIndex++;
+      saveProgress();
 
-    if (questionIndex >= wordPairs.length) {
-      showCompletionDialog();
-      return; // prevent further processing
-    }
+      if (questionIndex >= wordPairs.length) {
+        showCompletionDialog();
+        return; // prevent further processing
+      }
 
-    if (questionCounter == 5) {
-      iterationCounter++;
+      if (questionCounter == 5) {
+        iterationCounter++;
 
-      _saveTrophyCount();
-      questionCounter = 0;
+        _saveTrophyCount();
+        questionCounter = 0;
 
-      showIterationCompleteDialog();
+        showIterationCompleteDialog();
 
-      Future.delayed(Duration(milliseconds: 500), () {
-        if (mounted) {
-          setState(() {
-            generateQuestionAndOptions();
-          });
-        }
-      });
-    } else {
-      generateQuestionAndOptions();
-    }
-  });
-}
-
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              generateQuestionAndOptions();
+            });
+          }
+        });
+      } else {
+        generateQuestionAndOptions();
+      }
+    });
+  }
 
   @override
   void dispose() {

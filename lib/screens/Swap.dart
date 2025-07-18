@@ -17,6 +17,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
 class Swap extends StatefulWidget {
   @override
   _SwapState createState() => _SwapState();
@@ -383,77 +385,24 @@ class _SwapState extends State<Swap> {
   }
 
   void showIterationCompleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                generateWords();
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  showDialog(
+    context: context,
+    builder: (context) => const TrophyDialog(),
+  );
+}
 
   void showAllWordsDoneDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('All Words Done!'),
-          content: Text(
-              'You have completed all words in this level. Reset to play again.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                resetLevel();
-              },
-              child: Text('Reset Level'),
-            ),
-          ],
-        );
+  showDialog(
+    context: context,
+    builder: (context) => CompletionDialog(
+      onReset: () {
+        Navigator.of(context).pop();
+        resetLevel();
       },
-    );
-  }
+    ),
+  );
+}
+
 
   @override
   void dispose() {

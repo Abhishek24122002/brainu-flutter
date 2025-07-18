@@ -198,23 +198,22 @@ class _IdentifyState extends State<Identify> {
       int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
 
       if (_iteration < maxIterations) {
-  _randomizeImages();
-} else {
-  showDialog(
-    context: context,
-    builder: (context) => CompletionDialog(
-      onReset: () async {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('identify_iteration', 0);
-        setState(() {
-          _iteration = 0;
-        });
-        _randomizeImages(); // Restart with fresh images
-      },
-    ),
-  );
-}
-
+        _randomizeImages();
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => CompletionDialog(
+            onReset: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setInt('identify_iteration', 0);
+              setState(() {
+                _iteration = 0;
+              });
+              _randomizeImages(); // Restart with fresh images
+            },
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload failed! Please try again.")),
