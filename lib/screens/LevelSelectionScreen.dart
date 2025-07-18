@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:brainu/managers/trophy_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,7 @@ import 'swap.dart';
 import 'package:vibration/vibration.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class LevelSelectionScreen extends StatefulWidget {
   final User? user;
@@ -74,62 +76,92 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
           appBar: AppBar(
             backgroundColor: Colors.white.withOpacity(0.3),
             elevation: 0,
-            title: Stack(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  S.of(context).games,
-                  style: GoogleFonts.fredokaOne(
-                    textStyle: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 3
-                        ..color = Color(0xFF954305),
-                    ),
+                // 🏆 Trophy icon + count
+                Consumer<TrophyManager>(
+                  builder: (context, trophyManager, _) => Row(
+                    children: [
+                      Icon(Icons.emoji_events,
+                          color: Colors.amber[700], size: 30),
+                      const SizedBox(width: 4),
+                      Text(
+                        trophyManager.trophyCount.toString(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[800],
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  S.of(context).games,
-                  style: GoogleFonts.fredokaOne(
-                    textStyle: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFFDA748),
+
+                // 🎮 Title in center with stroke effect
+                Stack(
+                  children: [
+                    Text(
+                      S.of(context).games,
+                      style: GoogleFonts.fredokaOne(
+                        textStyle: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 3
+                            ..color = Color(0xFF954305),
+                        ),
+                      ),
                     ),
-                  ),
+                    Text(
+                      S.of(context).games,
+                      style: GoogleFonts.fredokaOne(
+                        textStyle: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFDA748),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 🍔 Menu + logout buttons
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.logout, color: Color(0xFFEE5B03)),
+                      onPressed: () async {
+                        await FirebaseAuth.instance.signOut();
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        await prefs.remove('uid');
+                        Navigator.pushReplacement(
+                          context,
+                          Navigation.generateRoute(
+                              RouteSettings(name: '/login')),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.menu, color: Color(0xFFEE5B03)),
+                      onPressed: () async {
+                        final result = await showDialog<List<bool>>(
+                          context: context,
+                          builder: (context) => SelectGameDialog(
+                              initialSelectedLevels: selectedLevels),
+                        );
+                        if (result != null) {
+                          setState(() => selectedLevels = result);
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
             centerTitle: true,
-            actions: [
-              IconButton(
-                icon: Icon(Icons.logout, color: Color(0xFFEE5B03)),
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  await prefs.remove('uid');
-                  Navigator.pushReplacement(
-                    context,
-                    Navigation.generateRoute(RouteSettings(name: '/login')),
-                  );
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.menu, color: Color(0xFFEE5B03)),
-                onPressed: () async {
-                  final result = await showDialog<List<bool>>(
-                    context: context,
-                    builder: (context) =>
-                        SelectGameDialog(initialSelectedLevels: selectedLevels),
-                  );
-                  if (result != null) {
-                    setState(() => selectedLevels = result);
-                  }
-                },
-              ),
-            ],
           ),
           body: Padding(
             padding: const EdgeInsets.only(bottom: 40),

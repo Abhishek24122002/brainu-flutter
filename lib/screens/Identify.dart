@@ -16,6 +16,12 @@ import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:provider/provider.dart';
+
+import 'package:brainu/components/popups/trophy.dart'; 
+import 'package:brainu/components/popups/completion.dart';
+
 class Identify extends StatefulWidget {
   @override
   _IdentifyState createState() => _IdentifyState();
@@ -60,6 +66,7 @@ class _IdentifyState extends State<Identify> {
   bool _isPlaying = false;
   bool _recordingAvailable = false;
   String? _recordingPath;
+  int trophyCount = 0;
 
   @override
   void initState() {
@@ -69,8 +76,9 @@ class _IdentifyState extends State<Identify> {
     // Convert list to string for Firebase
     _imageNamesString = _imageNames.join(', ');
     _loadIteration().then((_) {
-    _fetchUserLanguage(); // Only after iteration is loaded
-  });
+      _fetchUserLanguage();
+      _loadTrophyCount(); // Only after iteration is loaded
+    });
   }
 
   void _randomizeImages() {
@@ -97,16 +105,40 @@ class _IdentifyState extends State<Identify> {
 
     _randomizeImages();
   }
+
   Future<void> _saveIteration() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt('identify_iteration', _iteration);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('identify_iteration', _iteration);
+  }
+
+  Future<void> _loadIteration() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _iteration = prefs.getInt('identify_iteration') ?? 0;
+    });
+  }
+
+  Future<void> _loadTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyCount = trophyManager.trophyCount;
+  }
+
+  Future<void> _saveTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase(); // update Provider
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+    await trophyManager.saveToFirebase();
+  }
+
+  void _showTrophyDialog() {
+  showDialog(
+    context: context,
+    builder: (context) => const TrophyDialog(),
+  );
 }
-Future<void> _loadIteration() async {
-  final prefs = await SharedPreferences.getInstance();
-  setState(() {
-    _iteration = prefs.getInt('identify_iteration') ?? 0;
-  });
-}
+
 
   Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
@@ -124,69 +156,64 @@ Future<void> _loadIteration() async {
   }
 
   Future<void> _uploadAudioAndNavigate() async {
-  setState(() {
-    _iteration++;
-    _showGameElements = false;
-  });
-  await _saveIteration(); // 👈 Save after updating
+    setState(() {
+      _iteration++;
+      _showGameElements = false;
+    });
+    await _saveIteration(); // 👈 Save after updating
+    if (_iteration % 2 == 0) {
+      await _saveTrophyCount();
+      _showTrophyDialog();
+    }
+    // 👈 Save after updating
 
-  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("No recording found!")),
-    );
-    return;
-  }
+    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No recording found!")),
+      );
+      return;
+    }
 
-  File audioFile = File(_recordingPath!);
-  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
 
-  if (uploadedUrl != null) {
-    print("Audio uploaded: $uploadedUrl");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Upload successful!")),
-    );
+    if (uploadedUrl != null) {
+      print("Audio uploaded: $uploadedUrl");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload successful!")),
+      );
 
-    
+      // Extract just the names from the asset paths
+      List<String> imageNamesForKey = _images.map((path) {
+        String name = path.split('_r_').last.replaceAll('.png', '');
+        return name;
+      }).toList();
 
-    // Extract just the names from the asset paths
-List<String> imageNamesForKey = _images.map((path) {
-  String name = path.split('_r_').last.replaceAll('.png', '');
-  return name;
-}).toList();
-
-String iterationKey = "iteration${_iteration}"; 
+      String iterationKey = "iteration${_iteration}";
 
 // Save to Firebase as a proper JSON object
-await _firebaseSave.saveAnswer_Identify(
-  userLanguage,
-  iterationKey,
-  imageNamesForKey,
-  uploadedUrl
-);
+      await _firebaseSave.saveAnswer_Identify(
+          userLanguage, iterationKey, imageNamesForKey, uploadedUrl);
 
+      // Determine max iterations based on language
+      int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
 
-
-    // Determine max iterations based on language
-    int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
-
-   if (_iteration < maxIterations) {
-  _randomizeImages();
-} else {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt('identify_iteration', 0); // ✅ Reset iteration
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
-  );
-}
-
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Upload failed! Please try again.")),
-    );
+      if (_iteration < maxIterations) {
+        _randomizeImages();
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('identify_iteration', 0); // ✅ Reset iteration
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed! Please try again.")),
+      );
+    }
   }
-}
-
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
@@ -307,28 +334,27 @@ await _firebaseSave.saveAnswer_Identify(
                     SizedBox(height: 5),
 
                     // Buttons for recording and submitting answers
-                    
-                      // padding: const EdgeInsets.symmetric(
-                      //     horizontal: 25.0, vertical: 20),
-                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StartRecordingButton(
-                            onPressed: _toggleRecording,
-                            isRecording: _isRecording,
-                          ),
-                          PlayAudioButton(
-                            onPressed: _playRecording,
-                            isPlaying: _isPlaying,
-                            isEnabled: _recordingAvailable && !_isPlaying,
-                          ),
-                          ConfirmButton(
-                            onPressed: _uploadAudioAndNavigate,
-                            isEnabled: _recordingAvailable,
-                          ),
-                        ],
-                      ),
-                    
+
+                    // padding: const EdgeInsets.symmetric(
+                    //     horizontal: 25.0, vertical: 20),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        StartRecordingButton(
+                          onPressed: _toggleRecording,
+                          isRecording: _isRecording,
+                        ),
+                        PlayAudioButton(
+                          onPressed: _playRecording,
+                          isPlaying: _isPlaying,
+                          isEnabled: _recordingAvailable && !_isPlaying,
+                        ),
+                        ConfirmButton(
+                          onPressed: _uploadAudioAndNavigate,
+                          isEnabled: _recordingAvailable,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
             ],

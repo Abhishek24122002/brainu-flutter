@@ -17,6 +17,10 @@ import '../components/appbar.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+
+
 class Word extends StatefulWidget {
   @override
   _WordState createState() => _WordState();
@@ -372,90 +376,23 @@ class _WordState extends State<Word> {
     await trophyManager.saveToFirebase();
   }
   void showIterationCompleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                // generateWords();
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setInt('Word_questionIndex', 0);
+  showDialog(
+    context: context,
+    builder: (context) => const TrophyDialog(),
+  );
+}
 
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Congratulations!'),
-          content: Text('You have completed all words.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _loadWords();
-              },
-              child: Text('Reset Words'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => LevelSelectionScreen()),
-                );
-              },
-              child: Text('Next Level'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => CompletionDialog(
+      onReset: _loadWords,
+    ),
+  );
+}
+
 
   @override
   void dispose() {

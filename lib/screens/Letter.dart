@@ -16,6 +16,10 @@ import 'package:showcaseview/showcaseview.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+
+
 class Letter extends StatefulWidget {
   @override
   _LetterState createState() => _LetterState();
@@ -226,59 +230,29 @@ class _LetterState extends State<Letter> {
   }
 
   void showIterationCompleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                // generateWords();
-                final prefs = await SharedPreferences.getInstance();
-                if (questionIndex >= wordPairs.length) {
-                  await prefs.setInt('V_C_questionIndex', 0);
-                }
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
+  showDialog(
+    context: context,
+    builder: (context) => const TrophyDialog(),
+  );
+}
+
+void showCompletionDialog() {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => CompletionDialog(
+      onReset: () {
+        setState(() {
+          questionIndex = 0;
+          saveProgress(); // optional: reset progress in SharedPreferences
+          generateQuestionAndOptions();
+        });
       },
-    );
-  }
+    ),
+  );
+}
+
+
 
   void generateQuestionAndOptions() {
     if (questionIndex >= wordPairs.length) {
@@ -359,37 +333,41 @@ class _LetterState extends State<Letter> {
   }
 
   void handleSubmit() {
-    bool isCorrect = selectedOption == wordPairs[questionIndex][1];
-    saveAnswer_Letter(isCorrect, selectedOption);
+  bool isCorrect = selectedOption == wordPairs[questionIndex][1];
+  saveAnswer_Letter(isCorrect, selectedOption);
 
-    setState(() {
-      questionCounter++;
-      _showGameElements = false;
-      questionIndex++;
-      saveProgress();
+  setState(() {
+    questionCounter++;
+    _showGameElements = false;
+    questionIndex++;
+    saveProgress();
 
-      if (questionCounter == 5) {
-        iterationCounter++;
+    if (questionIndex >= wordPairs.length) {
+      showCompletionDialog();
+      return; // prevent further processing
+    }
 
-        _saveTrophyCount();
-        questionCounter = 0;
+    if (questionCounter == 5) {
+      iterationCounter++;
 
-        showIterationCompleteDialog();
+      _saveTrophyCount();
+      questionCounter = 0;
 
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {
-              generateQuestionAndOptions();
-            });
-          }
-        });
-      } else {
-        setState(() {
-          generateQuestionAndOptions();
-        });
-      }
-    });
-  }
+      showIterationCompleteDialog();
+
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            generateQuestionAndOptions();
+          });
+        }
+      });
+    } else {
+      generateQuestionAndOptions();
+    }
+  });
+}
+
 
   @override
   void dispose() {
