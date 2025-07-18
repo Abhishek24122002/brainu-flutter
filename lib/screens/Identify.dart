@@ -19,7 +19,7 @@ import '../generated/l10n.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
-import 'package:brainu/components/popups/trophy.dart'; 
+import 'package:brainu/components/popups/trophy.dart';
 import 'package:brainu/components/popups/completion.dart';
 
 class Identify extends StatefulWidget {
@@ -133,12 +133,11 @@ class _IdentifyState extends State<Identify> {
   }
 
   void _showTrophyDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
-
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
   Future<void> _initializeRecorder() async {
     await Permission.microphone.request();
@@ -199,15 +198,23 @@ class _IdentifyState extends State<Identify> {
       int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
 
       if (_iteration < maxIterations) {
-        _randomizeImages();
-      } else {
+  _randomizeImages();
+} else {
+  showDialog(
+    context: context,
+    builder: (context) => CompletionDialog(
+      onReset: () async {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('identify_iteration', 0); // ✅ Reset iteration
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
-        );
-      }
+        await prefs.setInt('identify_iteration', 0);
+        setState(() {
+          _iteration = 0;
+        });
+        _randomizeImages(); // Restart with fresh images
+      },
+    ),
+  );
+}
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload failed! Please try again.")),
