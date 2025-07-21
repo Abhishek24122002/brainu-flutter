@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:brainu/managers/trophy_manager.dart';
+import 'package:brainu/generated/l10n.dart';
 
 class TrophyDialog extends StatelessWidget {
   const TrophyDialog({super.key});
@@ -16,7 +17,7 @@ class TrophyDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'You Won!!!',
+            S.of(context).you_won,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -39,7 +40,7 @@ class TrophyDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('Continue', style: TextStyle(fontSize: 18)),
+          child: Text(S.of(context).done, style: TextStyle(fontSize: 18)),
         ),
       ],
     );

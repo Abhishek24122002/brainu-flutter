@@ -32,6 +32,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("पुष्टि करे"),
         "Click_here_to_write":
             MessageLookupByLibrary.simpleMessage("लिखने के लिए यहा क्लिक करे"),
+        "Congratulation": MessageLookupByLibrary.simpleMessage("बधाई हो!"),
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("पहचाने और बोले"),
         "In": MessageLookupByLibrary.simpleMessage("में"),
@@ -84,6 +85,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "play_audio": MessageLookupByLibrary.simpleMessage("ऑडियो सुने"),
         "ran_question": MessageLookupByLibrary.simpleMessage(
             "बोर्ड पर लगी पर्चियों को समझने में ब्रेनु की मदद कीजिये । इन पर्चियों पर दिखी जाने वाली चिजों को बाएं से दाये सही सही जोर से और जल्दी से पढ़े। "),
+        "restart": MessageLookupByLibrary.simpleMessage("पुन शुरू करे"),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("अपने खेल चुने |"),
         "sound": MessageLookupByLibrary.simpleMessage("ध्वनि"),
@@ -102,6 +104,9 @@ class MessageLookup extends MessageLookupByLibrary {
             "ब्रेनू एक घने जंगल में है, जहाँ उसे विभिन्न प्रकार की पत्तियों और फूलों की पहचान करनी है। \n \n ब्रेनू को विभिन्न व्यंजनों की पहचान करने में सहायता करें। दिए गए विकल्पों को सुनें और सही विकल्प चुनें।"),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(
             "ब्रेनू समुद्र तट पर है। वह एक बोर्ड पकडे हुए है। जिसमें कुछ शब्द दिखाई देंगे। अपना उत्तर रिकॉर्ड कर के उसे शब्द पढ़ने में मदद करें। आपके टैप करने पर ही शब्द दिखाई देगा।"),
-        "write_here": MessageLookupByLibrary.simpleMessage("यहा लिखे")
+        "write_here": MessageLookupByLibrary.simpleMessage("यहा लिखे"),
+        "you_did_it": MessageLookupByLibrary.simpleMessage(
+            "आप इस के अंत तक पहुँच चुके हैं ।"),
+        "you_won": MessageLookupByLibrary.simpleMessage("आप सफल हो गए !!")
       };
 }

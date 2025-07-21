@@ -64,6 +64,12 @@
   
   "Click_here_to_start_and_listen_to_audio_carefully" : "शुरू करने के लिए क्लिक करे और औडियो ध्यान से सुने",
   "Click_here_to_write" : "लिखने के लिए यहा क्लिक करे",
-  "write_here" : "यहा लिखे"
+  "write_here" : "यहा लिखे",
+
+  "you_won" : "आप सफल हो गए !!",
+  "you_did_it":"आप इस के अंत तक पहुँच चुके हैं ।",
+  "restart":"पुन शुरू करे",
+  "Congratulation":"बधाई हो!"
+
 
 }

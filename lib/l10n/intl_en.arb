@@ -64,7 +64,13 @@
   
   "Click_here_to_start_and_listen_to_audiocarefully" : "Click here to start and listen to audio carefully",
   "Click_here_to_write" : "Click here to write",
-  "write_here" : "write here"
+  "write_here" : "write here",
+
+  "you_won" : "You Won !!!",
+  "you_did_it":"You Did it",
+  "restart":"Restart",
+  "Congratulation":"Congratulation"
+
 
 
 

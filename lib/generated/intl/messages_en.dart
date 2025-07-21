@@ -35,6 +35,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Click here to submit"),
         "Click_here_to_write":
             MessageLookupByLibrary.simpleMessage("Click here to write"),
+        "Congratulation":
+            MessageLookupByLibrary.simpleMessage("Congratulation"),
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("Identify and Speak"),
         "In": MessageLookupByLibrary.simpleMessage("in"),
@@ -87,6 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can."),
         "read_the_text_loudly":
             MessageLookupByLibrary.simpleMessage("read the text loudly"),
+        "restart": MessageLookupByLibrary.simpleMessage("Restart"),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("Select Your Games"),
         "sound": MessageLookupByLibrary.simpleMessage("Sound"),
@@ -105,6 +108,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one."),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(
             "Brainu is at the beach. He is holding a board that will show a few words. Help him read them out by recording your answer. The word will appear only when you tap."),
-        "write_here": MessageLookupByLibrary.simpleMessage("write here")
+        "write_here": MessageLookupByLibrary.simpleMessage("write here"),
+        "you_did_it": MessageLookupByLibrary.simpleMessage("You Did it"),
+        "you_won": MessageLookupByLibrary.simpleMessage("You Won !!!")
       };
 }

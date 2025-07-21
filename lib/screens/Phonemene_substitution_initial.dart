@@ -22,6 +22,9 @@ import '../components/start_button.dart';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+
 class Ph_substitution_initial extends StatefulWidget {
   @override
   _Ph_substitution_initialState createState() =>
@@ -246,7 +249,7 @@ Future<void> _saveTrophyCount() async {
     }
   }
 
-  Future<void> handleSubmit() async {
+   Future<void> handleSubmit() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
       File file = File(_recordingPath!);
       String? uploadedUrl = await _fileUploader.uploadFile(file);
@@ -256,7 +259,7 @@ Future<void> _saveTrophyCount() async {
 
         // Call the function to save the uploaded URL
         await _firebaseSave.saveAnswer_Ph_substitution_initial(
-            uploadedUrl, _userLanguage,word, sound1, sound2);
+            uploadedUrl, _userLanguage, word, sound1, sound2);
 
         setState(() {
           questionCounter++;
@@ -269,15 +272,27 @@ Future<void> _saveTrophyCount() async {
         if (questionCounter == 5) {
           iterationCounter++;
           trophyCount++;
-          _saveTrophyCount();
+          await _saveTrophyCount();
           questionCounter = 0;
-          showIterationCompleteDialog();
-        }
 
-        if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
-          generateWords();
+          // Show TrophyDialog first
+          await showIterationCompleteDialog();
+
+
+          // After TrophyDialog is closed, check if any words remain
+          if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+            generateWords();
+          } else {
+            // Show CompletionDialog after TrophyDialog is dismissed
+            showAllWordsDoneDialog();
+          }
         } else {
-          showAllWordsDoneDialog();
+          // If it's not the 5th question, proceed normally
+          if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
+            generateWords();
+          } else {
+            showAllWordsDoneDialog();
+          }
         }
       } else {
         print("File upload failed.");
@@ -302,78 +317,26 @@ Future<void> _saveTrophyCount() async {
     generateWords();
   }
 
-  void showIterationCompleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'You Won!!!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 69, 20, 153),
-                ),
-              ),
-              SizedBox(height: 20),
-              Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 80,
-              ),
-              SizedBox(height: 20),
-              Text(
-                '${Provider.of<TrophyManager>(context).trophyCount}', // Display the number of trophies
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                generateWords();
-              },
-              child: Text(
-                'Continue',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  Future<void> showIterationCompleteDialog() async {
+  await showDialog(
+    context: context,
+    // barrierDismissible: false, // Prevents closing by tapping outside
+    builder: (context) => const TrophyDialog(),
+  );
+}
 
   void showAllWordsDoneDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('All Words Done!'),
-          content: Text(
-              'You have completed all words in this level. Reset to play again.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                resetLevel();
-              },
-              child: Text('Reset Level'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => CompletionDialog(
+        onReset: () {
+          Navigator.of(context).pop();
+          resetLevel();
+        },
+      ),
     );
   }
+
 
   @override
   void dispose() {
