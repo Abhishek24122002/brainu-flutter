@@ -63,7 +63,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   Icon(
                     Icons.school, // 🎓 degree cap
-                    color: Colors.white,
+                    color: Color(0xFF954305),
                     size: 24,
                   ),
                   SizedBox(width: 4),
@@ -72,7 +72,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     style: GoogleFonts.fredokaOne(
                       textStyle: TextStyle(
                         fontSize: 18,
-                        color: Colors.white,
+                        color: Color(0xFF954305),
                       ),
                     ),
                   ),

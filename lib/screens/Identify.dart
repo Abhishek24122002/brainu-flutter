@@ -21,6 +21,8 @@ import 'package:provider/provider.dart';
 
 import 'package:brainu/components/popups/trophy.dart';
 import 'package:brainu/components/popups/completion.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class Identify extends StatefulWidget {
   @override
@@ -30,6 +32,13 @@ class Identify extends StatefulWidget {
 class _IdentifyState extends State<Identify> {
   int _iteration = 0;
   bool _showGameElements = false; // Control visibility
+
+  bool showShowcase = false;
+
+  final GlobalKey _recordButtonKey = GlobalKey();
+  final GlobalKey _playButtonKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
+
   List<List<String>> iterations = [
     // Iteration 1 (Common)
     ['star', 'triangle', 'circle', 'rectangle'],
@@ -73,6 +82,7 @@ class _IdentifyState extends State<Identify> {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
+    _loadShowcaseStatus();
     // Convert list to string for Firebase
     _imageNamesString = _imageNames.join(', ');
     _loadIteration().then((_) {
@@ -104,6 +114,12 @@ class _IdentifyState extends State<Identify> {
     userLanguage = await _firebaseServices.getUserLanguage();
 
     _randomizeImages();
+  }
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_2') ?? true;
+    });
   }
 
   Future<void> _saveIteration() async {
@@ -270,6 +286,24 @@ class _IdentifyState extends State<Identify> {
 
   @override
   Widget build(BuildContext context) {
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && _iteration == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _recordButtonKey,
+                _playButtonKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_2', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
     return Stack(
       children: [
         Positioned.fill(
@@ -280,7 +314,22 @@ class _IdentifyState extends State<Identify> {
         ),
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: CustomAppBar(titleKey: 'ldentify'),
+          // appBar: CustomAppBar(titleKey: 'ldentify'),
+          appBar: CustomAppBar(
+                  titleKey: 'ldentify',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_2', true);
+                    setState(() {
+                      showShowcase = true;
+                    });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _recordButtonKey,
+                      _playButtonKey,
+                      _confirmButtonKey,
+                    ]);
+                  },
+                ),
           body: Column(
             children: [
               CustomContainer(text: S.of(context).ran_question),
@@ -343,24 +392,29 @@ class _IdentifyState extends State<Identify> {
 
                     // padding: const EdgeInsets.symmetric(
                     //     horizontal: 25.0, vertical: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        StartRecordingButton(
-                          onPressed: _toggleRecording,
-                          isRecording: _isRecording,
-                        ),
-                        PlayAudioButton(
-                          onPressed: _playRecording,
-                          isPlaying: _isPlaying,
-                          isEnabled: _recordingAvailable && !_isPlaying,
-                        ),
-                        ConfirmButton(
-                          onPressed: _uploadAudioAndNavigate,
-                          isEnabled: _recordingAvailable,
-                        ),
-                      ],
-                    ),
+                    Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 25.0, vertical: 0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    AudioShowcaseButtons(
+                                      isRecording: _isRecording,
+                                      isPlaying: _isPlaying,
+                                      isEnabled: _recordingAvailable,
+                                      onRecordPressed: _toggleRecording,
+                                      onPlayPressed: _playRecording,
+                                      onConfirmPressed: _uploadAudioAndNavigate,
+                                      keys: {
+                                        'record': _recordButtonKey,
+                                        'play': _playButtonKey,
+                                        'confirm': _confirmButtonKey,
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                   ],
                 ),
             ],
@@ -368,7 +422,10 @@ class _IdentifyState extends State<Identify> {
         ),
       ],
     );
-  }
+  },
+      ),
+    );
+}
 }
 
 Widget _buildStyledButton({

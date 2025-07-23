@@ -3,6 +3,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'dart:io';
 import '../components/audio_buttons.dart';
 import '../components/question_container.dart';
@@ -19,7 +20,7 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
-
+import '../components/showcase/AudioShowcaseButtons.dart';
 
 class Word extends StatefulWidget {
   @override
@@ -46,6 +47,11 @@ class _WordState extends State<Word> {
   String? _recordingPath;
   int questionIndex = 0;
   int trophyCount = 0;
+  bool showShowcase = false;
+
+  final GlobalKey _recordButtonKey = GlobalKey();
+  final GlobalKey _playButtonKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -54,12 +60,19 @@ class _WordState extends State<Word> {
     _player.openPlayer();
     _fetchUserLanguage();
     loadTrophyCount();
-
+    _loadShowcaseStatus();
   }
 
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
     await _loadWords(); // Load words after fetching user language
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_3') ?? true;
+    });
   }
 
   Future<void> _loadWords() async {
@@ -205,21 +218,22 @@ class _WordState extends State<Word> {
     // ✅ **Update remainingWords and currentWord**
 
     // 👇 Load saved progress
-  questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
+    questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
 
-  // 👇 Skip words based on progress
-  if (questionIndex < selectedWords.length) {
-    remainingWords = selectedWords.sublist(questionIndex);
-  } else {
-    remainingWords = [];
-  }
+    // 👇 Skip words based on progress
+    if (questionIndex < selectedWords.length) {
+      remainingWords = selectedWords.sublist(questionIndex);
+    } else {
+      remainingWords = [];
+    }
     setState(() {
-    currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
-  });
+      currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
+    });
 
     print("Remaining Words: $remainingWords");
     print("Current Word: $currentWord");
   }
+
   Future<void> saveProgress() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('Word_questionIndex', questionIndex);
@@ -229,6 +243,7 @@ class _WordState extends State<Word> {
     final prefs = await SharedPreferences.getInstance();
     questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
   }
+
   Future<void> loadTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
     int trophyC = trophyManager.trophyCount;
@@ -306,64 +321,64 @@ class _WordState extends State<Word> {
   }
 
   void _onConfirm() async {
-  if (_isUploading) {
-    print("Upload already in progress. Please wait.");
-    return;
-  }
+    if (_isUploading) {
+      print("Upload already in progress. Please wait.");
+      return;
+    }
 
-  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-    print("No recording available to upload.");
-    return;
-  }
-
-  setState(() {
-    _isUploading = true;
-  });
-
-  File audioFile = File(_recordingPath!);
-  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-  if (uploadedUrl != null) {
-    await _firebaseSave.saveAnswer_word(
-        uploadedUrl, userLanguage, currentWord);
-
-    if (remainingWords.isNotEmpty) {
-      setState(() {
-        remainingWords.removeAt(0);
-        currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
-      });
-      await _saveWords();
+    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+      print("No recording available to upload.");
+      return;
     }
 
     setState(() {
-      _showGameElements = false;
-      _recordingAvailable = false;
-      _recordingPath = null;
+      _isUploading = true;
     });
 
-    questionIndex++;
-    await saveProgress();
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
 
-    // 🏆 Check for trophy every 5 words
-    if (questionIndex % 5 == 0) {
-      trophyCount++;
-      await _saveTrophyCount();
-      showIterationCompleteDialog();
+    if (uploadedUrl != null) {
+      await _firebaseSave.saveAnswer_word(
+          uploadedUrl, userLanguage, currentWord);
+
+      if (remainingWords.isNotEmpty) {
+        setState(() {
+          remainingWords.removeAt(0);
+          currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
+        });
+        await _saveWords();
+      }
+
+      setState(() {
+        _showGameElements = false;
+        _recordingAvailable = false;
+        _recordingPath = null;
+      });
+
+      questionIndex++;
+      await saveProgress();
+
+      // 🏆 Check for trophy every 5 words
+      if (questionIndex % 5 == 0) {
+        trophyCount++;
+        await _saveTrophyCount();
+        showIterationCompleteDialog();
+      }
+
+      if (remainingWords.isEmpty) {
+        _showCompletionDialog();
+      }
+    } else {
+      print("File upload failed.");
     }
 
-    if (remainingWords.isEmpty) {
-      _showCompletionDialog();
-    }
-  } else {
-    print("File upload failed.");
+    setState(() {
+      _isUploading = false;
+    });
   }
 
-  setState(() {
-    _isUploading = false;
-  });
-}
-
-   Future<void> _saveTrophyCount() async {
+  Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
     trophyManager.increase(); // this updates the provider
 
@@ -375,24 +390,23 @@ class _WordState extends State<Word> {
     // Optionally also save to Firebase if needed:
     await trophyManager.saveToFirebase();
   }
-  void showIterationCompleteDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
 
+  void showIterationCompleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
   void _showCompletionDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => CompletionDialog(
-      onReset: _loadWords,
-    ),
-  );
-}
-
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CompletionDialog(
+        onReset: _loadWords,
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -403,87 +417,149 @@ class _WordState extends State<Word> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      // 🖼 Background image covering the entire screen
-      Positioned.fill(
-        child: Image.asset(
-          'assets/img/Word_bg.png',
-          fit: BoxFit.cover,
-        ),
-      ),
-
-      // 🧠 Main UI with transparent background
-      Scaffold(
-        backgroundColor: Colors.transparent, // Important!
-        appBar: CustomAppBar(titleKey: 'word'),
-
-        body: Column(
-          children: [
-            CustomContainer(text: S.of(context).word_reading_question),
-            if (!_showGameElements)
-              StartButton(
-                onPressed: () {
-                  setState(() {
-                    _showGameElements = true;
-                  });
-                },
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && questionIndex == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _recordButtonKey,
+                _playButtonKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_3', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
+          return Stack(
+            children: [
+              // 🖼 Background image covering the entire screen
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Word_bg.png',
+                  fit: BoxFit.cover,
+                ),
               ),
-            if (_showGameElements)
-              Expanded(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
 
-                    Expanded(
-                      child: Center(
-                        child: Transform.translate(
-                          offset: Offset(0, -20), // Move word 40 pixels upward
-                          child: Text(
-                            currentWord,
-                            style: const TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF7B2F00),
+              // 🧠 Main UI with transparent background
+              Scaffold(
+                backgroundColor: Colors.transparent, // Important!
+                // appBar: CustomAppBar(titleKey: 'word'),
+                appBar: CustomAppBar(
+                  titleKey: 'word',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_3', true);
+                    setState(() {
+                      showShowcase = true;
+                    });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _recordButtonKey,
+                      _playButtonKey,
+                      _confirmButtonKey,
+                    ]);
+                  },
+                ),
+
+                body: Column(
+                  children: [
+                    CustomContainer(text: S.of(context).word_reading_question),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                          });
+                        },
+                      ),
+                    if (_showGameElements)
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+
+                            Expanded(
+                              child: Center(
+                                child: Transform.translate(
+                                  offset: Offset(
+                                      0, -20), // Move word 40 pixels upward
+                                  child: Text(
+                                    currentWord,
+                                    style: const TextStyle(
+                                      fontSize: 50,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF7B2F00),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
+
+                            // ✅ Buttons aligned to bottom
+                            // Padding(
+                            //   padding: const EdgeInsets.symmetric(
+                            //       horizontal: 25.0, vertical: 20),
+                            //   child: Column(
+                            //     crossAxisAlignment: CrossAxisAlignment.stretch,
+                            //     children: [
+                            //       StartRecordingButton(
+                            //         onPressed: _toggleRecording,
+                            //         isRecording: _isRecording,
+                            //       ),
+                            //       const SizedBox(height: 10),
+                            //       PlayAudioButton(
+                            //         onPressed: _isPlaying ? null : _playRecording,
+                            //         isPlaying: _isPlaying,
+                            //         isEnabled: _recordingAvailable,
+                            //       ),
+                            //       const SizedBox(height: 10),
+                            //       ConfirmButton(
+                            //         onPressed: (_recordingAvailable && !_isUploading)
+                            //             ? _onConfirm
+                            //             : null,
+                            //         isEnabled: _recordingAvailable && !_isUploading,
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 25.0, vertical: 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AudioShowcaseButtons(
+                                    isRecording: _isRecording,
+                                    isPlaying: _isPlaying,
+                                    isEnabled: _recordingAvailable,
+                                    onRecordPressed: _toggleRecording,
+                                    onPlayPressed: _playRecording,
+                                    onConfirmPressed: _onConfirm,
+                                    keys: {
+                                      'record': _recordButtonKey,
+                                      'play': _playButtonKey,
+                                      'confirm': _confirmButtonKey,
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-
-                    // ✅ Buttons aligned to bottom
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25.0, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StartRecordingButton(
-                            onPressed: _toggleRecording,
-                            isRecording: _isRecording,
-                          ),
-                          const SizedBox(height: 10),
-                          PlayAudioButton(
-                            onPressed: _isPlaying ? null : _playRecording,
-                            isPlaying: _isPlaying,
-                            isEnabled: _recordingAvailable,
-                          ),
-                          const SizedBox(height: 10),
-                          ConfirmButton(
-                            onPressed: (_recordingAvailable && !_isUploading)
-                                ? _onConfirm
-                                : null,
-                            isEnabled: _recordingAvailable && !_isUploading,
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
-    ]);
+    );
   }
 }
