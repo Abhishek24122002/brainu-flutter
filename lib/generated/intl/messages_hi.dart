@@ -25,7 +25,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Click_here_to_listen":
             MessageLookupByLibrary.simpleMessage("सुनने के लिए यहा क्लिक करे"),
         "Click_here_to_record": MessageLookupByLibrary.simpleMessage(
-            "रिकॉर्ड करने के लिए यहा क्लिक करे"),
+            "रिकॉर्डिंग शुरू करने और रोकने के लिए यहां क्लिक करें"),
         "Click_here_to_stop":
             MessageLookupByLibrary.simpleMessage("रुकने के लिए यहा क्लिक करे"),
         "Click_here_to_submit":
@@ -36,6 +36,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("पहचाने और बोले"),
         "In": MessageLookupByLibrary.simpleMessage("में"),
+        "Learn": MessageLookupByLibrary.simpleMessage("सीखे"),
         "Read_Question": MessageLookupByLibrary.simpleMessage("प्रश्न पढे"),
         "Read_Text": MessageLookupByLibrary.simpleMessage("इसे पढे"),
         "Remove": MessageLookupByLibrary.simpleMessage("निकाले"),

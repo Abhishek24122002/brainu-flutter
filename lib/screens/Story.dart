@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'dart:io';
 import '../aws/FileUploader.dart';
 import '../firebase/firebase_save_answer.dart';
@@ -23,6 +24,7 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
 
 class Story extends StatefulWidget {
   @override
@@ -39,6 +41,11 @@ class _StoryState extends State<Story> {
   String? _recordingPath;
   int questionIndex = 0;
   int trophyCount = 0;
+  bool showShowcase = false;
+
+  final GlobalKey _recordButtonKey = GlobalKey();
+  final GlobalKey _playButtonKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
 
   final FirebaseServices _firebaseServices = FirebaseServices();
   final FirebaseSave _firebaseSave = FirebaseSave();
@@ -56,6 +63,7 @@ class _StoryState extends State<Story> {
     _fetchUserLanguage();
     loadTrophyCount();
     loadProgress();
+    _loadShowcaseStatus();
   }
 
   Future<void> _initializeRecorder() async {
@@ -78,22 +86,29 @@ class _StoryState extends State<Story> {
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
   }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_8') ?? true;
+    });
+  }
+
   Future<void> saveProgress() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('Story_questionIndex', questionIndex);
   }
 
   Future<void> loadProgress() async {
-  final prefs = await SharedPreferences.getInstance();
-  questionIndex = prefs.getInt('Story_questionIndex') ?? 0;
-}
+    final prefs = await SharedPreferences.getInstance();
+    questionIndex = prefs.getInt('Story_questionIndex') ?? 0;
+  }
 
   Future<void> loadTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
     int trophyC = trophyManager.trophyCount;
     trophyCount = trophyC;
   }
-
 
   Future<void> _playRecording() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
@@ -110,62 +125,62 @@ class _StoryState extends State<Story> {
       });
     }
   }
-  
+
   void _confirmStory() async {
-  if (_recordingPath == null) {
-    print("No recording found.");
-    return;
-  }
-
-  File recordedFile = File(_recordingPath!);
-  if (!recordedFile.existsSync()) {
-    print("Recorded file does not exist.");
-    return;
-  }
-
-  File audioFile = File(_recordingPath!);
-  String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-  if (uploadedUrl != null) {
-    print("File uploaded successfully: $uploadedUrl");
-
-    String currentStory = stories[currentStoryIndex];
-    String iterationKey = 'iteration${currentStoryIndex + 1}';
-
-    await _firebaseSave.saveAnswer_Story(
-      userLanguage,
-      iterationKey,
-      currentStory,
-      uploadedUrl,
-    );
-
-    // ✅ INCREMENT first
-    questionIndex++;
-    await saveProgress();
-
-    // ✅ Trophy only after every 5 stories (5, 10, 15, ...)
-    if (questionIndex % 5 == 0) {
-      trophyCount++;
-      await _saveTrophyCount();
-      showIterationCompleteDialog();
-      return; // Stop here to avoid advancing to next story before dialog
+    if (_recordingPath == null) {
+      print("No recording found.");
+      return;
     }
 
-    // ✅ Proceed to next story if not the end
-    if (currentStoryIndex < stories.length - 1) {
-      setState(() {
-        _recordingAvailable = false;
-        currentStoryIndex++;
-        _recordingPath = null;
-        _showGameElements = false;
-      });
+    File recordedFile = File(_recordingPath!);
+    if (!recordedFile.existsSync()) {
+      print("Recorded file does not exist.");
+      return;
+    }
+
+    File audioFile = File(_recordingPath!);
+    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+    if (uploadedUrl != null) {
+      print("File uploaded successfully: $uploadedUrl");
+
+      String currentStory = stories[currentStoryIndex];
+      String iterationKey = 'iteration${currentStoryIndex + 1}';
+
+      await _firebaseSave.saveAnswer_Story(
+        userLanguage,
+        iterationKey,
+        currentStory,
+        uploadedUrl,
+      );
+
+      // ✅ INCREMENT first
+      questionIndex++;
+      await saveProgress();
+
+      // ✅ Trophy only after every 5 stories (5, 10, 15, ...)
+      if (questionIndex % 5 == 0) {
+        trophyCount++;
+        await _saveTrophyCount();
+        showIterationCompleteDialog();
+        return; // Stop here to avoid advancing to next story before dialog
+      }
+
+      // ✅ Proceed to next story if not the end
+      if (currentStoryIndex < stories.length - 1) {
+        setState(() {
+          _recordingAvailable = false;
+          currentStoryIndex++;
+          _recordingPath = null;
+          _showGameElements = false;
+        });
+      } else {
+        showAllWordsDoneDialog();
+      }
     } else {
-      showAllWordsDoneDialog();
+      print("File upload failed.");
     }
-  } else {
-    print("File upload failed.");
   }
-}
 
   Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
@@ -179,30 +194,32 @@ class _StoryState extends State<Story> {
     // Optionally also save to Firebase if needed:
     await trophyManager.saveToFirebase();
   }
+
   void showIterationCompleteDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
+
   void showAllWordsDoneDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => CompletionDialog(
-      onReset: () async {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('Story_questionIndex', 0);
-        setState(() {
-          questionIndex = 0;
-          currentStoryIndex = 0;
-          _recordingAvailable = false;
-          _showGameElements = false;
-        });
-      },
-    ),
-  );
-}
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CompletionDialog(
+        onReset: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('Story_questionIndex', 0);
+          setState(() {
+            questionIndex = 0;
+            currentStoryIndex = 0;
+            _recordingAvailable = false;
+            _showGameElements = false;
+          });
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -256,104 +273,143 @@ class _StoryState extends State<Story> {
   Widget build(BuildContext context) {
     stories = getStories(context); // Fetch localized stories
     // ✅ Set the currentStoryIndex based on saved progress
-  currentStoryIndex = questionIndex.clamp(0, stories.length - 1);
+    currentStoryIndex = questionIndex.clamp(0, stories.length - 1);
 
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && currentStoryIndex == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _recordButtonKey,
+                _playButtonKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_5', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
 
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Listen_bg.png',
-            fit: BoxFit.cover,
-          ),
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: CustomAppBar(titleKey: 'story'),
-          body: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align to start instead of center
-              children: [
-                // Question Section
-                CustomContainer(text: S.of(context).paragraph_reading_question),
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Listen_bg.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                // appBar: CustomAppBar(titleKey: 'story'),
+                appBar: CustomAppBar(
+                  titleKey: 'story',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_5', true);
+                    setState(() {
+                      showShowcase = true;
+                    });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _recordButtonKey,
+                      _playButtonKey,
+                      _confirmButtonKey,
+                    ]);
+                  },
+                ),
+                body: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment
+                        .start, // Align to start instead of center
+                    children: [
+                      // Question Section
+                      CustomContainer(
+                          text: S.of(context).paragraph_reading_question),
 
-                // Story Section with Scroll only for text
-                if (_showGameElements && currentStoryIndex < stories.length)
-                  Container(
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.40,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/img/Story_container.png'),
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(50, 60, 50, 60),
-                      child: ScrollbarTheme(
-                        data: ScrollbarThemeData(
-                          thumbColor: MaterialStateProperty.all(
-                              Color.fromARGB(154, 141, 110, 99)),
-                          trackColor:
-                              MaterialStateProperty.all(Colors.brown[100]),
-                          thickness: MaterialStateProperty.all(5),
-                          radius: Radius.circular(10),
-                        ),
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            child: Text(
-                              
-                              stories[currentStoryIndex],
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Color.fromRGBO(114, 64, 23, 1),
-                                fontWeight: FontWeight.w500,
+                      // Story Section with Scroll only for text
+                      if (_showGameElements &&
+                          currentStoryIndex < stories.length)
+                        Container(
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.40,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image:
+                                  AssetImage('assets/img/Story_container.png'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(50, 60, 50, 60),
+                            child: ScrollbarTheme(
+                              data: ScrollbarThemeData(
+                                thumbColor: MaterialStateProperty.all(
+                                    Color.fromARGB(154, 141, 110, 99)),
+                                trackColor: MaterialStateProperty.all(
+                                    Colors.brown[100]),
+                                thickness: MaterialStateProperty.all(5),
+                                radius: Radius.circular(10),
+                              ),
+                              child: Scrollbar(
+                                thumbVisibility: true,
+                                child: SingleChildScrollView(
+                                  child: Text(
+                                    stories[currentStoryIndex],
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color.fromRGBO(114, 64, 23, 1),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
 
-                // const SizedBox(height: 10),
+                      // const SizedBox(height: 10),
 
-                // Start Button
-                if (!_showGameElements)
-                  StartButton(
-                    onPressed: () {
-                      setState(() {
-                        _showGameElements = true;
-                      });
-                    },
-                  ),
+                      // Start Button
+                      if (!_showGameElements)
+                        StartButton(
+                          onPressed: () {
+                            setState(() {
+                              _showGameElements = true;
+                            });
+                          },
+                        ),
 
-                // Recording & Confirm Buttons
-                if (_showGameElements) ...[
-                  StartRecordingButton(
-                    onPressed: _toggleRecording,
-                    isRecording: _isRecording,
+                      // Recording & Confirm Buttons
+                      if (_showGameElements) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                          child: AudioShowcaseButtons(
+                            isRecording: _isRecording,
+                            isPlaying: _isPlaying,
+                            isEnabled: _recordingAvailable,
+                            onRecordPressed: _toggleRecording,
+                            onPlayPressed: _playRecording,
+                            onConfirmPressed: _confirmStory,
+                            keys: {
+                              'record': _recordButtonKey,
+                              'play': _playButtonKey,
+                              'confirm': _confirmButtonKey,
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  PlayAudioButton(
-                    onPressed: _isPlaying ? null : _playRecording,
-                    isPlaying: _isPlaying,
-                    isEnabled: _recordingPath != null,
-                  ),
-                  const SizedBox(height: 3),
-                  ConfirmButton(
-                    onPressed: _recordingAvailable ? _confirmStory : null,
-                    isEnabled: _recordingAvailable,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

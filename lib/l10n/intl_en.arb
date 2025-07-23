@@ -56,7 +56,7 @@
   "double_click_to_select" : "double click to select",
   "Identify_and_Speak" : "Identify and Speak",
 
-  "Click_here_to_record" : "Click here to record",
+  "Click_here_to_record" : "Click here to start and stop recording",
   "Click_here_to_stop" : "Click here to stop",
   "Click_here_to_listen" : "Click here to listen",
   "Click_here_to_submit" : "Click here to submit",
@@ -69,7 +69,8 @@
   "you_won" : "You Won !!!",
   "you_did_it":"You Did it",
   "restart":"Restart",
-  "Congratulation":"Congratulation"
+  "Congratulation":"Congratulation",
+  "Learn":"Learn"
 
 
 

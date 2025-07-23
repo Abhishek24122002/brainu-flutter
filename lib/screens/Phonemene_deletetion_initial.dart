@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:showcaseview/showcaseview.dart';
 import '../aws/FileUploader.dart';
 import '../components/WoodenButton.dart';
 import '../components/audio_buttons.dart';
@@ -24,6 +25,7 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
 
 class Ph_deletion_initial extends StatefulWidget {
   @override
@@ -52,6 +54,11 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   bool _recordingAvailable = false;
   String? _recordingPath;
   bool _showGameElements = false;
+  bool showShowcase = false;
+
+  final GlobalKey _recordButtonKey = GlobalKey();
+  final GlobalKey _playButtonKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
@@ -100,6 +107,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     generateWords();
     _initializeRecorder();
     _player.openPlayer();
+    _loadShowcaseStatus();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -107,6 +115,13 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     setState(() {
       _userLanguage = language;
       generateWords(); // Call generateWords() after setting language
+    });
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_8') ?? true;
     });
   }
 
@@ -250,64 +265,63 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   }
 
   Future<void> handleSubmit() async {
-  if (_recordingPath != null && File(_recordingPath!).existsSync()) {
-    File file = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(file);
+    if (_recordingPath != null && File(_recordingPath!).existsSync()) {
+      File file = File(_recordingPath!);
+      String? uploadedUrl = await _fileUploader.uploadFile(file);
 
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
+      if (uploadedUrl != null) {
+        print("File uploaded successfully: $uploadedUrl");
 
-      await _firebaseSave.saveAnswer_Ph_deletion_initial(
-        uploadedUrl, _userLanguage, word1, word2);
+        await _firebaseSave.saveAnswer_Ph_deletion_initial(
+            uploadedUrl, _userLanguage, word1, word2);
 
-      setState(() {
-        questionCounter++;
-        _showGameElements = false;
-        _recordingAvailable = false;
-        isSubmitEnabled = false;
-      });
+        setState(() {
+          questionCounter++;
+          _showGameElements = false;
+          _recordingAvailable = false;
+          isSubmitEnabled = false;
+        });
 
-      final bool allWordsDone = wordPairsByLanguage[_userLanguage]!.isEmpty;
-      final bool shouldShowTrophy = questionCounter == 5;
+        final bool allWordsDone = wordPairsByLanguage[_userLanguage]!.isEmpty;
+        final bool shouldShowTrophy = questionCounter == 5;
 
-      if (shouldShowTrophy) {
-        iterationCounter++;
-        trophyCount++;
-        await _saveTrophyCount(); // ensure this is awaited
-        questionCounter = 0;
+        if (shouldShowTrophy) {
+          iterationCounter++;
+          trophyCount++;
+          await _saveTrophyCount(); // ensure this is awaited
+          questionCounter = 0;
 
-        // 🏆 Show Trophy Dialog first and wait until it's dismissed
-        await showDialog(
-          context: context,
-          builder: (context) => const TrophyDialog(),
-        );
+          // 🏆 Show Trophy Dialog first and wait until it's dismissed
+          await showDialog(
+            context: context,
+            builder: (context) => const TrophyDialog(),
+          );
 
-        // 🎯 If all words are done, show CompletionDialog AFTER TrophyDialog
+          // 🎯 If all words are done, show CompletionDialog AFTER TrophyDialog
+          if (allWordsDone) {
+            await Future.delayed(Duration(
+                milliseconds: 300)); // Optional delay for UX smoothness
+            showAllWordsDoneDialog();
+          } else {
+            generateWords();
+          }
+
+          return; // Prevents any further execution
+        }
+
+        // If it's not the 5th question
         if (allWordsDone) {
-          await Future.delayed(Duration(milliseconds: 300)); // Optional delay for UX smoothness
           showAllWordsDoneDialog();
         } else {
           generateWords();
         }
-
-        return; // Prevents any further execution
-      }
-
-      // If it's not the 5th question
-      if (allWordsDone) {
-        showAllWordsDoneDialog();
       } else {
-        generateWords();
+        print("File upload failed.");
       }
     } else {
-      print("File upload failed.");
+      print("No recording available for upload.");
     }
-  } else {
-    print("No recording available for upload.");
   }
-}
-
-
 
 // Check if a new recording file exists
   Future<bool> _checkForNewRecording() async {
@@ -326,23 +340,23 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   }
 
   void showIterationCompleteDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
   void showAllWordsDoneDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => CompletionDialog(
-      onReset: () {
-        Navigator.of(context).pop();
-        resetLevel();
-      },
-    ),
-  );
-}
+    showDialog(
+      context: context,
+      builder: (context) => CompletionDialog(
+        onReset: () {
+          Navigator.of(context).pop();
+          resetLevel();
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -354,162 +368,203 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Deletion_bg.png',
-            fit: BoxFit.cover,
-          ),
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: CustomAppBar(titleKey: 'wordgame2'),
-          body: Container(
-            // color: Colors.white,
-            child: Column(children: [
-              CustomContainer(
-                text: S.of(context).phoneme_deletion_question,
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && iterationCounter == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _recordButtonKey,
+                _playButtonKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_8', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Deletion_bg.png',
+                  fit: BoxFit.cover,
+                ),
               ),
-              if (!_showGameElements)
-                StartButton(
-                  onPressed: () {
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: CustomAppBar(
+                  titleKey: 'wordgame2',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_8', true);
                     setState(() {
-                      _showGameElements = true;
+                      showShowcase = true;
                     });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _recordButtonKey,
+                      _playButtonKey,
+                      _confirmButtonKey,
+                    ]);
                   },
                 ),
-              // Main game content
-              if (_showGameElements) ...[
-                // Main game content
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                body: Container(
+                  // color: Colors.white,
+                  child: Column(children: [
+                    CustomContainer(
+                      text: S.of(context).phoneme_deletion_question,
+                    ),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                          });
+                        },
+                      ),
+                    // Main game content
+                    if (_showGameElements) ...[
+                      // Main game content
+                      Expanded(
+                        child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _userLanguage == "hindi"
-                                ? [
-                                    // Hindi order: Word → From → Sound → Remove
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).Word,
-                                      onPressed: () => playAudio(word1),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).from_the,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound,
-                                      onPressed: () => playAudio(word2),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).Remove,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                  ]
-                                : [
-                                    // Default order: Remove → Sound → From → Word
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).Remove,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound,
-                                      onPressed: () => playAudio(word2),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).from_the,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).Word,
-                                      onPressed: () => playAudio(word1),
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _userLanguage == "hindi"
+                                      ? [
+                                          // Hindi order: Word → From → Sound → Remove
+                                          AnimatedWoodenButton(
+                                            label: S.of(context).Word,
+                                            onPressed: () => playAudio(word1),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).from_the,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          AnimatedWoodenButton(
+                                            label: S.of(context).sound,
+                                            onPressed: () => playAudio(word2),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).Remove,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ]
+                                      : [
+                                          // Default order: Remove → Sound → From → Word
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).Remove,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          AnimatedWoodenButton(
+                                            label: S.of(context).sound,
+                                            onPressed: () => playAudio(word2),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).from_the,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          AnimatedWoodenButton(
+                                            label: S.of(context).Word,
+                                            onPressed: () => playAudio(word1),
+                                          ),
+                                        ],
+                                ),
+                              ),
+                             Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 25.0, vertical: 0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    AudioShowcaseButtons(
+                                      isRecording: _isRecording,
+                                      isPlaying: _isPlaying,
+                                      isEnabled: _recordingAvailable,
+                                      onRecordPressed: _toggleRecording,
+                                      onPlayPressed: _playRecording,
+                                      onConfirmPressed: handleSubmit,
+                                      keys: {
+                                        'record': _recordButtonKey,
+                                        'play': _playButtonKey,
+                                        'confirm': _confirmButtonKey,
+                                      },
                                     ),
                                   ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                       
-                        Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 25.0, vertical: 1),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                StartRecordingButton(
-                                  onPressed: _toggleRecording,
-                                  isRecording: _isRecording,
-                                ),
-                               
-                                PlayAudioButton(
-                                  isEnabled: _recordingAvailable,
-                                  onPressed: _isPlaying ? null : _playRecording,
-                                  isPlaying: _isPlaying,
-                                ),
-                                
-                                ConfirmButton(
-                                  isEnabled:
-                                      _recordingAvailable, // Only enable when a new recording exists
-                                  onPressed:
-                                      _recordingAvailable ? handleSubmit : null,
-                                ),
-                              ],
-                            ))
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ]),
                 ),
-              ],
-            ]),
-          ),
-        ),
-      ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

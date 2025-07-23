@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import '../components/WoodenButton.dart';
 import '../components/audio_buttons.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import '../firebase/firebase_save_answer.dart';
@@ -55,6 +56,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   bool _recordingAvailable = false;
   String? _recordingPath;
   bool _showGameElements = false;
+  bool showShowcase = false;
 
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
@@ -109,6 +111,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     _fetchUserLanguage();
     _initializeRecorder();
     _player.openPlayer();
+    _loadShowcaseStatus();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -116,6 +119,13 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     setState(() {
       _userLanguage = language;
       generateWords(); // Call generateWords() after setting language
+    });
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_10') ?? true;
     });
   }
 
@@ -357,16 +367,25 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     return ShowCaseWidget(
       builder: Builder(
         builder: (context) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ShowCaseWidget.of(context).startShowCase([
-              _wordButtonKey,
-              _sound2ButtonKey,
-              _sound1ButtonKey,
-              _recordButtonKey,
-              _playButtonKey,
-              _confirmButtonKey,
-            ]);
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && iterationCounter == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _wordButtonKey,
+                _sound2ButtonKey,
+                _sound1ButtonKey,
+                _recordButtonKey,
+                _playButtonKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_10', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
           });
+
           return Stack(
             children: [
               Positioned.fill(
@@ -377,7 +396,24 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
               ),
               Scaffold(
                 backgroundColor: Colors.transparent,
-                appBar: CustomAppBar(titleKey: 'wordgame4'),
+                appBar: CustomAppBar(
+                  titleKey: 'wordgame4',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_10', true);
+                    setState(() {
+                      showShowcase = true;
+                    });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _wordButtonKey,
+                      _sound2ButtonKey,
+                      _sound1ButtonKey,
+                      _recordButtonKey,
+                      _playButtonKey,
+                      _confirmButtonKey,
+                    ]);
+                  },
+                ),
                 body: Container(
                   child: Column(children: [
                     // Question Container with shadow
@@ -448,8 +484,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                               ShowCaseWidget.of(context)
                                                   .next(); // Move to next showcase
                                             },
-                                            disposeOnTap:
-                                                false, 
+                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound1,
                                               onPressed: () =>
@@ -480,8 +515,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                               ShowCaseWidget.of(context)
                                                   .next(); // Move to next showcase
                                             },
-                                            disposeOnTap:
-                                                false, 
+                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound2,
                                               onPressed: () =>
@@ -530,8 +564,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                               ShowCaseWidget.of(context)
                                                   .next(); // Move to next showcase
                                             },
-                                            disposeOnTap:
-                                                false, 
+                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound1,
                                               onPressed: () =>
@@ -562,8 +595,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                               ShowCaseWidget.of(context)
                                                   .next(); // Move to next showcase
                                             },
-                                            disposeOnTap:
-                                                false, 
+                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound2,
                                               onPressed: () =>
@@ -611,35 +643,18 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    Showcase(
-                                      key: _recordButtonKey,
-                                      description:
-                                          'Tap to start/stop recording your voice',
-                                      child: StartRecordingButton(
-                                        onPressed: _toggleRecording,
-                                        isRecording: _isRecording,
-                                      ),
-                                    ),
-                                    Showcase(
-                                      key: _playButtonKey,
-                                      description:
-                                          'Tap to play back your recording',
-                                      child: PlayAudioButton(
-                                        isEnabled: _recordingAvailable,
-                                        onPressed:
-                                            _isPlaying ? null : _playRecording,
-                                        isPlaying: _isPlaying,
-                                      ),
-                                    ),
-                                    Showcase(
-                                      key: _confirmButtonKey,
-                                      description: 'Submit your answer',
-                                      child: ConfirmButton(
-                                        isEnabled: _recordingAvailable,
-                                        onPressed: _recordingAvailable
-                                            ? handleSubmit
-                                            : null,
-                                      ),
+                                    AudioShowcaseButtons(
+                                      isRecording: _isRecording,
+                                      isPlaying: _isPlaying,
+                                      isEnabled: _recordingAvailable,
+                                      onRecordPressed: _toggleRecording,
+                                      onPlayPressed: _playRecording,
+                                      onConfirmPressed: handleSubmit,
+                                      keys: {
+                                        'record': _recordButtonKey,
+                                        'play': _playButtonKey,
+                                        'confirm': _confirmButtonKey,
+                                      },
                                     ),
                                   ],
                                 ),

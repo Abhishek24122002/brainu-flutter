@@ -56,7 +56,7 @@
   "double_click_to_select" : "उत्तर चुनने के लिए दो-बार क्लिक करे",
   "Identify_and_Speak" : "पहचाने और बोले",
 
-  "Click_here_to_record" : "रिकॉर्ड करने के लिए यहा क्लिक करे",
+  "Click_here_to_record" : "रिकॉर्डिंग शुरू करने और रोकने के लिए यहां क्लिक करें",
   "Click_here_to_stop" : "रुकने के लिए यहा क्लिक करे",
   "Click_here_to_listen" : "सुनने के लिए यहा क्लिक करे",
   "Click_here_to_submit" : "पुष्टि करे",
@@ -69,7 +69,8 @@
   "you_won" : "आप सफल हो गए !!",
   "you_did_it":"आप इस के अंत तक पहुँच चुके हैं ।",
   "restart":"पुन शुरू करे",
-  "Congratulation":"बधाई हो!"
+  "Congratulation":"बधाई हो!",
+  "Learn":"सीखे"
 
 
 }

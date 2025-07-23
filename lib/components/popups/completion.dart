@@ -9,16 +9,16 @@ class CompletionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // Prevents back button dismissal
+    return PopScope(
+      canPop: false, // Prevents back button dismissal
       child: AlertDialog(
         title: Text(S.of(context).Congratulation),
         content: Text(S.of(context).you_did_it),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
               onReset();
+              Navigator.of(context).pop(); 
             },
             child: Text(S.of(context).restart),
           ),

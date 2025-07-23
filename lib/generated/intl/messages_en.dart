@@ -24,8 +24,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
         "Click_here_to_listen":
             MessageLookupByLibrary.simpleMessage("Click here to listen"),
-        "Click_here_to_record":
-            MessageLookupByLibrary.simpleMessage("Click here to record"),
+        "Click_here_to_record": MessageLookupByLibrary.simpleMessage(
+            "Click here to start and stop recording"),
         "Click_here_to_start_and_listen_to_audiocarefully":
             MessageLookupByLibrary.simpleMessage(
                 "Click here to start and listen to audio carefully"),
@@ -40,6 +40,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("Identify and Speak"),
         "In": MessageLookupByLibrary.simpleMessage("in"),
+        "Learn": MessageLookupByLibrary.simpleMessage("Learn"),
         "Read_Question": MessageLookupByLibrary.simpleMessage("Read Question"),
         "Read_Text": MessageLookupByLibrary.simpleMessage("Read Text"),
         "Remove": MessageLookupByLibrary.simpleMessage("Remove"),

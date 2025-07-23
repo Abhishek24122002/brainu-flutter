@@ -550,10 +550,10 @@ class S {
     );
   }
 
-  /// `Click here to record`
+  /// `Click here to start and stop recording`
   String get Click_here_to_record {
     return Intl.message(
-      'Click here to record',
+      'Click here to start and stop recording',
       name: 'Click_here_to_record',
       desc: '',
       args: [],
@@ -655,6 +655,16 @@ class S {
     return Intl.message(
       'Congratulation',
       name: 'Congratulation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Learn`
+  String get Learn {
+    return Intl.message(
+      'Learn',
+      name: 'Learn',
       desc: '',
       args: [],
     );
