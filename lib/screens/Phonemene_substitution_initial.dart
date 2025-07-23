@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class Ph_substitution_initial extends StatefulWidget {
   @override
@@ -54,6 +55,13 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
   bool _recordingAvailable = false;
   String? _recordingPath;
   bool _showGameElements = false;
+
+  final GlobalKey _recordButtonKey = GlobalKey();
+  final GlobalKey _playButtonKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
+  final GlobalKey _wordButtonKey = GlobalKey();
+  final GlobalKey _sound2ButtonKey = GlobalKey();
+  final GlobalKey _sound1ButtonKey = GlobalKey();
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
@@ -194,8 +202,8 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     int trophyC = trophyManager.trophyCount;
     trophyCount = trophyC;
   }
-  
-Future<void> _saveTrophyCount() async {
+
+  Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
     trophyManager.increase(); // this updates the provider
 
@@ -249,7 +257,7 @@ Future<void> _saveTrophyCount() async {
     }
   }
 
-   Future<void> handleSubmit() async {
+  Future<void> handleSubmit() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
       File file = File(_recordingPath!);
       String? uploadedUrl = await _fileUploader.uploadFile(file);
@@ -277,7 +285,6 @@ Future<void> _saveTrophyCount() async {
 
           // Show TrophyDialog first
           await showIterationCompleteDialog();
-
 
           // After TrophyDialog is closed, check if any words remain
           if (wordPairsByLanguage[_userLanguage]!.isNotEmpty) {
@@ -318,12 +325,12 @@ Future<void> _saveTrophyCount() async {
   }
 
   Future<void> showIterationCompleteDialog() async {
-  await showDialog(
-    context: context,
-    // barrierDismissible: false, // Prevents closing by tapping outside
-    builder: (context) => const TrophyDialog(),
-  );
-}
+    await showDialog(
+      context: context,
+      // barrierDismissible: false, // Prevents closing by tapping outside
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
   void showAllWordsDoneDialog() {
     showDialog(
@@ -337,7 +344,6 @@ Future<void> _saveTrophyCount() async {
     );
   }
 
-
   @override
   void dispose() {
     audioPlayer.dispose();
@@ -348,187 +354,308 @@ Future<void> _saveTrophyCount() async {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Deletion_bg.png',
-            fit: BoxFit.cover,
-          ),),
-      
-    Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: CustomAppBar(titleKey: 'wordgame4'),
-      body: Container(
-        child: Column(children: [
-          // Question Container with shadow
-          CustomContainer(
-            text: S.of(context).phoneme_substitution_question,
-          ),
-          if (!_showGameElements)
-            StartButton(
-              onPressed: () {
-                setState(() {
-                  _showGameElements = true;
-                });
-              },
-            ),
-          // Main game content
-          if (_showGameElements) ...[
-                // Main game content
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ShowCaseWidget.of(context).startShowCase([
+              _wordButtonKey,
+              _sound2ButtonKey,
+              _sound1ButtonKey,
+              _recordButtonKey,
+              _playButtonKey,
+              _confirmButtonKey,
+            ]);
+          });
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Deletion_bg.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: CustomAppBar(titleKey: 'wordgame4'),
+                body: Container(
+                  child: Column(children: [
+                    // Question Container with shadow
+                    CustomContainer(
+                      text: S.of(context).phoneme_substitution_question,
+                    ),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                          });
+                        },
+                      ),
+                    // Main game content
+                    if (_showGameElements) ...[
+                      // Main game content
+                      Expanded(
+                        child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: _userLanguage == "hindi"
-                                ? [
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).Word,
-                                      onPressed: () => playAudio(word),
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _userLanguage == "hindi"
+                                      ? [
+                                          Showcase(
+                                            key: _wordButtonKey,
+                                            description:
+                                                'Tap to hear the base word',
+                                            onTargetClick: () {
+                                              playAudio(word);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                false, // Removes highlight after tap
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).Word,
+                                              onPressed: () => playAudio(word),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).In,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          Showcase(
+                                            key: _sound2ButtonKey,
+                                            description:
+                                                'Tap to hear the sound being replaced',
+                                            onTargetClick: () {
+                                              playAudio(sound1);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                false, 
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).sound1,
+                                              onPressed: () =>
+                                                  playAudio(sound1),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).With,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          Showcase(
+                                            key: _sound1ButtonKey,
+                                            description:
+                                                'Tap to hear the new sound',
+                                            onTargetClick: () {
+                                              playAudio(sound2);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                false, 
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).sound2,
+                                              onPressed: () =>
+                                                  playAudio(sound2),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).substitute,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ]
+                                      : [
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).substitute,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          Showcase(
+                                            key: _sound2ButtonKey,
+                                            description:
+                                                'Tap to hear the sound being replaced',
+                                            onTargetClick: () {
+                                              playAudio(sound1);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                false, 
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).sound1,
+                                              onPressed: () =>
+                                                  playAudio(sound1),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).With,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          Showcase(
+                                            key: _sound1ButtonKey,
+                                            description:
+                                                'Tap to hear the new sound',
+                                            onTargetClick: () {
+                                              playAudio(sound2);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                false, 
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).sound2,
+                                              onPressed: () =>
+                                                  playAudio(sound2),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 15, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              S.of(context).In,
+                                              style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          Showcase(
+                                            key: _wordButtonKey,
+                                            description:
+                                                'Tap to hear the base word',
+                                            onTargetClick: () {
+                                              playAudio(word);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // Move to next showcase
+                                            },
+                                            disposeOnTap:
+                                                true, // Removes highlight after tap
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).Word,
+                                              onPressed: () => playAudio(word),
+                                            ),
+                                          ),
+                                        ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 25.0, vertical: 0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Showcase(
+                                      key: _recordButtonKey,
+                                      description:
+                                          'Tap to start/stop recording your voice',
+                                      child: StartRecordingButton(
+                                        onPressed: _toggleRecording,
+                                        isRecording: _isRecording,
+                                      ),
                                     ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).In,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                    Showcase(
+                                      key: _playButtonKey,
+                                      description:
+                                          'Tap to play back your recording',
+                                      child: PlayAudioButton(
+                                        isEnabled: _recordingAvailable,
+                                        onPressed:
+                                            _isPlaying ? null : _playRecording,
+                                        isPlaying: _isPlaying,
                                       ),
                                     ),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound2,
-                                      onPressed: () => playAudio(sound1),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
+                                    Showcase(
+                                      key: _confirmButtonKey,
+                                      description: 'Submit your answer',
+                                      child: ConfirmButton(
+                                        isEnabled: _recordingAvailable,
+                                        onPressed: _recordingAvailable
+                                            ? handleSubmit
+                                            : null,
                                       ),
-                                      child: Text(
-                                        S.of(context).With,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound1,
-                                      onPressed: () => playAudio(sound2),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).substitute,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                  ]
-                                : [
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).substitute,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound1,
-                                      onPressed: () => playAudio(sound1),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).With,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).sound2,
-                                      onPressed: () => playAudio(sound2),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 15, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        S.of(context).In,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
-                                      ),
-                                    ),
-                                    AnimatedWoodenButton(
-                                      label: S.of(context).Word,
-                                      onPressed: () => playAudio(word),
                                     ),
                                   ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 25.0, vertical: 0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                StartRecordingButton(
-                                  onPressed: _toggleRecording,
-                                  isRecording: _isRecording,
-                                ),
-                                
-                                PlayAudioButton(
-                                  isEnabled: _recordingAvailable,
-                                  onPressed: _isPlaying ? null : _playRecording,
-                                  isPlaying: _isPlaying,
-                                ),
-                                ConfirmButton(
-                                  isEnabled:
-                                      _recordingAvailable, // Only enable when a new recording exists
-                                  onPressed:
-                                      _recordingAvailable ? handleSubmit : null,
-                                ),
-                              ],
-                            ))
-                      ],
-                    ),
-                  ),
+                      ),
+                    ]
+                  ]),
                 ),
-              ],
-            ]),
-          ),
-        ),
-      ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
