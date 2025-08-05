@@ -90,7 +90,7 @@ class _StoryState extends State<Story> {
   Future<void> _loadShowcaseStatus() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      showShowcase = prefs.getBool('showShowcase_8') ?? true;
+      showShowcase = prefs.getBool('showShowcase_5') ?? true;
     });
   }
 

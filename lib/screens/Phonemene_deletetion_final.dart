@@ -382,7 +382,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
               ]);
               // Save it so next time it's skipped
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('showShowcase_8', false);
+              await prefs.setBool('showShowcase_7', false);
               setState(() {
                 showShowcase = false;
               });

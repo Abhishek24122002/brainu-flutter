@@ -50,6 +50,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Word": MessageLookupByLibrary.simpleMessage("Word"),
         "click_here_to_start":
             MessageLookupByLibrary.simpleMessage("Click here to Start"),
+        "click_to_select": MessageLookupByLibrary.simpleMessage(
+            "Single tap to listen to the sound."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
             "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!"),

@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../components/appbar.dart';
 import '../components/question_container.dart';
+import '../components/showcase/showcase_option_button.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_services.dart'; // Import your FirebaseServices file
 import '../components/option_button.dart';
@@ -19,6 +20,8 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import 'package:showcaseview/showcaseview.dart';
+
 class Swap extends StatefulWidget {
   @override
   _SwapState createState() => _SwapState();
@@ -44,8 +47,21 @@ class _SwapState extends State<Swap> {
   int trophyCount = 0; // Track total trophies
   bool _showGameElements = false;
   int currentIndex = 0;
+  bool showShowcase = false;
+
+  final GlobalKey _word1Key = GlobalKey();
+  final GlobalKey _word2Key = GlobalKey();
+  final GlobalKey _clickKey = GlobalKey();
+  final GlobalKey _doubleclickKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
 
   Map<String, int> clickCountMap = {};
+  // final Map<String, GlobalKey> showcaseKeys = {
+  //   'option1': GlobalKey(),
+  //   'option2': GlobalKey(),
+  //   'option3': GlobalKey(),
+  //   'option4': GlobalKey(),
+  // };
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
@@ -195,6 +211,7 @@ class _SwapState extends State<Swap> {
     loadTrophyCount(); // Load the trophy count when the level is loaded
     _fetchUserLanguage();
     _loadProgress();
+    _loadShowcaseStatus();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -202,6 +219,13 @@ class _SwapState extends State<Swap> {
     setState(() {
       _userLanguage = language;
       generateWords(); // Call generateWords() after setting language
+    });
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_6') ?? true;
     });
   }
 
@@ -345,8 +369,6 @@ class _SwapState extends State<Swap> {
     String correctAnswer = '$correct.wav';
     bool isCorrect = selectedOption == correctAnswer;
 
-    
-
     // Store answer in Firebase
     await _storeAnswer(correct, isCorrect, selectedOption!);
 // ⬇️ Move to next word and save
@@ -360,8 +382,8 @@ class _SwapState extends State<Swap> {
       if (questionCounter == 5) {
         iterationCounter++;
         questionCounter = 0;
-         trophyCount++;
-      _saveTrophyCount();
+        trophyCount++;
+        _saveTrophyCount();
 
         // Show trophy dialog, then wait for user to dismiss before continuing
         Future.delayed(Duration.zero, () {
@@ -385,24 +407,23 @@ class _SwapState extends State<Swap> {
   }
 
   void showIterationCompleteDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => const TrophyDialog(),
-  );
-}
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
+  }
 
   void showAllWordsDoneDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => CompletionDialog(
-      onReset: () {
-        Navigator.of(context).pop();
-        resetLevel();
-      },
-    ),
-  );
-}
-
+    showDialog(
+      context: context,
+      builder: (context) => CompletionDialog(
+        onReset: () {
+          Navigator.of(context).pop();
+          resetLevel();
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -412,91 +433,192 @@ class _SwapState extends State<Swap> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Spoonerism_bg.png',
-            fit: BoxFit.cover,
-          ),
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: CustomAppBar(titleKey: 'spoonerism'),
-          body: Column(
+    return ShowCaseWidget(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && iterationCounter == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _word1Key,
+                _word2Key,
+                _clickKey,
+                _doubleclickKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_6', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
+          return Stack(
             children: [
-              CustomContainer(text: S.of(context).spoonerism_question),
-              if (!_showGameElements)
-                StartButton(
-                  onPressed: () {
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Spoonerism_bg.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                // appBar: CustomAppBar(titleKey: 'spoonerism'),
+                appBar: CustomAppBar(
+                  titleKey: 'spoonerism',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_6', true);
                     setState(() {
-                      _showGameElements = true;
-                      generateWords(); // Generate words when the game starts
+                      showShowcase = true;
                     });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _word1Key,
+                      _word2Key,
+                      _clickKey,
+                      _doubleclickKey,
+                      _confirmButtonKey,
+                    ]);
                   },
                 ),
-              // Main game content
-              if (_showGameElements)
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // Positioning the two boards slightly upward and aligned to left/right
-                      // Left board (shift word slightly right and down)
-                      Positioned(
-                        top: MediaQuery.of(context).size.height * 0.15,
-                        left: 0,
-                        child: GestureDetector(
-                          onTap: () => playAudio(word3),
-                          child: _buildWordContainer(word1),
-                        ),
+                body: Column(
+                  children: [
+                    CustomContainer(text: S.of(context).spoonerism_question),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                            generateWords(); // Generate words when the game starts
+                          });
+                        },
                       ),
+                    // Main game content
+                    if (_showGameElements)
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            // Positioning the two boards slightly upward and aligned to left/right
+                            // Left board (shift word slightly right and down)
+                            Positioned(
+                              top: MediaQuery.of(context).size.height * 0.15,
+                              left: MediaQuery.of(context).size.width * 0.05,
+                              child: Showcase(
+                                key: _word1Key,
+                                description: S.of(context).Click_here_to_listen,
+                                disableBarrierInteraction: true,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await playAudio(
+                                        word3); // wait for audio to start
+                                    await audioPlayer.onPlayerComplete
+                                        .first; // wait until audio finishes
+                                    ShowCaseWidget.of(context)
+                                        .next(); // move to next showcase
+                                  },
+                                  child: _buildWordContainer(word1),
+                                ),
+                              ),
+                            ),
 
 // Right board (shift word slightly left and down)
-                      Positioned(
-                        top: MediaQuery.of(context).size.height * 0.15,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => playAudio(word4),
-                          child: _buildWordContainer(word2),
-                        ),
-                      ),
-
-                      // Center options below boards
-                      Align(
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.25),
-                            Wrap(
-                              spacing: 20,
-                              alignment: WrapAlignment.center,
-                              children: options.map((option) {
-                                return OptionButton(
-                                  index: options.indexOf(option) + 1,
-                                  isSelected: selectedOption == option,
-                                  clickCount: clickCountMap[option] ?? 0,
-                                  onPressed: () => handleClick(option),
-                                );
-                              }).toList(),
+                            Positioned(
+                              top: MediaQuery.of(context).size.height * 0.15,
+                              right: MediaQuery.of(context).size.width * 0.05,
+                              child: Showcase(
+                                key: _word2Key,
+                                description: S.of(context).Click_here_to_listen,
+                                disableBarrierInteraction: true,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await playAudio(
+                                        word4); // wait for audio to start
+                                    await audioPlayer.onPlayerComplete
+                                        .first; // wait for audio to finish
+                                    ShowCaseWidget.of(context)
+                                        .next(); // move to next showcase
+                                  },
+                                  child: _buildWordContainer(word2),
+                                ),
+                              ),
                             ),
-                            SizedBox(height: 20),
-                            SubmitButton(
-                              isEnabled: isSubmitEnabled,
-                              onPressed: handleSubmit,
+
+                            // Center options below boards
+                            Align(
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.25),
+                                  // Wrap(
+                                  //   spacing: 20,
+                                  //   alignment: WrapAlignment.center,
+                                  //   children: options.map((option) {
+                                  //     return OptionButton(
+                                  //       index: options.indexOf(option) + 1,
+                                  //       isSelected: selectedOption == option,
+                                  //       clickCount: clickCountMap[option] ?? 0,
+                                  //       onPressed: () => handleClick(option),
+                                  //     );
+                                  //   }).toList(),
+                                  // ),
+                                  Wrap(
+                                    spacing: 20,
+                                    alignment: WrapAlignment.center,
+                                    children:
+                                        options.asMap().entries.map((entry) {
+                                      int idx = entry.key;
+                                      String option = entry.value;
+
+                                      GlobalKey key;
+                                      String desc;
+
+                                      if (idx == 0) {
+                                        key = _clickKey;
+                                        desc = S.of(context).click_to_select;
+                                      } else if (idx == 1) {
+                                        key = _doubleclickKey;
+                                        desc = S
+                                            .of(context)
+                                            .double_click_to_select;
+                                      } else {
+                                        key =
+                                            GlobalKey(); // dummy key, not showcased
+                                        desc = '';
+                                      }
+
+                                      return ShowcaseOptionButton(
+                                        index: idx + 1,
+                                        isSelected: selectedOption == option,
+                                        clickCount: clickCountMap[option] ?? 0,
+                                        onPressed: () => handleClick(option),
+                                        showcaseKey: key,
+                                        description: desc,
+                                      );
+                                    }).toList(),
+                                  ),
+
+                                  SizedBox(height: 20),
+                                  SubmitButton(
+                                    isEnabled: isSubmitEnabled,
+                                    onPressed: handleSubmit,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
             ],
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }

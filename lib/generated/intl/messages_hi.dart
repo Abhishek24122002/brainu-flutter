@@ -46,6 +46,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "Word": MessageLookupByLibrary.simpleMessage("शब्द"),
         "click_here_to_start": MessageLookupByLibrary.simpleMessage(
             "आगे जाने के लिए यहां क्लिक करें।"),
+        "click_to_select": MessageLookupByLibrary.simpleMessage(
+            "सुनने के लिए एक बार टैप करें"),
         "confirm": MessageLookupByLibrary.simpleMessage("पुष्टी करें"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
             "ब्रेनु एक शांतिपूर्ण जंगल में है, पक्षियों और प्रकृति की आवाज़ों को सुननें के लिए। ब्रेनु की सहायता करे शब्द को टाइप करके जो आपको सुनाई देगा !"),

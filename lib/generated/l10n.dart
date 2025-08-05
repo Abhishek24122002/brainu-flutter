@@ -530,6 +530,16 @@ class S {
     );
   }
 
+  /// `Single tap to listen to the sound.`
+  String get click_to_select {
+    return Intl.message(
+      'Single tap to listen to the sound.',
+      name: 'click_to_select',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `double click to select`
   String get double_click_to_select {
     return Intl.message(

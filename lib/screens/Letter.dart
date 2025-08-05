@@ -18,6 +18,8 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import 'package:showcaseview/showcaseview.dart';
+import '../components/showcase/showcase_option_button.dart';
 
 class Letter extends StatefulWidget {
   @override
@@ -42,8 +44,11 @@ class _LetterState extends State<Letter> {
   int questionIndex = 0;
   int trophyCount = 0;
 
-  final GlobalKey _startButtonKey = GlobalKey();
-  bool _hasShownShowcase = false;
+  bool showShowcase = false;
+
+  final GlobalKey _clickKey = GlobalKey();
+  final GlobalKey _doubleclickKey = GlobalKey();
+  final GlobalKey _confirmButtonKey = GlobalKey();
 
   List<List<String>> englishWordPairs = [
     ['A', 'a'],
@@ -149,23 +154,12 @@ class _LetterState extends State<Letter> {
     ['प्र', 'pr'],
     ['कृ', 'kre']
   ];
-  Future<void> _checkAndShowShowcase() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool seen = prefs.getBool('seen_vc_start_showcase') ?? false;
-
-    if (!seen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ShowCaseWidget.of(context).startShowCase([_startButtonKey]);
-      });
-      await prefs.setBool('seen_vc_start_showcase', true);
-    }
-  }
 
   @override
   void initState() {
     super.initState();
     _fetchUserLanguage();
-    _checkAndShowShowcase();
+     _loadShowcaseStatus();
 
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
@@ -184,6 +178,13 @@ class _LetterState extends State<Letter> {
       loadTrophyCount().then((_) {
         generateQuestionAndOptions();
       });
+    });
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_1') ?? true;
     });
   }
 
@@ -375,109 +376,171 @@ class _LetterState extends State<Letter> {
   @override
   Widget build(BuildContext context) {
     return ShowCaseWidget(
-        builder: Builder(
-            builder: (context) => Stack(
+      builder: Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (showShowcase && iterationCounter == 0) {
+              ShowCaseWidget.of(context).startShowCase([
+                _clickKey,
+                _doubleclickKey,
+                _confirmButtonKey,
+              ]);
+              // Save it so next time it's skipped
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_1', false);
+              setState(() {
+                showShowcase = false;
+              });
+            }
+          });
+          return Stack(
+            children: [
+              Positioned.fill(
+                child:
+                    Image.asset('assets/img/Letter_bg.png', fit: BoxFit.cover),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent, // Important!
+                // appBar: CustomAppBar(titleKey: 'letter'),
+                appBar: CustomAppBar(
+                  titleKey: 'letter',
+                  onLearnPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('showShowcase_1', true);
+                    setState(() {
+                      showShowcase = true;
+                    });
+                    ShowCaseWidget.of(context).startShowCase([
+                      _clickKey,
+                      _doubleclickKey,
+                      _confirmButtonKey,
+                    ]);
+                  },
+                ),
+
+                body: Column(
                   children: [
-                    Positioned.fill(
-                      child: Image.asset('assets/img/Letter_bg.png',
-                          fit: BoxFit.cover),
-                    ),
-                    Scaffold(
-                      backgroundColor: Colors.transparent, // Important!
-                      appBar: CustomAppBar(titleKey: 'letter'),
-
-                      body: Column(
-                        children: [
-                          CustomContainer(
-                              text: S.of(context).vc_starting_question),
-                          if (!_showGameElements)
-                            StartButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showGameElements = true;
-                                });
-                              },
-                            ),
-                          if (_showGameElements)
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  double screenWidth = constraints.maxWidth;
-                                  double imageSize =
-                                      screenWidth * 0.55; // Scales for tablet
-                                  double fontSize = screenWidth *
-                                      0.15; // Responsive font size
-                                  double spacing = screenWidth *
-                                      0.04; // Spacing between options
-
-                                  return Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            Image.asset(
-                                              'assets/img/Letter_brainu.png',
-                                              width: imageSize,
-                                              height: imageSize,
-                                              fit: BoxFit.contain,
-                                            ),
-                                            Positioned(
-                                              bottom: 20,
-                                              child: Text(
-                                                question.toUpperCase(),
-                                                style: TextStyle(
-                                                  fontSize: fontSize,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF7B2F00),
-                                                  backgroundColor: Colors.white
-                                                      .withOpacity(1),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: spacing),
-                                        Wrap(
-                                          alignment: WrapAlignment.center,
-                                          spacing: spacing,
-                                          runSpacing: spacing / 2,
-                                          children: options
-                                              .asMap()
-                                              .entries
-                                              .map((entry) {
-                                            int index = entry.key + 1;
-                                            String option = entry.value;
-
-                                            return OptionButton(
-                                              index: index,
-                                              isSelected:
-                                                  selectedOption == option,
-                                              clickCount:
-                                                  clickCountMap[option] ?? 0,
-                                              onPressed: () =>
-                                                  handleClick(option),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        SizedBox(height: spacing),
-                                        SubmitButton(
-                                          isEnabled: isSubmitEnabled,
-                                          onPressed: handleSubmit,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                        ],
+                    CustomContainer(text: S.of(context).vc_starting_question),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                          });
+                        },
                       ),
-                    ),
+                    if (_showGameElements)
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            double screenWidth = constraints.maxWidth;
+                            double imageSize =
+                                screenWidth * 0.55; // Scales for tablet
+                            double fontSize =
+                                screenWidth * 0.15; // Responsive font size
+                            double spacing =
+                                screenWidth * 0.04; // Spacing between options
+
+                            return Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/img/Letter_brainu.png',
+                                        width: imageSize,
+                                        height: imageSize,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      Positioned(
+                                        bottom: 20,
+                                        child: Text(
+                                          question.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: fontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF7B2F00),
+                                            backgroundColor:
+                                                Colors.white.withOpacity(1),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: spacing),
+                                  // Wrap(
+                                  //   alignment: WrapAlignment.center,
+                                  //   spacing: spacing,
+                                  //   runSpacing: spacing / 2,
+                                  //   children:
+                                  //       options.asMap().entries.map((entry) {
+                                  //     int index = entry.key + 1;
+                                  //     String option = entry.value;
+
+                                  //     return OptionButton(
+                                  //       index: index,
+                                  //       isSelected: selectedOption == option,
+                                  //       clickCount: clickCountMap[option] ?? 0,
+                                  //       onPressed: () => handleClick(option),
+                                  //     );
+                                  //   }).toList(),
+                                  // ),
+                                   Wrap(
+                                    spacing: 20,
+                                    alignment: WrapAlignment.center,
+                                    children:
+                                        options.asMap().entries.map((entry) {
+                                      int idx = entry.key;
+                                      String option = entry.value;
+
+                                      GlobalKey key;
+                                      String desc;
+
+                                      if (idx == 0) {
+                                        key = _clickKey;
+                                        desc = S.of(context).click_to_select;
+                                      } else if (idx == 1) {
+                                        key = _doubleclickKey;
+                                        desc = S
+                                            .of(context)
+                                            .double_click_to_select;
+                                      } else {
+                                        key =
+                                            GlobalKey(); // dummy key, not showcased
+                                        desc = '';
+                                      }
+
+                                      return ShowcaseOptionButton(
+                                        index: idx + 1,
+                                        isSelected: selectedOption == option,
+                                        clickCount: clickCountMap[option] ?? 0,
+                                        onPressed: () => handleClick(option),
+                                        showcaseKey: key,
+                                        description: desc,
+                                      );
+                                    }).toList(),
+                                  ),
+                                  SizedBox(height: spacing),
+                                  SubmitButton(
+                                    isEnabled: isSubmitEnabled,
+                                    onPressed: handleSubmit,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                   ],
-                )));
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }

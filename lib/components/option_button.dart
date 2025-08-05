@@ -14,7 +14,7 @@ class OptionButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  String getImageAsset() {
+  String getImageAsset()   {
     if (clickCount >= 2) {
       return 'assets/img/green_btn_round.png';
     } else if (clickCount == 1) {
