@@ -55,6 +55,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
   String? _recordingPath;
   bool _showGameElements = false;
   bool showShowcase = false;
+  int currentIndex = 0;
 
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
@@ -108,6 +109,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     _initializeRecorder();
     _player.openPlayer();
     _loadShowcaseStatus();
+    _loadProgress();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -123,6 +125,18 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     setState(() {
       showShowcase = prefs.getBool('showShowcase_8') ?? true;
     });
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      currentIndex = prefs.getInt('8_currentIndex') ?? 0;
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('8_currentIndex', currentIndex);
   }
 
   Future<void> _initializeRecorder() async {
@@ -221,12 +235,41 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     await trophyManager.saveToFirebase();
   }
 
-  void generateWords() {
+  // void generateWords() {
+  //   List<List<String>> availableWords =
+  //       wordPairsByLanguage[_userLanguage] ?? [];
+
+  //   if (availableWords.isEmpty) {
+  //     // All words used; show level completed
+  //     setState(() {
+  //       selectedOption = null;
+  //       isSubmitEnabled = false;
+  //       clickCountMap.clear();
+  //     });
+  //     showAllWordsDoneDialog();
+  //     return;
+  //   }
+
+  //   Random random = Random();
+  //   int index = random.nextInt(availableWords.length);
+  //   List<String> selectedPair = availableWords.removeAt(index);
+  //   usedWordPairs.add(selectedPair);
+
+  //   word1 = selectedPair[0];
+  //   word2 = selectedPair[1];
+
+  //   setState(() {
+  //     selectedOption = null;
+  //     isSubmitEnabled = false;
+  //     clickCountMap = {for (var option in options) option: 0};
+  //   });
+  // }
+
+  Future<void> generateWords() async {
     List<List<String>> availableWords =
         wordPairsByLanguage[_userLanguage] ?? [];
 
-    if (availableWords.isEmpty) {
-      // All words used; show level completed
+    if (currentIndex >= availableWords.length) {
       setState(() {
         selectedOption = null;
         isSubmitEnabled = false;
@@ -236,10 +279,9 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
       return;
     }
 
-    Random random = Random();
-    int index = random.nextInt(availableWords.length);
-    List<String> selectedPair = availableWords.removeAt(index);
+    List<String> selectedPair = availableWords[currentIndex];
     usedWordPairs.add(selectedPair);
+    
 
     word1 = selectedPair[0];
     word2 = selectedPair[1];
@@ -281,6 +323,9 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
           _recordingAvailable = false;
           isSubmitEnabled = false;
         });
+
+        currentIndex++; // Move to next index for next call
+    await _saveProgress();
 
         final bool allWordsDone = wordPairsByLanguage[_userLanguage]!.isEmpty;
         final bool shouldShowTrophy = questionCounter == 5;
@@ -329,13 +374,16 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
     return File(_recordingPath!).existsSync();
   }
 
-  void resetLevel() {
+  Future<void> resetLevel() async {
     setState(() {
       wordPairsByLanguage[_userLanguage]!.addAll(usedWordPairs);
       usedWordPairs.clear();
       questionCounter = 0;
       iterationCounter = 0;
+      currentIndex = 0;
     });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('8_currentIndex');
     generateWords();
   }
 

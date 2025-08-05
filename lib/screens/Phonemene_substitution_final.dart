@@ -57,6 +57,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
   String? _recordingPath;
   bool _showGameElements = false;
   bool showShowcase = false;
+  int currentIndex = 0;
 
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
@@ -100,7 +101,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
   };
 
   List<List<String>> usedWordPairs = [];
-  
+
   @override
   void initState() {
     super.initState();
@@ -109,6 +110,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     _initializeRecorder();
     _player.openPlayer();
     _loadShowcaseStatus();
+    _loadProgress();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -117,6 +119,18 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
       _userLanguage = language;
       generateWords(); // Call generateWords() after setting language
     });
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      currentIndex = prefs.getInt('9_currentIndex') ?? 0;
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('9_currentIndex', currentIndex);
   }
 
   Future<void> _loadShowcaseStatus() async {
@@ -254,7 +268,17 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     List<List<String>> availableWords =
         wordPairsByLanguage[_userLanguage] ?? [];
 
-    if (availableWords.isEmpty) {
+    // if (availableWords.isEmpty) {
+    //   setState(() {
+    //     selectedOption = null;
+    //     isSubmitEnabled = false;
+    //     clickCountMap.clear();
+    //   });
+    //   showAllWordsDoneDialog();
+    //   return;
+    // }
+
+    if (currentIndex >= availableWords.length) {
       setState(() {
         selectedOption = null;
         isSubmitEnabled = false;
@@ -264,9 +288,11 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
       return;
     }
 
-    Random random = Random();
-    int index = random.nextInt(availableWords.length);
-    List<String> selectedPair = availableWords.removeAt(index);
+    // Random random = Random();
+    // int index = random.nextInt(availableWords.length);
+    // List<String> selectedPair = availableWords.removeAt(index);
+
+    List<String> selectedPair = availableWords[currentIndex];
     usedWordPairs.add(selectedPair);
 
     sound1 = selectedPair[0];
@@ -330,6 +356,9 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
               false; // Disable confirm button until a new recording is made
         });
 
+        currentIndex++; // Move to next index for next call
+    await _saveProgress();
+
         if (questionCounter == 5) {
           iterationCounter++;
           trophyCount++;
@@ -367,13 +396,16 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
     return File(_recordingPath!).existsSync();
   }
 
-  void resetLevel() {
+  Future<void> resetLevel() async {
     setState(() {
       wordPairsByLanguage[_userLanguage]!.addAll(usedWordPairs);
       usedWordPairs.clear();
       questionCounter = 0;
       iterationCounter = 0;
+      currentIndex = 0;
     });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('9_currentIndex');
     generateWords();
   }
 
