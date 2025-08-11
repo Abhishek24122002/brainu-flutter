@@ -495,7 +495,7 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                             label: S.of(context).Word,
                                             onPressed: () => playAudio(word1),
                                           ),
-                                          SizedBox(height: 10),
+                                          SizedBox(height: 5),
                                           Container(
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 5),

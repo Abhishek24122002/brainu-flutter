@@ -426,7 +426,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                 _playButtonKey,
                 _confirmButtonKey,
               ]);
-              // Save it so next time it's skipped
+              
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('showShowcase_8', false);
               setState(() {
@@ -515,7 +515,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             label: S.of(context).sound,
                                             onPressed: () => playAudio(word2),
                                           ),
-                                          SizedBox(height: 10),
+                                          SizedBox(height: 5),
                                           Container(
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 5),
@@ -570,7 +570,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          SizedBox(height: 10),
+                                          SizedBox(height: 5),
                                           AnimatedWoodenButton(
                                             label: S.of(context).Word,
                                             onPressed: () => playAudio(word1),

@@ -115,6 +115,7 @@ class _IdentifyState extends State<Identify> {
 
     _randomizeImages();
   }
+
   Future<void> _loadShowcaseStatus() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -304,18 +305,18 @@ class _IdentifyState extends State<Identify> {
               });
             }
           });
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.asset(
-            'assets/img/Identify_bg.png',
-            fit: BoxFit.cover,
-          ),
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          // appBar: CustomAppBar(titleKey: 'ldentify'),
-          appBar: CustomAppBar(
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/img/Identify_bg.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                // appBar: CustomAppBar(titleKey: 'ldentify'),
+                appBar: CustomAppBar(
                   titleKey: 'ldentify',
                   onLearnPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
@@ -330,102 +331,106 @@ class _IdentifyState extends State<Identify> {
                     ]);
                   },
                 ),
-          body: Column(
-            children: [
-              CustomContainer(text: S.of(context).ran_question),
-
-              if (!_showGameElements)
-                StartButton(
-                  onPressed: () {
-                    setState(() {
-                      _showGameElements = true;
-                      _recordingPath = null; // Clear the last recording
-                      _recordingAvailable = false;
-                    });
-                  },
-                ),
-              // Game elements become visible after clicking the button
-              if (_showGameElements)
-                Column(
+                body: Column(
                   children: [
-                    Container(
-                      margin: EdgeInsets.fromLTRB(10, 10, 10, 0),
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF00AAB3),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color: Color(0xFFBA4C24),
-                            width: 10), // updated border color
-                      ),
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        itemCount: _images.length,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color.fromARGB(30, 0, 0, 0),
-                                  blurRadius: 5,
-                                  spreadRadius: 1,
-                                  offset: Offset(3, 3),
-                                ),
-                              ],
-                            ),
-                            child: Image.asset(
-                              _images[index],
-                              fit: BoxFit.cover,
-                            ),
-                          );
+                    CustomContainer(text: S.of(context).ran_question),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() {
+                            _showGameElements = true;
+                            _recordingPath = null; // Clear the last recording
+                            _recordingAvailable = false;
+                          });
                         },
                       ),
-                    ),
-                    SizedBox(height: 5),
-
-                    // Buttons for recording and submitting answers
-
-                    // padding: const EdgeInsets.symmetric(
-                    //     horizontal: 25.0, vertical: 20),
-                    Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 25.0, vertical: 0),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    AudioShowcaseButtons(
-                                      isRecording: _isRecording,
-                                      isPlaying: _isPlaying,
-                                      isEnabled: _recordingAvailable,
-                                      onRecordPressed: _toggleRecording,
-                                      onPlayPressed: _playRecording,
-                                      onConfirmPressed: _uploadAudioAndNavigate,
-                                      keys: {
-                                        'record': _recordButtonKey,
-                                        'play': _playButtonKey,
-                                        'confirm': _confirmButtonKey,
-                                      },
-                                    ),
-                                  ],
+                    if (_showGameElements)
+                      Expanded(
+                        // Expanded added here
+                        child: Column(
+                          children: [
+                            Expanded(
+                              // Expanded to fill remaining vertical space
+                              child: Container(
+                                margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00AAB3),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFBA4C24),
+                                    width: 6,
+                                  ),
+                                ),
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 5,
+                                    crossAxisSpacing: 4,
+                                    mainAxisSpacing: 4,
+                                    childAspectRatio: 1.3,
+                                  ),
+                                  itemCount: _images.length,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color.fromARGB(
+                                                20, 0, 0, 0),
+                                            blurRadius: 3,
+                                            spreadRadius: 0.5,
+                                            offset: const Offset(1, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Image.asset(
+                                        _images[index],
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
+                            ),
+
+                            SizedBox(
+                                height: 5), // spacing between board and buttons
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 25.0, vertical: 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AudioShowcaseButtons(
+                                    isRecording: _isRecording,
+                                    isPlaying: _isPlaying,
+                                    isEnabled: _recordingAvailable,
+                                    onRecordPressed: _toggleRecording,
+                                    onPlayPressed: _playRecording,
+                                    onConfirmPressed: _uploadAudioAndNavigate,
+                                    keys: {
+                                      'record': _recordButtonKey,
+                                      'play': _playButtonKey,
+                                      'confirm': _confirmButtonKey,
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
+              ),
             ],
-          ),
-        ),
-      ],
-    );
-  },
+          );
+        },
       ),
     );
-}
+  }
 }
 
 Widget _buildStyledButton({

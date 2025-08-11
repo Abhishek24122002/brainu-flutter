@@ -62,7 +62,7 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
             Text(
               widget.label,
               style: TextStyle(
-                fontSize: 84.sp,              // Responsive font
+                fontSize: 45.sp,              // Responsive font
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

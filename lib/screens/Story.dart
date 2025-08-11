@@ -335,7 +335,7 @@ class _StoryState extends State<Story> {
                           currentStoryIndex < stories.length)
                         Container(
                           width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.40,
+                          height: MediaQuery.of(context).size.height * 0.30,
                           decoration: BoxDecoration(
                             image: DecorationImage(
                               image:
@@ -344,7 +344,7 @@ class _StoryState extends State<Story> {
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(50, 60, 50, 60),
+                            padding: const EdgeInsets.fromLTRB(65, 60, 65, 60),
                             child: ScrollbarTheme(
                               data: ScrollbarThemeData(
                                 thumbColor: MaterialStateProperty.all(

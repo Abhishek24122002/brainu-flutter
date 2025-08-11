@@ -30,7 +30,7 @@ class CustomContainer extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.fredokaOne(
           textStyle: TextStyle(
-            fontSize: 60.sp, // Responsive font size
+            fontSize: 45.sp, // Responsive font size
             fontWeight: FontWeight.bold,
             color: const Color.fromARGB(255, 138, 58, 9),
           ),

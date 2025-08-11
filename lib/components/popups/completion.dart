@@ -9,30 +9,28 @@ class CompletionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false, // Prevents back button dismissal
-      child: AlertDialog(
-        title: Text(S.of(context).Congratulation),
-        content: Text(S.of(context).you_did_it),
-        actions: [
-          TextButton(
-            onPressed: () {
-              onReset();
-              Navigator.of(context).pop(); 
-            },
-            child: Text(S.of(context).restart),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
-              );
-            },
-            child: Text(S.of(context).done),
-          ),
-        ],
-      ),
+    return AlertDialog(
+      title: Text(S.of(context).Congratulation),
+      content: Text(S.of(context).you_did_it),
+      actions: [
+        TextButton(
+          onPressed: () {
+            onReset();
+            Navigator.of(context).pop();
+          },
+          child: Text(S.of(context).restart),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LevelSelectionScreen()),
+            );
+          },
+          child: Text(S.of(context).done),
+        ),
+      ],
     );
   }
 }
+

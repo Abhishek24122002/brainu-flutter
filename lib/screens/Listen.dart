@@ -357,89 +357,87 @@ if (_remainingWords.isEmpty) {
                   },
                 ),
               if (_showGameElements)
-                Expanded(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 25.w, vertical: 8.h),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 3,
-                          child: GestureDetector(
-                            onPanUpdate: (details) {
-                              setState(() {
-                                RenderBox renderBox = _canvasKey.currentContext!
-                                    .findRenderObject() as RenderBox;
-                                _points.add(renderBox
-                                    .globalToLocal(details.globalPosition));
-                              });
-                            },
-                            onPanEnd: (_) {
-                              _points.add(Offset.zero);
-                              bool hasMeaningfulDrawing = _points
-                                      .where((p) => p != Offset.zero)
-                                      .length >
-                                  2;
-                              setState(() {
-                                _isDrawingDone = hasMeaningfulDrawing;
-                              });
-                            },
-                            child: RepaintBoundary(
-                              key: _canvasKey,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  Image.asset(
-                                    'assets/img/board.png',
-                                    fit: BoxFit.fill,
-                                  ),
-                                  CustomPaint(
-                                    painter: CanvasPainter(_points),
-                                    child: Container(
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+  Flexible(
+    flex: 6, // Adjust proportion
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        double boardHeight = constraints.maxHeight * 0.7; // Limit height
+        return Column(
+          children: [
+            Container(
+              height: boardHeight,
+              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 8.h),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      RenderBox renderBox = _canvasKey.currentContext!
+                          .findRenderObject() as RenderBox;
+                      _points.add(renderBox
+                          .globalToLocal(details.globalPosition));
+                    });
+                  },
+                  onPanEnd: (_) {
+                    _points.add(Offset.zero);
+                    bool hasMeaningfulDrawing =
+                        _points.where((p) => p != Offset.zero).length > 2;
+                    setState(() {
+                      _isDrawingDone = hasMeaningfulDrawing;
+                    });
+                  },
+                  child: RepaintBoundary(
+                    key: _canvasKey,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          'assets/img/board.png',
+                          fit: BoxFit.fill,
                         ),
-                      ),
-                      Column(
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _points.clear();
-                                _isDrawingDone = false;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFFE40808),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5), // Padding // Red color
-
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              "Clear",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 18),
-                              // White text
-                            ),
-                          ),
-                          SubmitButton(
-                            isEnabled: _isDrawingDone,
-                            onPressed: _onSubmit,
-                          ),
-                        ],
-                      ),
-                    ],
+                        CustomPaint(
+                          painter: CanvasPainter(_points),
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+            ),
+            Column(
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _points.clear();
+                      _isDrawingDone = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFE40808),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    "Clear",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ),
+                SubmitButton(
+                  isEnabled: _isDrawingDone,
+                  onPressed: _onSubmit,
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    ),
+  ),
+
             ],
           ),
         ),

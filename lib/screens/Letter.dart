@@ -435,9 +435,9 @@ class _LetterState extends State<Letter> {
                           builder: (context, constraints) {
                             double screenWidth = constraints.maxWidth;
                             double imageSize =
-                                screenWidth * 0.55; // Scales for tablet
+                                screenWidth * 0.40; // Scales for tablet
                             double fontSize =
-                                screenWidth * 0.15; // Responsive font size
+                                screenWidth * 0.10; // Responsive font size
                             double spacing =
                                 screenWidth * 0.04; // Spacing between options
 
