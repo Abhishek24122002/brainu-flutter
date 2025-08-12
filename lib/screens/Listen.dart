@@ -276,13 +276,12 @@ class _ListenState extends State<Listen> {
     });
 
     questionIndex++;
-await saveProgress();
+    await saveProgress();
 
-if (_remainingWords.isEmpty) {
-  showCompletionDialog();
-  return;
-}
-
+    if (_remainingWords.isEmpty) {
+      showCompletionDialog();
+      return;
+    }
 
     // 🏆 Check for trophy every 5 words
     if (questionIndex % 5 == 0) {
@@ -313,22 +312,21 @@ if (_remainingWords.isEmpty) {
   }
 
   void showCompletionDialog() {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => CompletionDialog(
-      onReset: () async {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('Listen_questionIndex', 0);
-        setState(() {
-          questionIndex = 0;
-          _detectLocaleAndLoadWords(); // Reset word list
-        });
-      },
-    ),
-  );
-}
-
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CompletionDialog(
+        onReset: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('Listen_questionIndex', 0);
+          setState(() {
+            questionIndex = 0;
+            _detectLocaleAndLoadWords(); // Reset word list
+          });
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -357,87 +355,94 @@ if (_remainingWords.isEmpty) {
                   },
                 ),
               if (_showGameElements)
-  Flexible(
-    flex: 6, // Adjust proportion
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        double boardHeight = constraints.maxHeight * 0.7; // Limit height
-        return Column(
-          children: [
-            Container(
-              height: boardHeight,
-              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 8.h),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
-                child: GestureDetector(
-                  onPanUpdate: (details) {
-                    setState(() {
-                      RenderBox renderBox = _canvasKey.currentContext!
-                          .findRenderObject() as RenderBox;
-                      _points.add(renderBox
-                          .globalToLocal(details.globalPosition));
-                    });
-                  },
-                  onPanEnd: (_) {
-                    _points.add(Offset.zero);
-                    bool hasMeaningfulDrawing =
-                        _points.where((p) => p != Offset.zero).length > 2;
-                    setState(() {
-                      _isDrawingDone = hasMeaningfulDrawing;
-                    });
-                  },
-                  child: RepaintBoundary(
-                    key: _canvasKey,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          'assets/img/board.png',
-                          fit: BoxFit.fill,
-                        ),
-                        CustomPaint(
-                          painter: CanvasPainter(_points),
-                          child: Container(color: Colors.transparent),
-                        ),
-                      ],
-                    ),
+                Flexible(
+                  flex: 6, // Adjust proportion
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      double boardHeight =
+                          constraints.maxHeight * 0.7; // Limit height
+                      return Column(
+                        children: [
+                          Container(
+                            height: boardHeight,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 25.w, vertical: 8.h),
+                            child: AspectRatio(
+                              aspectRatio: 4 / 3,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+                                    RenderBox renderBox = _canvasKey
+                                        .currentContext!
+                                        .findRenderObject() as RenderBox;
+                                    _points.add(renderBox
+                                        .globalToLocal(details.globalPosition));
+                                  });
+                                },
+                                onPanEnd: (_) {
+                                  _points.add(Offset.zero);
+                                  bool hasMeaningfulDrawing = _points
+                                          .where((p) => p != Offset.zero)
+                                          .length >
+                                      2;
+                                  setState(() {
+                                    _isDrawingDone = hasMeaningfulDrawing;
+                                  });
+                                },
+                                child: RepaintBoundary(
+                                  key: _canvasKey,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Image.asset(
+                                        'assets/img/board.png',
+                                        fit: BoxFit.fill,
+                                      ),
+                                      CustomPaint(
+                                        painter: CanvasPainter(_points),
+                                        child: Container(
+                                            color: Colors.transparent),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _points.clear();
+                                    _isDrawingDone = false;
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFFE40808),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  "Clear",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                              ),
+                              SubmitButton(
+                                isEnabled: _isDrawingDone,
+                                onPressed: _onSubmit,
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
-              ),
-            ),
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _points.clear();
-                      _isDrawingDone = false;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFE40808),
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    "Clear",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ),
-                SubmitButton(
-                  isEnabled: _isDrawingDone,
-                  onPressed: _onSubmit,
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    ),
-  ),
-
             ],
           ),
         ),

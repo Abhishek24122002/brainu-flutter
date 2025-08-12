@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -506,7 +507,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             child: Text(
                                               S.of(context).from_the,
                                               style: TextStyle(
-                                                  fontSize: 18,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -527,7 +528,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             child: Text(
                                               S.of(context).Remove,
                                               style: TextStyle(
-                                                  fontSize: 18,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -545,7 +546,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             child: Text(
                                               S.of(context).Remove,
                                               style: TextStyle(
-                                                  fontSize: 18,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -566,7 +567,7 @@ class _Ph_deletion_initialState extends State<Ph_deletion_initial> {
                                             child: Text(
                                               S.of(context).from_the,
                                               style: TextStyle(
-                                                  fontSize: 18,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),

@@ -527,7 +527,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                             child: Text(
                                               S.of(context).In,
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -546,7 +546,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                             child: Text(
                                               S.of(context).With,
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -566,7 +566,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                             child: Text(
                                               S.of(context).substitute,
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -583,7 +583,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                             child: Text(
                                               S.of(context).substitute,
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -602,7 +602,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                             child: Text(
                                               S.of(context).With,
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -623,7 +623,7 @@ class _Ph_substitution_finalState extends State<Ph_substitution_final> {
                                               // style: TextStyle(
                                               //     fontSize: 18, color: Colors.white),
                                               style: TextStyle(
-                                                  fontSize: 70.sp,
+                                                  fontSize: 60.sp,
                                                   color: Colors.white),
                                             ),
                                           ),
