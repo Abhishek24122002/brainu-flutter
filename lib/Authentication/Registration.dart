@@ -98,9 +98,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                       items: [
                                         "English",
                                         "Hindi",
-                                        "Urdu",
-                                        "Persian",
-                                        "Marathi"
+                                        // "Urdu",
+                                        // "Persian",
+                                        // "Marathi"
                                       ]
                                           .map((lang) =>
                                               DropdownMenuItem<String>(

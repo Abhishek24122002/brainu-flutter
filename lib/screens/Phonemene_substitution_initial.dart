@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
 import '../components/WoodenButton.dart';
-import '../components/audio_buttons.dart';
 import '../components/showcase/AudioShowcaseButtons.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
@@ -27,6 +25,7 @@ import 'package:provider/provider.dart';
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
 import 'package:showcaseview/showcaseview.dart';
+import '../components/showcase/click_here_to_listen.dart';
 
 class Ph_substitution_initial extends StatefulWidget {
   @override
@@ -268,8 +267,8 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     // Random random = Random();
     // int index = random.nextInt(availableWords.length);
     // List<String> selectedPair = availableWords.removeAt(index);
-    
-     List<String> selectedPair = availableWords[currentIndex];
+
+    List<String> selectedPair = availableWords[currentIndex];
     usedWordPairs.add(selectedPair);
 
     sound1 = selectedPair[0];
@@ -315,7 +314,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
         });
 
         currentIndex++; // Move to next index for next call
-    await _saveProgress();
+        await _saveProgress();
 
         if (questionCounter == 5) {
           iterationCounter++;
@@ -354,7 +353,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
     return File(_recordingPath!).existsSync();
   }
 
-  void resetLevel() async{
+  void resetLevel() async {
     setState(() {
       wordPairsByLanguage[_userLanguage]!.addAll(usedWordPairs);
       usedWordPairs.clear();
@@ -362,7 +361,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
       iterationCounter = 0;
       currentIndex = 0;
     });
-     final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     await prefs.remove('10_currentIndex');
     generateWords();
   }
@@ -402,15 +401,32 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
         builder: (context) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && iterationCounter == 0) {
-              ShowCaseWidget.of(context).startShowCase([
-                _wordButtonKey,
-                _sound2ButtonKey,
-                _sound1ButtonKey,
-                _recordButtonKey,
-                _playButtonKey,
-                _confirmButtonKey,
-              ]);
-              // Save it so next time it's skipped
+              List<GlobalKey> showcaseOrder;
+
+              if (_userLanguage == "hindi") {
+                showcaseOrder = [
+                  _wordButtonKey,
+                  _sound2ButtonKey,
+                  _sound1ButtonKey,
+                  _recordButtonKey,
+                  _playButtonKey,
+                  _confirmButtonKey,
+                ];
+              } else {
+                // english (order as in UI)
+                showcaseOrder = [
+                  _sound2ButtonKey,
+                  _sound1ButtonKey,
+                  _wordButtonKey,
+                  _recordButtonKey,
+                  _playButtonKey,
+                  _confirmButtonKey,
+                ];
+              }
+
+              ShowCaseWidget.of(context).startShowCase(showcaseOrder);
+
+              // Save so it won't repeat
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('showShowcase_10', false);
               setState(() {
@@ -437,14 +453,26 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                     setState(() {
                       showShowcase = true;
                     });
-                    ShowCaseWidget.of(context).startShowCase([
-                      _wordButtonKey,
-                      _sound2ButtonKey,
-                      _sound1ButtonKey,
-                      _recordButtonKey,
-                      _playButtonKey,
-                      _confirmButtonKey,
-                    ]);
+
+                    List<GlobalKey> showcaseOrder = _userLanguage == "hindi"
+                        ? [
+                            _wordButtonKey,
+                            _sound2ButtonKey,
+                            _sound1ButtonKey,
+                            _recordButtonKey,
+                            _playButtonKey,
+                            _confirmButtonKey,
+                          ]
+                        : [
+                            _sound2ButtonKey,
+                            _sound1ButtonKey,
+                            _wordButtonKey,
+                            _recordButtonKey,
+                            _playButtonKey,
+                            _confirmButtonKey,
+                          ];
+
+                    ShowCaseWidget.of(context).startShowCase(showcaseOrder);
                   },
                 ),
                 body: Container(
@@ -477,22 +505,35 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _userLanguage == "hindi"
                                       ? [
-                                          Showcase(
-                                            key: _wordButtonKey,
-                                            description:
-                                                'Tap to hear the base word',
+                                          // Showcase(
+                                          //   key: _wordButtonKey,
+                                          //   description:
+                                          //       'Tap to hear the base word',
+                                          //   onTargetClick: () {
+                                          //     playAudio(word);
+                                          //     ShowCaseWidget.of(context)
+                                          //         .next(); // Move to next showcase
+                                          //   },
+                                          //   disposeOnTap:
+                                          //       false, // Removes highlight after tap
+                                          //   child: AnimatedWoodenButton(
+                                          //     label: S.of(context).Word,
+                                          //     onPressed: () => playAudio(word),
+                                          //   ),
+                                          // ),
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _wordButtonKey,
                                             onTargetClick: () {
                                               playAudio(word);
                                               ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                                  .next(); // move to next showcase
                                             },
-                                            disposeOnTap:
-                                                false, // Removes highlight after tap
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).Word,
                                               onPressed: () => playAudio(word),
                                             ),
                                           ),
+
                                           Container(
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 20, vertical: 10),
@@ -508,16 +549,12 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          Showcase(
-                                            key: _sound2ButtonKey,
-                                            description:
-                                                'Tap to hear the sound being replaced',
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _sound2ButtonKey,
                                             onTargetClick: () {
                                               playAudio(sound1);
-                                              ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                              ShowCaseWidget.of(context).next();
                                             },
-                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound1,
                                               onPressed: () =>
@@ -539,16 +576,12 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          Showcase(
-                                            key: _sound1ButtonKey,
-                                            description:
-                                                'Tap to hear the new sound',
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _sound1ButtonKey,
                                             onTargetClick: () {
                                               playAudio(sound2);
-                                              ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                              ShowCaseWidget.of(context).next();
                                             },
-                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound2,
                                               onPressed: () =>
@@ -575,7 +608,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                       : [
                                           Container(
                                             padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
+                                                horizontal: 10, vertical: 3),
                                             decoration: BoxDecoration(
                                               color: Colors.orange,
                                               borderRadius:
@@ -588,16 +621,12 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          Showcase(
-                                            key: _sound2ButtonKey,
-                                            description:
-                                                'Tap to hear the sound being replaced',
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _sound2ButtonKey,
                                             onTargetClick: () {
                                               playAudio(sound1);
-                                              ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                              ShowCaseWidget.of(context).next();
                                             },
-                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound1,
                                               onPressed: () =>
@@ -606,7 +635,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                           ),
                                           Container(
                                             padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
+                                                horizontal: 10, vertical: 3),
                                             decoration: BoxDecoration(
                                               color: Colors.orange,
                                               borderRadius:
@@ -619,16 +648,12 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          Showcase(
-                                            key: _sound1ButtonKey,
-                                            description:
-                                                'Tap to hear the new sound',
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _sound1ButtonKey,
                                             onTargetClick: () {
                                               playAudio(sound2);
-                                              ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                              ShowCaseWidget.of(context).next();
                                             },
-                                            disposeOnTap: false,
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).sound2,
                                               onPressed: () =>
@@ -637,7 +662,7 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                           ),
                                           Container(
                                             padding: EdgeInsets.symmetric(
-                                                horizontal: 15, vertical: 5),
+                                                horizontal: 15, vertical: 3),
                                             decoration: BoxDecoration(
                                               color: Colors.orange,
                                               borderRadius:
@@ -650,17 +675,13 @@ class _Ph_substitution_initialState extends State<Ph_substitution_initial> {
                                                   color: Colors.white),
                                             ),
                                           ),
-                                          Showcase(
-                                            key: _wordButtonKey,
-                                            description:
-                                                'Tap to hear the base word',
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _wordButtonKey,
                                             onTargetClick: () {
                                               playAudio(word);
                                               ShowCaseWidget.of(context)
-                                                  .next(); // Move to next showcase
+                                                  .next(); // move to next showcase
                                             },
-                                            disposeOnTap:
-                                                true, // Removes highlight after tap
                                             child: AnimatedWoodenButton(
                                               label: S.of(context).Word,
                                               onPressed: () => playAudio(word),
