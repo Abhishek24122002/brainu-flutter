@@ -72,7 +72,11 @@
   "you_did_it":"आप इस के अंत तक पहुँच चुके हैं ।",
   "restart":"पुन शुरू करे",
   "Congratulation":"बधाई हो!",
-  "Learn":"सीखे"
+  "Learn":"सीखे",
+
+  "Clear":"मिटाये",
+  "Identify_and_speak":"पहचानें और बोलें",
+  "Read_text_loudly":"इसे जोर से पढ़ें"
 
 
 }

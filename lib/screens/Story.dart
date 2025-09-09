@@ -42,7 +42,7 @@ class _StoryState extends State<Story> {
   int questionIndex = 0;
   int trophyCount = 0;
   bool showShowcase = false;
-
+  final GlobalKey _storyContainerKey = GlobalKey();
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
@@ -281,6 +281,7 @@ class _StoryState extends State<Story> {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && currentStoryIndex == 0) {
               ShowCaseWidget.of(context).startShowCase([
+                _storyContainerKey,
                 _recordButtonKey,
                 _playButtonKey,
                 _confirmButtonKey,
@@ -314,6 +315,7 @@ class _StoryState extends State<Story> {
                       showShowcase = true;
                     });
                     ShowCaseWidget.of(context).startShowCase([
+                      _storyContainerKey,
                       _recordButtonKey,
                       _playButtonKey,
                       _confirmButtonKey,
@@ -333,36 +335,48 @@ class _StoryState extends State<Story> {
                       // Story Section with Scroll only for text
                       if (_showGameElements &&
                           currentStoryIndex < stories.length)
-                        Container(
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.height * 0.30,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image:
-                                  AssetImage('assets/img/Story_container.png'),
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(65, 60, 65, 60),
-                            child: ScrollbarTheme(
-                              data: ScrollbarThemeData(
-                                thumbColor: MaterialStateProperty.all(
-                                    Color.fromARGB(154, 141, 110, 99)),
-                                trackColor: MaterialStateProperty.all(
-                                    Colors.brown[100]),
-                                thickness: MaterialStateProperty.all(5),
-                                radius: Radius.circular(10),
+                        Showcase(
+                          key: _storyContainerKey,
+                          description:
+                              S.of(context).Read_text_loudly, // ✅ instruction
+                          child: GestureDetector(
+                            onTap: () {
+                              ShowCaseWidget.of(context)
+                                  .dismiss(); // dismiss on touch
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              height: MediaQuery.of(context).size.height * 0.30,
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage(
+                                      'assets/img/Story_container.png'),
+                                  fit: BoxFit.fill,
+                                ),
                               ),
-                              child: Scrollbar(
-                                thumbVisibility: true,
-                                child: SingleChildScrollView(
-                                  child: Text(
-                                    stories[currentStoryIndex],
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color.fromRGBO(114, 64, 23, 1),
-                                      fontWeight: FontWeight.w500,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(65, 60, 65, 60),
+                                child: ScrollbarTheme(
+                                  data: ScrollbarThemeData(
+                                    thumbColor: MaterialStateProperty.all(
+                                        Color.fromARGB(154, 141, 110, 99)),
+                                    trackColor: MaterialStateProperty.all(
+                                        Colors.brown[100]),
+                                    thickness: MaterialStateProperty.all(5),
+                                    radius: Radius.circular(10),
+                                  ),
+                                  child: Scrollbar(
+                                    thumbVisibility: true,
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        stories[currentStoryIndex],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color.fromRGBO(114, 64, 23, 1),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -370,7 +384,6 @@ class _StoryState extends State<Story> {
                             ),
                           ),
                         ),
-
                       // const SizedBox(height: 10),
 
                       // Start Button

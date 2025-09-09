@@ -1,4 +1,3 @@
-import 'package:brainu/screens/LevelSelectionScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -9,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../aws/FileUploader.dart';
 import '../components/appbar.dart';
-import '../components/audio_buttons.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_save_answer.dart';
@@ -23,6 +21,7 @@ import 'package:brainu/components/popups/trophy.dart';
 import 'package:brainu/components/popups/completion.dart';
 import '../components/showcase/AudioShowcaseButtons.dart';
 import 'package:showcaseview/showcaseview.dart';
+
 
 class Identify extends StatefulWidget {
   @override
@@ -38,6 +37,7 @@ class _IdentifyState extends State<Identify> {
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
+  final GlobalKey _boardKey = GlobalKey();
 
   List<List<String>> iterations = [
     // Iteration 1 (Common)
@@ -293,6 +293,7 @@ class _IdentifyState extends State<Identify> {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && _iteration == 0) {
               ShowCaseWidget.of(context).startShowCase([
+                _boardKey,
                 _recordButtonKey,
                 _playButtonKey,
                 _confirmButtonKey,
@@ -325,6 +326,7 @@ class _IdentifyState extends State<Identify> {
                       showShowcase = true;
                     });
                     ShowCaseWidget.of(context).startShowCase([
+                      _boardKey, 
                       _recordButtonKey,
                       _playButtonKey,
                       _confirmButtonKey,
@@ -350,18 +352,20 @@ class _IdentifyState extends State<Identify> {
                         child: Column(
                           children: [
                             Expanded(
-                              // Expanded to fill remaining vertical space
-                              child: Container(
-                                margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF00AAB3),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: const Color(0xFFBA4C24),
-                                    width: 6,
-                                  ),
-                                ),
+  child: Showcase(
+    key: _boardKey,
+    description: S.of(context).Identify_and_speak, // 👈 localized message
+    child: Container(
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00AAB3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFBA4C24),
+          width: 6,
+        ),
+      ),
                                 child: GridView.builder(
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
@@ -393,7 +397,7 @@ class _IdentifyState extends State<Identify> {
                                 ),
                               ),
                             ),
-
+                            ),
                             SizedBox(
                                 height: 5), // spacing between board and buttons
 

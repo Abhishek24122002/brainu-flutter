@@ -6,7 +6,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/appbar.dart';
-import '../components/option_button.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 import '../components/submit_button.dart';
@@ -18,7 +17,6 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
-import 'package:showcaseview/showcaseview.dart';
 import '../components/showcase/showcase_option_button.dart';
 
 class Letter extends StatefulWidget {
@@ -46,6 +44,7 @@ class _LetterState extends State<Letter> {
 
   bool showShowcase = false;
 
+  final GlobalKey _letterKey = GlobalKey();
   final GlobalKey _clickKey = GlobalKey();
   final GlobalKey _doubleclickKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
@@ -159,7 +158,7 @@ class _LetterState extends State<Letter> {
   void initState() {
     super.initState();
     _fetchUserLanguage();
-     _loadShowcaseStatus();
+    _loadShowcaseStatus();
 
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
@@ -381,6 +380,7 @@ class _LetterState extends State<Letter> {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && iterationCounter == 0) {
               ShowCaseWidget.of(context).startShowCase([
+                _letterKey,
                 _clickKey,
                 _doubleclickKey,
                 _confirmButtonKey,
@@ -411,6 +411,7 @@ class _LetterState extends State<Letter> {
                       showShowcase = true;
                     });
                     ShowCaseWidget.of(context).startShowCase([
+                      _letterKey,
                       _clickKey,
                       _doubleclickKey,
                       _confirmButtonKey,
@@ -457,14 +458,20 @@ class _LetterState extends State<Letter> {
                                       ),
                                       Positioned(
                                         bottom: 20,
-                                        child: Text(
-                                          question.toUpperCase(),
-                                          style: TextStyle(
-                                            fontSize: fontSize,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF7B2F00),
-                                            backgroundColor:
-                                                Colors.white.withOpacity(1),
+                                        child: Showcase(
+                                          key: _letterKey,
+                                          description: S
+                                              .of(context)
+                                              .Read_Text, // e.g. "Read this letter"
+                                          child: Text(
+                                            question.toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: fontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF7B2F00),
+                                              backgroundColor:
+                                                  Colors.white.withOpacity(1),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -488,7 +495,7 @@ class _LetterState extends State<Letter> {
                                   //     );
                                   //   }).toList(),
                                   // ),
-                                   Wrap(
+                                  Wrap(
                                     spacing: 20,
                                     alignment: WrapAlignment.center,
                                     children:

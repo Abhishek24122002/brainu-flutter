@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,11 +15,8 @@ import '../components/start_button.dart';
 import '../firebase/firebase_services.dart';
 
 import 'package:flutter_sound/flutter_sound.dart';
-import '../components/audio_buttons.dart';
 import '../generated/l10n.dart';
 import '../firebase/firebase_save_answer.dart';
-
-import 'package:vibration/vibration.dart';
 
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +24,7 @@ import 'package:provider/provider.dart';
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
 import '../components/showcase/AudioShowcaseButtons.dart';
+import '../components/showcase/click_here_to_listen.dart';
 
 class Ph_deletion_final extends StatefulWidget {
   @override
@@ -63,6 +60,8 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
+  final GlobalKey _word1ButtonKey = GlobalKey();
+  final GlobalKey _word2ButtonKey = GlobalKey();
 
   Map<String, List<List<String>>> wordPairsByLanguage = {
     "english": [
@@ -422,11 +421,28 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
         builder: (context) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && iterationCounter == 0) {
-              ShowCaseWidget.of(context).startShowCase([
-                _recordButtonKey,
-                _playButtonKey,
-                _confirmButtonKey,
-              ]);
+              List<GlobalKey> showcaseOrder;
+
+              if (_userLanguage == "hindi") {
+                showcaseOrder = [
+                  _word1ButtonKey,
+                  _word2ButtonKey,
+                  _recordButtonKey,
+                  _playButtonKey,
+                  _confirmButtonKey,
+                ];
+              } else {
+                // english (order as in UI)
+                showcaseOrder = [
+                  _word2ButtonKey,
+                  _word1ButtonKey,
+                  _recordButtonKey,
+                  _playButtonKey,
+                  _confirmButtonKey,
+                ];
+              }
+
+               ShowCaseWidget.of(context).startShowCase(showcaseOrder);
               // Save it so next time it's skipped
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('showShowcase_7', false);
@@ -450,14 +466,26 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                   onLearnPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool('showShowcase_7', true);
-                    setState(() {
+                   setState(() {
                       showShowcase = true;
                     });
-                    ShowCaseWidget.of(context).startShowCase([
-                      _recordButtonKey,
-                      _playButtonKey,
-                      _confirmButtonKey,
-                    ]);
+                    List<GlobalKey> showcaseOrder = _userLanguage == "hindi"
+                        ? [
+                            _word1ButtonKey,
+                            _word2ButtonKey,
+                            _recordButtonKey,
+                            _playButtonKey,
+                            _confirmButtonKey,
+                          ]
+                        : [
+                            _word2ButtonKey,
+                            _word1ButtonKey,
+                            _recordButtonKey,
+                            _playButtonKey,
+                            _confirmButtonKey,
+                          ];
+
+                    ShowCaseWidget.of(context).startShowCase(showcaseOrder);
                   },
                 ),
                 body: Container(
@@ -492,9 +520,17 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                   children: _userLanguage == "hindi"
                                       ? [
                                           // Hindi order: Word → From → Sound → Remove
-                                          AnimatedWoodenButton(
-                                            label: S.of(context).Word,
-                                            onPressed: () => playAudio(word1),
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _word1ButtonKey,
+                                            onTargetClick: () {
+                                              playAudio(word1);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // move to next showcase
+                                            },
+                                            child: AnimatedWoodenButton(
+                                              label: S.of(context).Word,
+                                              onPressed: () => playAudio(word1),
+                                            ),
                                           ),
                                           SizedBox(height: 5),
                                           Container(
@@ -513,10 +549,17 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                             ),
                                           ),
                                           SizedBox(height: 5),
-                                          AnimatedWoodenButton(
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _word2ButtonKey,
+                                            onTargetClick: () {
+                                              playAudio(word2);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // move to next showcase
+                                            },
+                                          child: AnimatedWoodenButton(
                                             label: S.of(context).sound,
                                             onPressed: () => playAudio(word2),
-                                          ),
+                                          ),),
                                           SizedBox(height: 5),
                                           Container(
                                             padding: EdgeInsets.symmetric(
@@ -552,10 +595,17 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                             ),
                                           ),
                                           SizedBox(height: 5),
-                                          AnimatedWoodenButton(
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _word2ButtonKey,
+                                            onTargetClick: () {
+                                              playAudio(word2);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // move to next showcase
+                                            },
+                                          child:AnimatedWoodenButton(
                                             label: S.of(context).sound,
                                             onPressed: () => playAudio(word2),
-                                          ),
+                                          ),),
                                           SizedBox(height: 5),
                                           Container(
                                             padding: EdgeInsets.symmetric(
@@ -573,10 +623,18 @@ class _Ph_deletion_finalState extends State<Ph_deletion_final> {
                                             ),
                                           ),
                                           SizedBox(height: 5),
-                                          AnimatedWoodenButton(
+                                          ClickHereToListenShowcase(
+                                            showcaseKey: _word1ButtonKey,
+                                            onTargetClick: () {
+                                              playAudio(word1);
+                                              ShowCaseWidget.of(context)
+                                                  .next(); // move to next showcase
+                                            },
+                                          
+                                          child:AnimatedWoodenButton(
                                             label: S.of(context).Word,
                                             onPressed: () => playAudio(word1),
-                                          ),
+                                          ),),
                                         ],
                                 ),
                               ),

@@ -218,7 +218,20 @@ class _SwapState extends State<Swap> {
     String language = await _firebaseServices.getUserLanguage();
     setState(() {
       _userLanguage = language;
-      generateWords(); // Call generateWords() after setting language
+      generateWords(); // set word1, word2, etc.
+    });
+
+// ✅ Trigger showcase only after words are ready & widget rebuilt
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (showShowcase && iterationCounter == 0 && word1.isNotEmpty) {
+        ShowCaseWidget.of(context).startShowCase([
+          _word1Key,
+          _word2Key,
+          _clickKey,
+          _doubleclickKey,
+          _confirmButtonKey,
+        ]);
+      }
     });
   }
 
@@ -437,7 +450,7 @@ class _SwapState extends State<Swap> {
       builder: Builder(
         builder: (context) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (showShowcase && iterationCounter == 0) {
+            if (showShowcase && iterationCounter == 0 && word1.isNotEmpty) {
               ShowCaseWidget.of(context).startShowCase([
                 _word1Key,
                 _word2Key,
@@ -453,6 +466,7 @@ class _SwapState extends State<Swap> {
               });
             }
           });
+
           return Stack(
             children: [
               Positioned.fill(

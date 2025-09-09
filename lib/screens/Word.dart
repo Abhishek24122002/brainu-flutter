@@ -5,14 +5,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'dart:io';
-import '../components/audio_buttons.dart';
 import '../components/question_container.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../aws/FileUploader.dart';
 import '../generated/l10n.dart';
-import '../screens/LevelSelectionScreen.dart';
 import '../components/appbar.dart';
 
 import 'package:brainu/managers/trophy_manager.dart';
@@ -49,6 +47,7 @@ class _WordState extends State<Word> {
   int trophyCount = 0;
   bool showShowcase = false;
 
+  final GlobalKey _wordKey = GlobalKey();
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
@@ -423,6 +422,7 @@ class _WordState extends State<Word> {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (showShowcase && questionIndex == 0) {
               ShowCaseWidget.of(context).startShowCase([
+                _wordKey,
                 _recordButtonKey,
                 _playButtonKey,
                 _confirmButtonKey,
@@ -458,6 +458,7 @@ class _WordState extends State<Word> {
                       showShowcase = true;
                     });
                     ShowCaseWidget.of(context).startShowCase([
+                      _wordKey,
                       _recordButtonKey,
                       _playButtonKey,
                       _confirmButtonKey,
@@ -487,14 +488,25 @@ class _WordState extends State<Word> {
                                 child: Transform.translate(
                                   offset: Offset(
                                       0, -20), // Move word 40 pixels upward
-                                  child: Text(
-                                    currentWord,
-                                    style: const TextStyle(
-                                      fontSize: 50,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF7B2F00),
+                                  child: Showcase(
+                                    key: _wordKey,
+                                    description:
+                                        S.of(context).Read_text_loudly,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // 👇 Stop showcase when user touches the word
+                                        ShowCaseWidget.of(context).dismiss();
+                                      },
+                                      child: Text(
+                                        currentWord,
+                                        style: const TextStyle(
+                                          fontSize: 50,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF7B2F00),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),

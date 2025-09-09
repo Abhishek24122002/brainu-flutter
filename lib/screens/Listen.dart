@@ -1,6 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
-import 'package:brainu/screens/LevelSelectionScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,6 +19,7 @@ import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class Listen extends StatefulWidget {
   @override
@@ -40,14 +40,20 @@ class _ListenState extends State<Listen> {
   bool _showGameElements = false;
   int questionIndex = 0;
   int trophyCount = 0;
+  int iterationCounter = 0;
 
   String currentLocale = "en"; // Default language
+
+  bool showShowcase = false;
+
+  final GlobalKey _boardKey = GlobalKey();
   FileUploader fileUploader =
       FileUploader(); // Create an instance of FileUploader
   @override
   void initState() {
     _fetchUserLanguage();
     loadTrophyCount();
+    _loadShowcaseStatus();
     super.initState();
     _audioPlayer = AudioPlayer();
   }
@@ -135,6 +141,13 @@ class _ListenState extends State<Listen> {
 
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
+  }
+
+  Future<void> _loadShowcaseStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      showShowcase = prefs.getBool('showShowcase_4') ?? true;
+    });
   }
 
   Future<void> saveProgress() async {
@@ -330,124 +343,175 @@ class _ListenState extends State<Listen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      Positioned.fill(
-        child: Image.asset(
-          'assets/img/Listen_bg.png',
-          fit: BoxFit.cover,
+    return ShowCaseWidget(builder: Builder(builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (showShowcase && iterationCounter == 0) {
+          ShowCaseWidget.of(context).startShowCase([
+            _boardKey,
+          ]);
+          // Save it so next time it's skipped
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('showShowcase_4', false);
+          setState(() {
+            showShowcase = false;
+          });
+        }
+      });
+      return Stack(children: [
+        Positioned.fill(
+          child: Image.asset(
+            'assets/img/Listen_bg.png',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      Scaffold(
-        backgroundColor: Colors.transparent, // Important!
-        appBar: CustomAppBar(titleKey: 'listen'),
-        body: Container(
-          child: Column(
-            children: [
-              CustomContainer(text: S.of(context).dictation_consonent),
-              SizedBox(height: 5),
-              if (!_showGameElements)
-                StartButton(
-                  onPressed: () {
-                    setState(() {
-                      _showGameElements = true;
-                    });
-                    _playNextWordAudio();
-                  },
-                ),
-              if (_showGameElements)
-                Flexible(
-                  flex: 6, // Adjust proportion
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      double boardHeight =
-                          constraints.maxHeight * 0.7; // Limit height
-                      return Column(
-                        children: [
-                          Container(
-                            height: boardHeight,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 25.w, vertical: 8.h),
-                            child: AspectRatio(
-                              aspectRatio: 4 / 3,
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  setState(() {
-                                    RenderBox renderBox = _canvasKey
-                                        .currentContext!
-                                        .findRenderObject() as RenderBox;
-                                    _points.add(renderBox
-                                        .globalToLocal(details.globalPosition));
-                                  });
-                                },
-                                onPanEnd: (_) {
-                                  _points.add(Offset.zero);
-                                  bool hasMeaningfulDrawing = _points
-                                          .where((p) => p != Offset.zero)
-                                          .length >
-                                      2;
-                                  setState(() {
-                                    _isDrawingDone = hasMeaningfulDrawing;
-                                  });
-                                },
-                                child: RepaintBoundary(
-                                  key: _canvasKey,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      Image.asset(
-                                        'assets/img/board.png',
-                                        fit: BoxFit.fill,
+        Scaffold(
+          backgroundColor: Colors.transparent, // Important!
+          // appBar: CustomAppBar(titleKey: 'listen'),
+          appBar: CustomAppBar(
+            titleKey: 'listen',
+            onLearnPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('showShowcase_4', true);
+              setState(() {
+                showShowcase = true;
+              });
+              ShowCaseWidget.of(context).startShowCase([
+                _boardKey,
+              ]);
+            },
+          ),
+          body: Container(
+            child: Column(
+              children: [
+                CustomContainer(text: S.of(context).dictation_consonent),
+                SizedBox(height: 5),
+                if (!_showGameElements)
+                  StartButton(
+                    onPressed: () {
+                      setState(() {
+                        _showGameElements = true;
+                      });
+                      _playNextWordAudio();
+                    },
+                  ),
+                if (_showGameElements)
+                  Flexible(
+                    flex: 6, // Adjust proportion
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double boardHeight =
+                            constraints.maxHeight * 0.7; // Limit height
+                        return Column(
+                          children: [
+                            Showcase(
+                              key: _boardKey,
+                              description: S.of(context).write_here,
+                              child: Container(
+                                height: boardHeight,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 25.w, vertical: 8.h),
+                                child: AspectRatio(
+                                  aspectRatio: 4 / 3,
+                                  child: GestureDetector(
+                                    onPanStart: (details) {
+                                      // Stop showcase immediately on first touch
+                                      if (showShowcase) {
+                                        ShowCaseWidget.of(context)
+                                            .dismiss(); // Close showcase popup
+                                        setState(() => showShowcase = false);
+                                        SharedPreferences.getInstance().then(
+                                            (prefs) => prefs.setBool(
+                                                'showShowcase_4', false));
+                                      }
+                                      // Begin drawing as before
+                                      setState(() {
+                                        RenderBox renderBox = _canvasKey
+                                            .currentContext!
+                                            .findRenderObject() as RenderBox;
+                                        _points.add(renderBox.globalToLocal(
+                                            details.globalPosition));
+                                      });
+                                    },
+                                    onPanUpdate: (details) {
+                                      setState(() {
+                                        RenderBox renderBox = _canvasKey
+                                            .currentContext!
+                                            .findRenderObject() as RenderBox;
+                                        _points.add(renderBox.globalToLocal(
+                                            details.globalPosition));
+                                      });
+                                    },
+                                    onPanEnd: (_) {
+                                      _points.add(Offset.zero);
+                                      bool hasMeaningfulDrawing = _points
+                                              .where((p) => p != Offset.zero)
+                                              .length >
+                                          2;
+                                      setState(() {
+                                        _isDrawingDone = hasMeaningfulDrawing;
+                                      });
+                                    },
+                                    child: RepaintBoundary(
+                                      key: _canvasKey,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.asset(
+                                            'assets/img/board.png',
+                                            fit: BoxFit.fill,
+                                          ),
+                                          CustomPaint(
+                                            painter: CanvasPainter(_points),
+                                            child: Container(
+                                                color: Colors.transparent),
+                                          ),
+                                        ],
                                       ),
-                                      CustomPaint(
-                                        painter: CanvasPainter(_points),
-                                        child: Container(
-                                            color: Colors.transparent),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Column(
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _points.clear();
-                                    _isDrawingDone = false;
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFFE40808),
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                            Column(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _points.clear();
+                                      _isDrawingDone = false;
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFFE40808),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    S.of(context).Clear,
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 18),
                                   ),
                                 ),
-                                child: Text(
-                                  "Clear",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18),
+                                SubmitButton(
+                                  isEnabled: _isDrawingDone,
+                                  onPressed: _onSubmit,
                                 ),
-                              ),
-                              SubmitButton(
-                                isEnabled: _isDrawingDone,
-                                onPressed: _onSubmit,
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    ]);
+      ]);
+    }));
   }
 }
 

@@ -50,16 +50,6 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
-  /// `Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.`
-  String get vc_starting_question {
-    return Intl.message(
-      'Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.',
-      name: 'vc_starting_question',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Click here to Start`
   String get click_here_to_start {
     return Intl.message(
@@ -110,6 +100,16 @@ class S {
     );
   }
 
+  /// `Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.`
+  String get vc_starting_question {
+    return Intl.message(
+      'Brainu is in a dense forest to identify different varieties of leaves and flowers. \n \n Help Brainu Identify the different vowels and consonants too. Listen to the options given and choose the correct one.',
+      name: 'vc_starting_question',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can.`
   String get ran_question {
     return Intl.message(
@@ -130,10 +130,10 @@ class S {
     );
   }
 
-  /// `Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!`
+  /// `Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by writing the word that is dictated!`
   String get dictation_consonent {
     return Intl.message(
-      'Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!',
+      'Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by writing the word that is dictated!',
       name: 'dictation_consonent',
       desc: '',
       args: [],
@@ -675,6 +675,36 @@ class S {
     return Intl.message(
       'Learn',
       name: 'Learn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear`
+  String get Clear {
+    return Intl.message(
+      'Clear',
+      name: 'Clear',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Identify and speak`
+  String get Identify_and_speak {
+    return Intl.message(
+      'Identify and speak',
+      name: 'Identify_and_speak',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Read text loudly`
+  String get Read_text_loudly {
+    return Intl.message(
+      'Read text loudly',
+      name: 'Read_text_loudly',
       desc: '',
       args: [],
     );

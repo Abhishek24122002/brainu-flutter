@@ -22,6 +22,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "Clear": MessageLookupByLibrary.simpleMessage("Clear"),
         "Click_here_to_listen":
             MessageLookupByLibrary.simpleMessage("Click here to listen"),
         "Click_here_to_record": MessageLookupByLibrary.simpleMessage(
@@ -39,10 +40,14 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Congratulation"),
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("Identify and Speak"),
+        "Identify_and_speak":
+            MessageLookupByLibrary.simpleMessage("Identify and speak"),
         "In": MessageLookupByLibrary.simpleMessage("in"),
         "Learn": MessageLookupByLibrary.simpleMessage("Learn"),
         "Read_Question": MessageLookupByLibrary.simpleMessage("Read Question"),
         "Read_Text": MessageLookupByLibrary.simpleMessage("Read Text"),
+        "Read_text_loudly":
+            MessageLookupByLibrary.simpleMessage("Read text loudly"),
         "Remove": MessageLookupByLibrary.simpleMessage("Remove"),
         "Select_Correct_one":
             MessageLookupByLibrary.simpleMessage("Select Correct one"),
@@ -54,7 +59,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Single tap to listen to the sound."),
         "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
-            "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by typing the word that is dictated!"),
+            "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by writing the word that is dictated!"),
         "done": MessageLookupByLibrary.simpleMessage("Done"),
         "double_click_to_select":
             MessageLookupByLibrary.simpleMessage("double click to select"),

@@ -22,6 +22,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "Clear": MessageLookupByLibrary.simpleMessage("मिटाये"),
         "Click_here_to_listen":
             MessageLookupByLibrary.simpleMessage("सुनने के लिए यहा क्लिक करे"),
         "Click_here_to_record": MessageLookupByLibrary.simpleMessage(
@@ -35,10 +36,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "Congratulation": MessageLookupByLibrary.simpleMessage("बधाई हो!"),
         "Identify_and_Speak":
             MessageLookupByLibrary.simpleMessage("पहचाने और बोले"),
+        "Identify_and_speak":
+            MessageLookupByLibrary.simpleMessage("पहचानें और बोलें"),
         "In": MessageLookupByLibrary.simpleMessage("में"),
         "Learn": MessageLookupByLibrary.simpleMessage("सीखे"),
         "Read_Question": MessageLookupByLibrary.simpleMessage("प्रश्न पढे"),
         "Read_Text": MessageLookupByLibrary.simpleMessage("इसे पढे"),
+        "Read_text_loudly":
+            MessageLookupByLibrary.simpleMessage("इसे जोर से पढ़ें"),
         "Remove": MessageLookupByLibrary.simpleMessage("निकाले"),
         "Select_Correct_one":
             MessageLookupByLibrary.simpleMessage("सही जवाब चुने"),
@@ -50,7 +55,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "सुनने के लिए एक बार टैप करें"),
         "confirm": MessageLookupByLibrary.simpleMessage("पुष्टी करें"),
         "dictation_consonent": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनु एक शांतिपूर्ण जंगल में है, पक्षियों और प्रकृति की आवाज़ों को सुननें के लिए। ब्रेनु की सहायता करे शब्द को टाइप करके जो आपको सुनाई देगा !"),
+            "ब्रेनु एक शांतिपूर्ण जंगल में है, पक्षियों और प्रकृति की आवाज़ों सुननें के लिए। जो शब्द आपको सुनाई देगा, उसे लिखकर ब्रेनू  की सहायता करें"),
         "done": MessageLookupByLibrary.simpleMessage("आगे बढ़े |"),
         "double_click_to_select": MessageLookupByLibrary.simpleMessage(
             "उत्तर चुनने के लिए दो-बार क्लिक करे"),
@@ -80,14 +85,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "paragraph_reading_5": MessageLookupByLibrary.simpleMessage(
             "एक बार एक लड़का कही जा रहा था। कड़ी धूप  थी और लू भी चल रही थी। चलते-चलते वह थक गया।  उसे प्यास भी लगी थी।  वह आराम करने की लिए छाया ढूंढ रहा था।  कुछ दूर चलने पर उसे एक बड़ा पेड़ दिखाई पड़ा।  वह बहुत प्रसन्न  हो गया।  उसे लगा की छाया  में  आराम करने से मेरी थकन दूर हो जाएगी और बचे हुए  थोड़े पानी से में अपनी प्यास बुझा लूंगा।  जैसे ही वह पेड़ के नीचे पंहुचा उसने देखा की  चिड़िया वहाँ  पड़ी बार-बार अपना मुँह खोल रही है।  उसे  दया आ गई। उसने चिड़िया को उठाकर  उसके मुँह पर पानी टपकाया। पानी पीते ही चिड़िया फुर्र से उड़कर डाल पर जा बैठी। लड़का भी पानी पीकर पेड़  नीचे  सो गया।  तभी एक साप लड़के को ओर आता दिखाई दिया। चिड़िया ने सोचा यह साँप तो लड़के को काट लेगा इसलिए लड़के को जगाना चाहिए। वह दाल से उड़कर  आई  और  लड़के के पैर में चोंच मरने लगी। लड़के ने जागकर काले नाग को और दूर भाग गया।  इस प्रकार लड़के की जान बच गयी।  लड़के ने पानी पिलाकर चिड़िया की जान बचाई और चिड़िया ने लड़के की। जो दुसरो पर दया करते  हैं  उनके  संकट टल  जाते हैं।"),
         "paragraph_reading_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू एक कहानी पढ़ना चाहता है, लेकिन वह पढ़ नहीं पा रहा है। लेकिन आप उसकी मदद कर सकते हैं! कृपया उनकी कहानी की किताब से छोटी कहानी पढ़ें। स्टार्ट पर टैप करने के बाद कहानी दिखाई देगी ।"),
+            "ब्रेनू एक कहानी पढ़ना चाहता है, लेकिन वह पढ़ नहीं पा रहा है। लेकिन आप उसकी मदद कर सकते हैं! कृपया उसकी कहानी की किताब से एक छोटी सी कहानी पढ़ें| स्टार्ट पर टैप करने के बाद कहानी दिखाई देगी ।"),
         "phoneme_deletion_question": MessageLookupByLibrary.simpleMessage(
             "ब्रेनु को यह बताने में मदद करें कि दिए गए शब्द से विशिष्ट ध्वनि निकालने के बाद शेष शब्द क्या होगा। ऑडियो सुनने के लिए ध्वनि और शब्द पर टैप करें।"),
         "phoneme_substitution_question": MessageLookupByLibrary.simpleMessage(
             "ब्रेनू को यह बताने में मदद करें कि दिए गए शब्द में ध्वनि 1 को ध्वनि 2 के साथ बदले तो नया शब्द क्या होगा | \n ऑडियो के लिए  ध्वनि 1, ध्वनि 2 और शब्द आइकन पर टैप करें।"),
         "play_audio": MessageLookupByLibrary.simpleMessage("ऑडियो सुने"),
         "ran_question": MessageLookupByLibrary.simpleMessage(
-            "बोर्ड पर लगी पर्चियों को समझने में ब्रेनु की मदद कीजिये । इन पर्चियों पर दिखी जाने वाली चिजों को बाएं से दाये सही सही जोर से और जल्दी से पढ़े। "),
+            "बोर्ड पर लगी पर्चियों को समझने में ब्रेनु की मदद कीजिये । इन पर्चियों पर दिखी जाने वाली चिजों को बाएं से दाये सही सही, जोर से और जल्दी से पढ़े। "),
         "restart": MessageLookupByLibrary.simpleMessage("पुन शुरू करे"),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("अपने खेल चुने |"),
@@ -95,7 +100,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "sound1": MessageLookupByLibrary.simpleMessage("ध्वनि 1"),
         "sound2": MessageLookupByLibrary.simpleMessage("ध्वनि 2"),
         "spoonerism_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू को अक्षर को बदलने में मदद करें, शब्दों की जोड़ी के पहले अक्षर का आदान-प्रदान करें और ब्रेनू को बताएं कि नई जोड़ी क्या है!  सुनने के लिए शब्दों पर टैप करें।  शुरू करने के लिए स्टार्ट पर टैप करे"),
+            "ब्रेनू को अक्षर को बदलने में मदद करें, शब्दों की जोड़ी के पहले अक्षर का आदान-प्रदान करें और ब्रेनू को बताएं कि नई जोड़ी क्या है! सुनने के लिए शब्द पर टैप करें। शुरू करने के लिए स्टार्ट पर टैप करे"),
         "start_recording":
             MessageLookupByLibrary.simpleMessage("रिकॉर्डिंग शुरु"),
         "stop_audio": MessageLookupByLibrary.simpleMessage("ऑडियो रोकें"),
@@ -104,9 +109,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "submit": MessageLookupByLibrary.simpleMessage("पुष्टी करे"),
         "substitute": MessageLookupByLibrary.simpleMessage("बदलें"),
         "vc_starting_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू एक घने जंगल में है, जहाँ उसे विभिन्न प्रकार की पत्तियों और फूलों की पहचान करनी है। \n \n ब्रेनू को विभिन्न व्यंजनों की पहचान करने में सहायता करें। दिए गए विकल्पों को सुनें और सही विकल्प चुनें।"),
+            "ब्रेनू एक घने जंगल में है, जहाँ उसे विभिन्न प्रकार की पत्तियों और फूलों की पहचान करनी है। \n \n ब्रेनू को विभिन्न स्वरों व व्यंजनों की पहचान करने में सहायता करें। दिए गए विकल्पों को सुनें और सही विकल्प चुनें।"),
         "word_reading_question": MessageLookupByLibrary.simpleMessage(
-            "ब्रेनू समुद्र तट पर है। वह एक बोर्ड पकडे हुए है। जिसमें कुछ शब्द दिखाई देंगे। अपना उत्तर रिकॉर्ड कर के उसे शब्द पढ़ने में मदद करें। आपके टैप करने पर ही शब्द दिखाई देगा।"),
+            "ब्रेनू समुद्र तट पर है। वह एक बोर्ड को पकडे हुए है, जिसमें कुछ शब्द दिखाई देंगे। अपना उत्तर रिकॉर्ड कर के उसे शब्द पढ़ने में मदद करें। आपके टैप करने पर ही शब्द दिखाई देगा।"),
         "write_here": MessageLookupByLibrary.simpleMessage("यहा लिखे"),
         "you_did_it": MessageLookupByLibrary.simpleMessage(
             "आप इस के अंत तक पहुँच चुके हैं ।"),
