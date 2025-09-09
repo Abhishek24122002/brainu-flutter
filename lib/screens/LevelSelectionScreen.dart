@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,14 +11,11 @@ import 'Phonemene_deletetion_final.dart';
 import 'Phonemene_deletetion_initial.dart';
 import 'Phonemene_substitution_final.dart';
 import 'Phonemene_substitution_initial.dart';
-import 'LevelSelection.dart';
 import 'Word.dart';
 import 'Listen.dart';
 import 'Story.dart';
 import 'swap.dart';
-
 import 'package:vibration/vibration.dart';
-import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -62,13 +58,14 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
       children: [
         // 🖼 Background image
         Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/img/background.jpeg"),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
+  decoration: BoxDecoration(
+    image: DecorationImage(
+      image: AssetImage("assets/img/background.jpeg"),
+      fit: BoxFit.cover,
+      alignment: Alignment.topCenter, // 👈 keep top visible, crop bottom
+    ),
+  ),
+),
 
         // 🧠 Main UI
         Scaffold(
