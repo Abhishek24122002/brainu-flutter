@@ -22,7 +22,6 @@ import 'package:brainu/components/popups/completion.dart';
 import '../components/showcase/AudioShowcaseButtons.dart';
 import 'package:showcaseview/showcaseview.dart';
 
-
 class Identify extends StatefulWidget {
   @override
   _IdentifyState createState() => _IdentifyState();
@@ -207,7 +206,7 @@ class _IdentifyState extends State<Identify> {
 
       String iterationKey = "iteration${_iteration}";
 
-// Save to Firebase as a proper JSON object
+      // Save to Firebase as a proper JSON object
       await _firebaseSave.saveAnswer_Identify(
           userLanguage, iterationKey, imageNamesForKey, uploadedUrl);
 
@@ -326,7 +325,7 @@ class _IdentifyState extends State<Identify> {
                       showShowcase = true;
                     });
                     ShowCaseWidget.of(context).startShowCase([
-                      _boardKey, 
+                      _boardKey,
                       _recordButtonKey,
                       _playButtonKey,
                       _confirmButtonKey,
@@ -351,22 +350,24 @@ class _IdentifyState extends State<Identify> {
                         // Expanded added here
                         child: Column(
                           children: [
-                            Expanded(
-  child: Showcase(
-    key: _boardKey,
-    description: S.of(context).Identify_and_speak, // 👈 localized message
-    child: Container(
-      margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF00AAB3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFFBA4C24),
-          width: 6,
-        ),
-      ),
+                            Showcase(
+                              key: _boardKey,
+                              description: S.of(context).Identify_and_speak,
+                              child: Container(
+                                margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00AAB3),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFBA4C24),
+                                    width: 6,
+                                  ),
+                                ),
                                 child: GridView.builder(
+                                  shrinkWrap: true, // 👈 take only needed space
+                                  physics:
+                                      const NeverScrollableScrollPhysics(), // 👈 no scrolling
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 5,
@@ -397,33 +398,31 @@ class _IdentifyState extends State<Identify> {
                                 ),
                               ),
                             ),
-                            ),
+
                             SizedBox(
                                 height: 5), // spacing between board and buttons
 
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 25.0, vertical: 0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  AudioShowcaseButtons(
-                                    isRecording: _isRecording,
-                                    isPlaying: _isPlaying,
-                                    isEnabled: _recordingAvailable,
-                                    onRecordPressed: _toggleRecording,
-                                    onPlayPressed: _playRecording,
-                                    onConfirmPressed: _uploadAudioAndNavigate,
-                                    keys: {
-                                      'record': _recordButtonKey,
-                                      'play': _playButtonKey,
-                                      'confirm': _confirmButtonKey,
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                        Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20),
+                          child: AudioShowcaseButtons(
+                            isRecording: _isRecording,
+                            isPlaying: _isPlaying,
+                            isEnabled: _recordingAvailable,
+                            onRecordPressed: _toggleRecording,
+                            onPlayPressed: _playRecording,
+                            onConfirmPressed: _uploadAudioAndNavigate,
+                            keys: {
+                              'record': _recordButtonKey,
+                              'play': _playButtonKey,
+                              'confirm': _confirmButtonKey,
+                            },
+            ),
+          ),
+        ),
+                    ],
                         ),
                       ),
                   ],
@@ -432,11 +431,7 @@ class _IdentifyState extends State<Identify> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
+      ));}
 Widget _buildStyledButton({
   required VoidCallback? onPressed,
   required String label,
@@ -455,4 +450,5 @@ Widget _buildStyledButton({
       ),
     ),
   );
+}
 }

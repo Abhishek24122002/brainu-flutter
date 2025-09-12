@@ -346,7 +346,7 @@ class _StoryState extends State<Story> {
                             },
                             child: Container(
                               width: double.infinity,
-                              height: MediaQuery.of(context).size.height * 0.30,
+                              height: MediaQuery.of(context).size.height * 0.37,
                               decoration: BoxDecoration(
                                 image: DecorationImage(
                                   image: AssetImage(
@@ -356,7 +356,7 @@ class _StoryState extends State<Story> {
                               ),
                               child: Padding(
                                 padding:
-                                    const EdgeInsets.fromLTRB(65, 60, 65, 60),
+                                    const EdgeInsets.fromLTRB(70, 60, 70, 65),
                                 child: ScrollbarTheme(
                                   data: ScrollbarThemeData(
                                     thumbColor: MaterialStateProperty.all(
@@ -372,7 +372,7 @@ class _StoryState extends State<Story> {
                                       child: Text(
                                         stories[currentStoryIndex],
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 17,
                                           color: Color.fromRGBO(114, 64, 23, 1),
                                           fontWeight: FontWeight.w500,
                                         ),

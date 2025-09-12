@@ -13,7 +13,7 @@ class CustomContainer extends StatelessWidget {
 
     // Font size adaptive: smaller phones get bigger text, large screens stay same
     double fontSize = screenWidth < 500
-        ? 65.sp // phones
+        ? 60.sp // phones
         : 45.sp; // tablets / fold
 
     // Padding adaptive
