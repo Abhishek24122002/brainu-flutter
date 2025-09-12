@@ -21,7 +21,6 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
       _scale = 0.9;
     });
 
-    // Vibrate on press
     if (await Vibration.hasVibrator() ?? false) {
       Vibration.vibrate(duration: 40);
     }
@@ -42,6 +41,13 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // Adaptive sizes
+    double buttonHeight = screenWidth < 500 ? 70.h : 60.h; // bigger on phones
+    double buttonWidth  = screenWidth < 500 ? 630.w : 560.w;
+    double fontSize     = screenWidth < 500 ? 80.sp : 45.sp;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -55,14 +61,14 @@ class _AnimatedWoodenButtonState extends State<AnimatedWoodenButton>
           children: [
             Image.asset(
               'assets/img/Wooden_btn.png',
-              height: 60.h,   // Responsive height
-              width: 560.w,   // Responsive width
+              height: buttonHeight,
+              width: buttonWidth,
               fit: BoxFit.contain,
             ),
             Text(
               widget.label,
               style: TextStyle(
-                fontSize: 45.sp,              // Responsive font
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

@@ -51,7 +51,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "Remove": MessageLookupByLibrary.simpleMessage("Remove"),
         "Select_Correct_one":
             MessageLookupByLibrary.simpleMessage("Select Correct one"),
-        "With": MessageLookupByLibrary.simpleMessage("With"),
+        "With": MessageLookupByLibrary.simpleMessage("with"),
         "Word": MessageLookupByLibrary.simpleMessage("Word"),
         "click_here_to_start":
             MessageLookupByLibrary.simpleMessage("Click here to Start"),
@@ -62,8 +62,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Brainu is in a quiet and peaceful forest, \n to listen to the sounds of birds and nature. Words will be dictated. \nHelp Brainu by writing the word that is dictated!"),
         "done": MessageLookupByLibrary.simpleMessage("Done"),
         "double_click_to_select":
-            MessageLookupByLibrary.simpleMessage("double click to select"),
-        "from_the": MessageLookupByLibrary.simpleMessage("From the"),
+            MessageLookupByLibrary.simpleMessage("Double click to select"),
+        "from_the": MessageLookupByLibrary.simpleMessage("from the"),
         "game_identify": MessageLookupByLibrary.simpleMessage("Identify"),
         "game_letter": MessageLookupByLibrary.simpleMessage("Letter"),
         "game_listen": MessageLookupByLibrary.simpleMessage("Listen"),
@@ -96,7 +96,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "ran_question": MessageLookupByLibrary.simpleMessage(
             "Help Brainu to understand what is pinned on the board. \nCertain items will appear on the notes. Say them out loud from left to right as fast as you can."),
         "read_the_text_loudly":
-            MessageLookupByLibrary.simpleMessage("read the text loudly"),
+            MessageLookupByLibrary.simpleMessage("Read the text loudly"),
         "restart": MessageLookupByLibrary.simpleMessage("Restart"),
         "select_your_games":
             MessageLookupByLibrary.simpleMessage("Select Your Games"),

@@ -450,10 +450,10 @@ class S {
     );
   }
 
-  /// `With`
+  /// `with`
   String get With {
     return Intl.message(
-      'With',
+      'with',
       name: 'With',
       desc: '',
       args: [],
@@ -480,10 +480,10 @@ class S {
     );
   }
 
-  /// `From the`
+  /// `from the`
   String get from_the {
     return Intl.message(
-      'From the',
+      'from the',
       name: 'from_the',
       desc: '',
       args: [],
@@ -510,10 +510,10 @@ class S {
     );
   }
 
-  /// `read the text loudly`
+  /// `Read the text loudly`
   String get read_the_text_loudly {
     return Intl.message(
-      'read the text loudly',
+      'Read the text loudly',
       name: 'read_the_text_loudly',
       desc: '',
       args: [],
@@ -540,10 +540,10 @@ class S {
     );
   }
 
-  /// `double click to select`
+  /// `Double click to select`
   String get double_click_to_select {
     return Intl.message(
-      'double click to select',
+      'Double click to select',
       name: 'double_click_to_select',
       desc: '',
       args: [],
