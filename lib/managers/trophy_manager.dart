@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 class TrophyManager with ChangeNotifier {
   int _trophyCount = 0;
@@ -12,28 +12,29 @@ class TrophyManager with ChangeNotifier {
 
   void increase() {
     _trophyCount++;
-    saveToPrefs();
+    saveToHive();
     notifyListeners();
   }
 
   void reset() {
     _trophyCount = 0;
-    saveToPrefs();
+    saveToHive();
     notifyListeners();
   }
 
-  Future<void> loadFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    _trophyCount = prefs.getInt('trophyCount') ?? 0;
+  Future<void> loadFromHive() async {
+    final box = await Hive.openBox('trophies');
+    _trophyCount = box.get('${userId}_trophyCount', defaultValue: 0);
     notifyListeners();
   }
 
-  Future<void> saveToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('trophyCount', _trophyCount);
+  Future<void> saveToHive() async {
+    final box = await Hive.openBox('trophies');
+    await box.put('${userId}_trophyCount', _trophyCount);
   }
 
   Future<void> loadFromFirebase() async {
+    if (userId.isEmpty) return;
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
@@ -42,7 +43,7 @@ class TrophyManager with ChangeNotifier {
 
       if (doc.exists && doc.data()?['trophy_count'] != null) {
         _trophyCount = doc.data()!['trophy_count'];
-        await saveToPrefs();
+        await saveToHive();
         notifyListeners();
       }
     } catch (e) {
@@ -51,6 +52,7 @@ class TrophyManager with ChangeNotifier {
   }
 
   Future<void> saveToFirebase() async {
+    if (userId.isEmpty) return;
     try {
       await FirebaseFirestore.instance
           .collection('users')

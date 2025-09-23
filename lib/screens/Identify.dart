@@ -1,26 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:brainu/components/popups/completion.dart';
+import 'package:brainu/components/popups/trophy.dart';
+import 'package:brainu/managers/trophy_manager.dart';
+import 'package:brainu/widgets/app_loader.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:hive/hive.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import '../aws/FileUploader.dart';
 import '../components/appbar.dart';
 import '../components/question_container.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
 import '../components/start_button.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
-
-import 'package:brainu/managers/trophy_manager.dart';
-import 'package:provider/provider.dart';
-
-import 'package:brainu/components/popups/trophy.dart';
-import 'package:brainu/components/popups/completion.dart';
-import '../components/showcase/AudioShowcaseButtons.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Identify extends StatefulWidget {
   @override
@@ -29,8 +31,7 @@ class Identify extends StatefulWidget {
 
 class _IdentifyState extends State<Identify> {
   int _iteration = 0;
-  bool _showGameElements = false; // Control visibility
-
+  bool _showGameElements = false;
   bool showShowcase = false;
 
   final GlobalKey _recordButtonKey = GlobalKey();
@@ -39,16 +40,9 @@ class _IdentifyState extends State<Identify> {
   final GlobalKey _boardKey = GlobalKey();
 
   List<List<String>> iterations = [
-    // Iteration 1 (Common)
     ['star', 'triangle', 'circle', 'rectangle'],
-
-    // Iteration 2 (Common)
     ['ship', 'color_star', 'fish', 'table', 'key'],
-
-    // Iteration 3 (Hindi Only)
     ['g', 'f', 'v', 'j', 'k'],
-
-    // Iteration 4 (Hindi Only)
     ['p', 'k', 'v']
   ];
 
@@ -60,99 +54,71 @@ class _IdentifyState extends State<Identify> {
     'key'
   ];
 
-  late String _imageNamesString; // Single string of names
-  final FirebaseServices _firebaseServices = FirebaseServices();
-  final FirebaseSave _firebaseSave = FirebaseSave();
-  late String userLanguage = "english"; // Default to English
+  late FirebaseServices _firebaseServices;
+  late FirebaseSave _firebaseSave;
 
+  late String userLanguage = "english";
   List<String> _images = [];
 
   final FileUploader _fileUploader = FileUploader();
-  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  FlutterSoundPlayer _player = FlutterSoundPlayer();
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isRecording = false;
   bool _isPlaying = false;
   bool _recordingAvailable = false;
   String? _recordingPath;
+
   int trophyCount = 0;
+
+  late Box _identifyBox;
+  late Box<List> _pendingUploadsBox;
+
+  late final Connectivity _connectivity;
+  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
-    _initializeRecorder();
-    _player.openPlayer();
-    _loadShowcaseStatus();
-    // Convert list to string for Firebase
-    _imageNamesString = _imageNames.join(', ');
-    _loadIteration().then((_) {
-      _fetchUserLanguage();
-      _loadTrophyCount(); // Only after iteration is loaded
-    });
+    _connectivity = Connectivity();
+    _initAll();
   }
 
-  void _randomizeImages() {
-    Random random = Random();
+  Future<void> _initAll() async {
+    _identifyBox = await Hive.openBox('identify_box');
+    _pendingUploadsBox = await Hive.openBox<List>('identify_pending_uploads');
 
-    // Determine the correct iteration list
-    List<List<String>> allowedIterations =
-        (userLanguage == "hindi") ? iterations : iterations.sublist(0, 2);
+    await _initializeRecorder();
+    await _player.openPlayer();
 
-    int currentIteration =
-        _iteration % allowedIterations.length; // Ensure it loops back
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _firebaseServices = FirebaseServices(userId: uid);
+    _firebaseSave = FirebaseSave(userId: uid);
 
-    List<String> availableImages = allowedIterations[currentIteration];
-
-    _images = List.generate(15, (index) {
-      return 'assets/img/ic_r_${availableImages[random.nextInt(availableImages.length)]}.png';
-    });
-
-    setState(() {});
-  }
-
-  Future<void> _fetchUserLanguage() async {
-    userLanguage = await _firebaseServices.getUserLanguage();
-
+    _loadIterationFromHive();
+    _loadShowcaseFromHive();
+    await _fetchUserLanguage();
     _randomizeImages();
-  }
+    _loadTrophyCount();
 
-  Future<void> _loadShowcaseStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      showShowcase = prefs.getBool('showShowcase_2') ?? true;
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((result) {
+      if (result != ConnectivityResult.none) _processPendingUploads();
     });
-  }
 
-  Future<void> _saveIteration() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('identify_iteration', _iteration);
-  }
+    var currentConn = await _connectivity.checkConnectivity();
+    if (currentConn != ConnectivityResult.none) _processPendingUploads();
 
-  Future<void> _loadIteration() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _iteration = prefs.getInt('identify_iteration') ?? 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (showShowcase && _iteration == 0) {
+        ShowCaseWidget.of(context)?.startShowCase([
+          _boardKey,
+          _recordButtonKey,
+          _playButtonKey,
+          _confirmButtonKey,
+        ]);
+        _saveShowcaseToHive(false);
+      }
     });
-  }
-
-  Future<void> _loadTrophyCount() async {
-    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyCount = trophyManager.trophyCount;
-  }
-
-  Future<void> _saveTrophyCount() async {
-    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyManager.increase(); // update Provider
-    setState(() {
-      trophyCount = trophyManager.trophyCount;
-    });
-    await trophyManager.saveToFirebase();
-  }
-
-  void _showTrophyDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const TrophyDialog(),
-    );
   }
 
   Future<void> _initializeRecorder() async {
@@ -164,23 +130,91 @@ class _IdentifyState extends State<Identify> {
   Future<String> _getFilePath() async {
     final directory = await getApplicationDocumentsDirectory();
     final test1Dir = Directory('${directory.path}/test1');
-    if (!test1Dir.existsSync()) {
-      test1Dir.createSync(recursive: true);
+    if (!test1Dir.existsSync()) test1Dir.createSync(recursive: true);
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    return '${test1Dir.path}/audio_recording_${ts}.aac';
+  }
+
+  void _randomizeImages() {
+    Random random = Random();
+    List<List<String>> allowedIterations =
+        (userLanguage.toLowerCase() == "hindi")
+            ? iterations
+            : iterations.sublist(0, 2);
+
+    int currentIteration = _iteration % allowedIterations.length;
+    List<String> availableImages = allowedIterations[currentIteration];
+
+    _images = List.generate(15, (index) {
+      return 'assets/img/ic_r_${availableImages[random.nextInt(availableImages.length)]}.png';
+    });
+
+    setState(() {});
+  }
+
+  Future<void> _fetchUserLanguage() async {
+    try {
+      String langCode = await _firebaseServices.getUserLanguage();
+      userLanguage = langCode.toLowerCase();
+    } catch (e) {
+      userLanguage = 'english';
     }
-    return '${test1Dir.path}/audio_recording.aac';
+    _randomizeImages();
+  }
+
+  Future<void> _saveIterationToHive() async {
+    await _identifyBox.put('identify_iteration', _iteration);
+  }
+
+  void _loadIterationFromHive() {
+    final stored = _identifyBox.get('identify_iteration');
+    _iteration = stored != null && stored is int ? stored : 0;
+  }
+
+  Future<void> _saveShowcaseToHive(bool val) async {
+    await _identifyBox.put('showShowcase_2', val);
+  }
+
+  void _loadShowcaseFromHive() {
+    final stored = _identifyBox.get('showShowcase_2');
+    showShowcase = stored != null && stored is bool ? stored : true;
+  }
+
+  Future<void> _loadTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyCount = trophyManager.trophyCount;
+  }
+
+  Future<void> _saveTrophyCountAndShowDialogIfNeeded() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase();
+    await trophyManager.saveToHive();
+    var conn = await _connectivity.checkConnectivity();
+    if (conn != ConnectivityResult.none) await trophyManager.saveToFirebase();
+
+    setState(() {
+      trophyCount = trophyManager.trophyCount;
+    });
+    _showTrophyDialog();
+  }
+
+  void _showTrophyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const TrophyDialog(),
+    );
   }
 
   Future<void> _uploadAudioAndNavigate() async {
+    if (_player.isPlaying) await _player.stopPlayer();
+
     setState(() {
       _iteration++;
       _showGameElements = false;
     });
-    await _saveIteration(); // 👈 Save after updating
-    if (_iteration % 2 == 0) {
-      await _saveTrophyCount();
-      _showTrophyDialog();
-    }
-    // 👈 Save after updating
+    await _saveIterationToHive();
+
+    if (_iteration % 2 == 0) await _saveTrophyCountAndShowDialogIfNeeded();
 
     if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -189,67 +223,159 @@ class _IdentifyState extends State<Identify> {
       return;
     }
 
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+    List<String> imageNamesForKey = _images.map((path) {
+      return path.split('_r_').last.replaceAll('.png', '');
+    }).toList();
 
-    if (uploadedUrl != null) {
-      print("Audio uploaded: $uploadedUrl");
+    final uploadItem = {
+      'filePath': _recordingPath!,
+      'iteration': _iteration,
+      'imageNames': imageNamesForKey,
+      'userLanguage': userLanguage,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          const AppLoader(message: "Uploading...", style: LoaderStyle.wave),
+    );
+
+    var connectivityResult = await _connectivity.checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      List<Map<String, dynamic>> pending = List<Map<String, dynamic>>.from(
+          _pendingUploadsBox.get('pending', defaultValue: [])!);
+      pending.add(uploadItem);
+      await _pendingUploadsBox.put('pending', pending);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text("Saved offline. Will upload when network is available.")),
+      );
+      _afterUploadSuccessFlow();
+      return;
+    }
+
+    final File audioFile = File(_recordingPath!);
+    String? uploadedUrl;
+    try {
+      uploadedUrl = await _fileUploader.uploadFile(audioFile);
+    } catch (e) {
+      uploadedUrl = null;
+    }
+
+    if (uploadedUrl == null) {
+      List<Map<String, dynamic>> pending = List<Map<String, dynamic>>.from(
+          _pendingUploadsBox.get('pending', defaultValue: [])!);
+      pending.add(uploadItem);
+      await _pendingUploadsBox.put('pending', pending);
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Upload failed — saved offline and will retry.")),
+      );
+      _afterUploadSuccessFlow();
+      return;
+    }
+
+    try {
+      await _firebaseSave.saveAnswer_Identify(
+        iterationKey: "iteration$_iteration",
+        items: imageNamesForKey,
+        audioUrl: uploadedUrl,
+        userLanguage: userLanguage,
+      );
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Upload successful!")),
       );
-
-      // Extract just the names from the asset paths
-      List<String> imageNamesForKey = _images.map((path) {
-        String name = path.split('_r_').last.replaceAll('.png', '');
-        return name;
-      }).toList();
-
-      String iterationKey = "iteration${_iteration}";
-
-      // Save to Firebase as a proper JSON object
-      await _firebaseSave.saveAnswer_Identify(
-          userLanguage, iterationKey, imageNamesForKey, uploadedUrl);
-
-      // Determine max iterations based on language
-      int maxIterations = (userLanguage == "hindi") ? iterations.length : 2;
-
-      if (_iteration < maxIterations) {
-        _randomizeImages();
-      } else {
-        showDialog(
-          context: context,
-          builder: (context) => CompletionDialog(
-            onReset: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setInt('identify_iteration', 0);
-              setState(() {
-                _iteration = 0;
-              });
-              _randomizeImages(); // Restart with fresh images
-            },
-          ),
-        );
-      }
-    } else {
+      _afterUploadSuccessFlow();
+    } catch (e) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Upload failed! Please try again.")),
+        SnackBar(content: Text("Saving result failed. Saved offline.")),
+      );
+      List<Map<String, dynamic>> pending = List<Map<String, dynamic>>.from(
+          _pendingUploadsBox.get('pending', defaultValue: [])!);
+      pending.add(uploadItem);
+      await _pendingUploadsBox.put('pending', pending);
+      _afterUploadSuccessFlow();
+    }
+  }
+
+  void _afterUploadSuccessFlow() {
+    int maxIterations =
+        (userLanguage.toLowerCase() == "hindi") ? iterations.length : 2;
+    if (_iteration < maxIterations) {
+      _randomizeImages();
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => CompletionDialog(
+          onReset: () async {
+            _iteration = 0;
+            await _saveIterationToHive();
+            _randomizeImages();
+            setState(() {});
+          },
+        ),
       );
     }
   }
 
-  Future<void> _toggleRecording() async {
-    if (_isRecording) {
-      await _stopRecording();
-    } else {
-      await _startRecording();
+  Future<void> _processPendingUploads() async {
+    List<Map<String, dynamic>> pending = List<Map<String, dynamic>>.from(
+        _pendingUploadsBox.get('pending', defaultValue: [])!);
+    if (pending.isEmpty) return;
+
+    final List<Map<String, dynamic>> items = List.from(pending);
+    bool anyUploaded = false;
+
+    for (var item in items) {
+      try {
+        final filePath = item['filePath'] as String;
+        final imageNames = (item['imageNames'] as List).cast<String>();
+        final userLang = item['userLanguage'] as String;
+        final iterationVal = item['iteration'] as int;
+        final f = File(filePath);
+        if (!f.existsSync()) {
+          pending.remove(item);
+          continue;
+        }
+
+        final url = await _fileUploader.uploadFile(f);
+        if (url != null) {
+          await _firebaseSave.saveAnswer_Identify(
+            iterationKey: "iteration$iterationVal",
+            items: imageNames,
+            audioUrl: url,
+            userLanguage: userLang,
+          );
+          anyUploaded = true;
+          pending.remove(item);
+        }
+      } catch (e) {}
     }
+
+    if (anyUploaded) await _pendingUploadsBox.put('pending', pending);
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording)
+      await _stopRecording();
+    else
+      await _startRecording();
   }
 
   Future<void> _startRecording() async {
+    if (_player.isPlaying) await _player.stopPlayer();
     _recordingPath = await _getFilePath();
     await _recorder.startRecorder(toFile: _recordingPath);
     setState(() {
       _isRecording = true;
+      _recordingAvailable = false;
     });
   }
 
@@ -264,13 +390,12 @@ class _IdentifyState extends State<Identify> {
   Future<void> _playRecording() async {
     if (_recordingPath != null && File(_recordingPath!).existsSync()) {
       await _player.startPlayer(
-        fromURI: _recordingPath,
-        whenFinished: () {
-          setState(() {
-            _isPlaying = false;
+          fromURI: _recordingPath,
+          whenFinished: () {
+            setState(() {
+              _isPlaying = false;
+            });
           });
-        },
-      );
       setState(() {
         _isPlaying = true;
       });
@@ -279,8 +404,13 @@ class _IdentifyState extends State<Identify> {
 
   @override
   void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
+    _connectivitySubscription?.cancel();
+    try {
+      _recorder.closeRecorder();
+      _player.closePlayer();
+    } catch (_) {}
+    _identifyBox.close();
+    _pendingUploadsBox.close();
     super.dispose();
   }
 
@@ -289,22 +419,6 @@ class _IdentifyState extends State<Identify> {
     return ShowCaseWidget(
       builder: Builder(
         builder: (context) {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (showShowcase && _iteration == 0) {
-              ShowCaseWidget.of(context).startShowCase([
-                _boardKey,
-                _recordButtonKey,
-                _playButtonKey,
-                _confirmButtonKey,
-              ]);
-              // Save it so next time it's skipped
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('showShowcase_2', false);
-              setState(() {
-                showShowcase = false;
-              });
-            }
-          });
           return Stack(
             children: [
               Positioned.fill(
@@ -315,16 +429,14 @@ class _IdentifyState extends State<Identify> {
               ),
               Scaffold(
                 backgroundColor: Colors.transparent,
-                // appBar: CustomAppBar(titleKey: 'ldentify'),
                 appBar: CustomAppBar(
                   titleKey: 'ldentify',
                   onLearnPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('showShowcase_2', true);
+                    await _saveShowcaseToHive(true);
                     setState(() {
                       showShowcase = true;
                     });
-                    ShowCaseWidget.of(context).startShowCase([
+                    ShowCaseWidget.of(context)?.startShowCase([
                       _boardKey,
                       _recordButtonKey,
                       _playButtonKey,
@@ -340,14 +452,13 @@ class _IdentifyState extends State<Identify> {
                         onPressed: () {
                           setState(() {
                             _showGameElements = true;
-                            _recordingPath = null; // Clear the last recording
+                            _recordingPath = null;
                             _recordingAvailable = false;
                           });
                         },
                       ),
                     if (_showGameElements)
                       Expanded(
-                        // Expanded added here
                         child: Column(
                           children: [
                             Showcase(
@@ -365,9 +476,8 @@ class _IdentifyState extends State<Identify> {
                                   ),
                                 ),
                                 child: GridView.builder(
-                                  shrinkWrap: true, // 👈 take only needed space
-                                  physics:
-                                      const NeverScrollableScrollPhysics(), // 👈 no scrolling
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 5,
@@ -398,31 +508,28 @@ class _IdentifyState extends State<Identify> {
                                 ),
                               ),
                             ),
-
-                            SizedBox(
-                                height: 5), // spacing between board and buttons
-
-                                        Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20),
-                          child: AudioShowcaseButtons(
-                            isRecording: _isRecording,
-                            isPlaying: _isPlaying,
-                            isEnabled: _recordingAvailable,
-                            onRecordPressed: _toggleRecording,
-                            onPlayPressed: _playRecording,
-                            onConfirmPressed: _uploadAudioAndNavigate,
-                            keys: {
-                              'record': _recordButtonKey,
-                              'play': _playButtonKey,
-                              'confirm': _confirmButtonKey,
-                            },
-            ),
-          ),
-        ),
-                    ],
+                            SizedBox(height: 5),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 25.0, vertical: 20),
+                                child: AudioShowcaseButtons(
+                                  isRecording: _isRecording,
+                                  isPlaying: _isPlaying,
+                                  isEnabled: _recordingAvailable,
+                                  onRecordPressed: _toggleRecording,
+                                  onPlayPressed: _playRecording,
+                                  onConfirmPressed: _uploadAudioAndNavigate,
+                                  keys: {
+                                    'record': _recordButtonKey,
+                                    'play': _playButtonKey,
+                                    'confirm': _confirmButtonKey,
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
@@ -431,24 +538,7 @@ class _IdentifyState extends State<Identify> {
             ],
           );
         },
-      ));}
-Widget _buildStyledButton({
-  required VoidCallback? onPressed,
-  required String label,
-  required IconData icon,
-  required Color color,
-}) {
-  return ElevatedButton.icon(
-    onPressed: onPressed,
-    icon: Icon(icon, color: Colors.white),
-    label: Text(label, style: TextStyle(fontSize: 18, color: Colors.white)),
-    style: ElevatedButton.styleFrom(
-      minimumSize: Size(double.infinity, 50),
-      backgroundColor: color,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
       ),
-    ),
-  );
-}
+    );
+  }
 }

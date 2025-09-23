@@ -185,6 +185,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
+  connectivity_plus:
+    dependency: "direct main"
+    description:
+      name: connectivity_plus
+      sha256: "77a180d6938f78ca7d2382d2240eb626c0f6a735d0bfdce227d8ffb80f95c48b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.2"
+  connectivity_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: connectivity_plus_platform_interface
+      sha256: cf1d1c28f4416f8c654d7dc3cd638ec586076255d407cef3ddbdaf178272a71a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.4"
   convert:
     dependency: transitive
     description:
@@ -225,6 +241,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.6"
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: "79e0c23480ff85dc68de79e2cd6334add97e48f7f4865d17686dd6ea81a47e8c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.11"
   device_info_plus:
     dependency: transitive
     description:
@@ -439,26 +463,34 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_sound
-      sha256: "719f6f511c5a1ce9b38031d1ba430f1ac5ca644a9bdcc757990349db9591b82e"
+      sha256: ef89477f6e8ce2fa395158ebc4a8b11982e3ada440b4021c06fd97a4e771554b
       url: "https://pub.dev"
     source: hosted
-    version: "9.11.2"
+    version: "9.28.0"
   flutter_sound_platform_interface:
     dependency: transitive
     description:
       name: flutter_sound_platform_interface
-      sha256: f75db77bf9fec46c70b284d7628d545ef7ba4164177e53f9dd14c48d0f557615
+      sha256: "3394d7e664a09796818014ff85a81db0dec397f4c286cbe52f8783886fa5a497"
       url: "https://pub.dev"
     source: hosted
-    version: "9.11.2"
+    version: "9.28.0"
   flutter_sound_web:
     dependency: transitive
     description:
       name: flutter_sound_web
-      sha256: "45811ad00142ff33d7e3c1ff47eb8c3fb1a3d363f9a3a60ccd7d240ee1139d14"
+      sha256: "4e10c94a8574bd93bb8668af59bf76f5312a890bccd3778d73168a7133217dc5"
       url: "https://pub.dev"
     source: hosted
-    version: "9.11.2"
+    version: "9.28.0"
+  flutter_spinkit:
+    dependency: "direct main"
+    description:
+      name: flutter_spinkit
+      sha256: "77850df57c00dc218bfe96071d576a8babec24cf58b2ed121c83cca4a2fdce7f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -493,6 +525,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.4"
+  hive:
+    dependency: "direct main"
+    description:
+      name: hive
+      sha256: "8dcf6db979d7933da8217edcec84e9df1bdb4e4edc7fc77dbd5aa74356d6d941"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.3"
+  hive_flutter:
+    dependency: "direct main"
+    description:
+      name: hive_flutter
+      sha256: dca1da446b1d808a51689fb5d0c6c9510c0a2ba01e22805d492c73b68e33eecc
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   http:
     dependency: "direct main"
     description:
@@ -601,10 +649,10 @@ packages:
     dependency: transitive
     description:
       name: js
-      sha256: c1b2e9b5ea78c45e1a0788d29606ba27dc5f71f019f32ca5140f61ef071838cf
+      sha256: f2c445dce49627136094980615a031419f7f3eb393237e4ecd97ac15dea343f3
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.1"
+    version: "0.6.7"
   json_annotation:
     dependency: transitive
     description:
@@ -717,6 +765,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  nm:
+    dependency: transitive
+    description:
+      name: nm
+      sha256: "2c9aae4127bdc8993206464fcc063611e0e36e72018696cd9631023a31b24254"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
   open_file:
     dependency: "direct main"
     description:
@@ -918,13 +974,13 @@ packages:
     source: hosted
     version: "2.1.8"
   provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: provider
-      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
+      sha256: "4e82183fa20e5ca25703ead7e05de9e4cceed1fbd1eadc1ac3cb6f565a09f272"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.2"
+    version: "6.1.5+1"
   pub_semver:
     dependency: transitive
     description:
@@ -933,14 +989,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
-  recase:
-    dependency: transitive
-    description:
-      name: recase
-      sha256: e4eb4ec2dcdee52dcf99cb4ceabaffc631d7424ee55e56f280bc039737f89213
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.1.0"
   rxdart:
     dependency: transitive
     description:

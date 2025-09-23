@@ -1,9 +1,14 @@
+// Letter.dart — Hive-only offline-first with auto Firestore sync
 import 'dart:async';
 import 'dart:math';
+
 import 'package:brainu/firebase/firebase_save_answer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:provider/provider.dart';
 
 import '../components/appbar.dart';
 import '../components/question_container.dart';
@@ -13,7 +18,6 @@ import '../firebase/firebase_services.dart';
 import '../generated/l10n.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:brainu/managers/trophy_manager.dart';
-import 'package:provider/provider.dart';
 
 import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
@@ -25,9 +29,12 @@ class Letter extends StatefulWidget {
 }
 
 class _LetterState extends State<Letter> {
-  final FirebaseServices _firebaseServices = FirebaseServices();
-  final FirebaseSave _firebaseSave = FirebaseSave();
-  late String userLanguage = "english"; // Default to English
+  // Services
+  late FirebaseServices _firebaseServices;
+  late FirebaseSave _firebaseSave;
+
+  // UI / state
+  late String userLanguage = "english"; // Default
   String question = '';
   List<String> options = [];
   bool isSubmitEnabled = false;
@@ -42,13 +49,22 @@ class _LetterState extends State<Letter> {
   int questionIndex = 0;
   int trophyCount = 0;
 
+  // Showcase
   bool showShowcase = false;
-
   final GlobalKey _letterKey = GlobalKey();
   final GlobalKey _clickKey = GlobalKey();
   final GlobalKey _doubleclickKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
 
+  // Hive boxes
+  late Box _progressBox; // progress (question index)
+  late Box<List> _pendingBox; // unsynced answers
+
+  // Connectivity
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult>? _connectivitySub;
+
+  // Word pairs
   List<List<String>> englishWordPairs = [
     ['A', 'a'],
     ['B', 'b'],
@@ -154,11 +170,19 @@ class _LetterState extends State<Letter> {
     ['कृ', 'kre']
   ];
 
+  late List<List<String>> wordPairs = englishWordPairs;
+
   @override
   void initState() {
     super.initState();
+
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _firebaseServices = FirebaseServices(userId: uid);
+    _firebaseSave = FirebaseSave(userId: uid);
+
+    _initLocalBoxesAndListeners();
     _fetchUserLanguage();
-    _loadShowcaseStatus();
+    _loadProgress();
 
     audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) {
@@ -173,59 +197,58 @@ class _LetterState extends State<Letter> {
         });
       }
     });
-    loadProgress().then((_) {
-      loadTrophyCount().then((_) {
-        generateQuestionAndOptions();
-      });
+
+    loadTrophyCount().then((_) {
+      generateQuestionAndOptions();
     });
   }
 
-  Future<void> _loadShowcaseStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      showShowcase = prefs.getBool('showShowcase_1') ?? true;
+  Future<void> _initLocalBoxesAndListeners() async {
+    _progressBox = await Hive.openBox('letter_progress');
+    _pendingBox = await Hive.openBox<List>('letter_pending');
+
+    _connectivitySub = _connectivity.onConnectivityChanged.listen((result) {
+      if (result != ConnectivityResult.none) {
+        _processPendingAnswers();
+      }
     });
+
+    var current = await _connectivity.checkConnectivity();
+    if (current != ConnectivityResult.none) {
+      _processPendingAnswers();
+    }
   }
 
-  Future<void> saveProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('V_C_questionIndex', questionIndex);
+  Future<void> _loadProgress() async {
+    questionIndex = _progressBox.get('V_C_questionIndex', defaultValue: 0);
   }
 
-  Future<void> loadProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    questionIndex = prefs.getInt('V_C_questionIndex') ?? 0;
+  Future<void> _saveProgress() async {
+    await _progressBox.put('V_C_questionIndex', questionIndex);
   }
 
   Future<void> loadTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    int trophyC = trophyManager.trophyCount;
-    trophyCount = trophyC;
+    trophyCount = trophyManager.trophyCount;
   }
 
   Future<void> playAudio(String alphabet) async {
     try {
       final audioPath = 'audio/$userLanguage/v_and_c/$alphabet.wav';
       await audioPlayer.play(AssetSource(audioPath));
-      setState(() {
-        isAudioPlaying = true;
-      });
+      setState(() => isAudioPlaying = true);
     } catch (e) {
-      print('Error playing audio: $e');
+      debugPrint('Error playing audio: $e');
     }
   }
 
   Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyManager.increase(); // this updates the provider
+    trophyManager.increase();
+    setState(() => trophyCount = trophyManager.trophyCount);
 
-    // Now refresh local trophyCount from provider
-    setState(() {
-      trophyCount = trophyManager.trophyCount;
-    });
-
-    // Optionally also save to Firebase if needed:
     await trophyManager.saveToFirebase();
+    await trophyManager.saveToHive();
   }
 
   void showIterationCompleteDialog() {
@@ -243,7 +266,7 @@ class _LetterState extends State<Letter> {
         onReset: () {
           setState(() {
             questionIndex = 0;
-            saveProgress(); // optional: reset progress in SharedPreferences
+            _saveProgress();
             generateQuestionAndOptions();
           });
         },
@@ -265,8 +288,7 @@ class _LetterState extends State<Letter> {
       randomOptions.add(wordPairs[randomIndex][1]);
     }
 
-    options = randomOptions.toList();
-    options.shuffle();
+    options = randomOptions.toList()..shuffle();
 
     selectedOption = null;
     isSubmitEnabled = false;
@@ -277,43 +299,82 @@ class _LetterState extends State<Letter> {
 
   String getHindiCharacterFromOption(String option) {
     for (var pair in hindiWordPairs) {
-      if (pair[1] == option) {
-        return pair[0]; // Return the Hindi character
-      }
+      if (pair[1] == option) return pair[0];
     }
-    return option; // fallback
+    return option;
   }
 
-  late List<List<String>> wordPairs = englishWordPairs; // Default is English
-
   Future<void> _fetchUserLanguage() async {
-    userLanguage = await _firebaseServices.getUserLanguage();
+    try {
+      userLanguage = await _firebaseServices.getUserLanguage();
+    } catch (_) {
+      userLanguage = 'english';
+    }
     setState(() {
       wordPairs = userLanguage == "hindi" ? hindiWordPairs : englishWordPairs;
-      generateQuestionAndOptions(); // Regenerate based on the new list
+      generateQuestionAndOptions();
     });
   }
 
   Future<void> saveAnswer_Letter(bool isCorrect, String? selectedOption) async {
-    String optionToSend = selectedOption!;
+    String optionToSend = selectedOption ?? '';
     if (userLanguage == "hindi") {
-      optionToSend = getHindiCharacterFromOption(selectedOption);
+      optionToSend = getHindiCharacterFromOption(selectedOption ?? '');
     }
-    await _firebaseSave.saveAnswer_Letter(
-        question, isCorrect, optionToSend, userLanguage);
+
+    final pendingItem = {
+      'question': question,
+      'isCorrect': isCorrect,
+      'selectedOption': optionToSend,
+      'userLanguage': userLanguage,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    List pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+    pending.add(pendingItem);
+    await _pendingBox.put('pending', pending.cast());
+
+    var conn = await _connectivity.checkConnectivity();
+    if (conn != ConnectivityResult.none) {
+      await _processPendingAnswers();
+    }
+  }
+
+  Future<void> _processPendingAnswers() async {
+    final pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+    if (pending.isEmpty) return;
+
+    final List items = List.from(pending);
+    bool anyUploaded = false;
+
+    for (var item in items) {
+      try {
+        await _firebaseSave.saveAnswer_Letter(
+          letter: item['question'],
+          isCorrect: item['isCorrect'],
+          selectedOption: item['selectedOption'],
+          userLanguage: item['userLanguage'],
+        );
+
+        pending.remove(item);
+        anyUploaded = true;
+      } catch (e) {
+        debugPrint('Failed to upload letter answer: $e');
+      }
+    }
+
+    if (anyUploaded) {
+      await _pendingBox.put('pending', pending.cast());
+    }
   }
 
   void handleClick(String option) {
     setState(() {
       if (selectedOption != null && selectedOption != option) {
-        int previousCount = clickCountMap[selectedOption!] ?? 0;
-        if (previousCount == 1 || previousCount == 2) {
-          clickCountMap[selectedOption!] = 0;
-        }
+        clickCountMap[selectedOption!] = 0;
       }
 
       int currentCount = clickCountMap[option] ?? 0;
-
       if (currentCount == 0) {
         clickCountMap[option] = 1;
         playAudio(option);
@@ -337,27 +398,21 @@ class _LetterState extends State<Letter> {
       questionCounter++;
       _showGameElements = false;
       questionIndex++;
-      saveProgress();
+      _saveProgress();
 
       if (questionIndex >= wordPairs.length) {
         showCompletionDialog();
-        return; // prevent further processing
+        return;
       }
 
       if (questionCounter == 5) {
         iterationCounter++;
-
         _saveTrophyCount();
         questionCounter = 0;
-
         showIterationCompleteDialog();
 
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {
-              generateQuestionAndOptions();
-            });
-          }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) generateQuestionAndOptions();
         });
       } else {
         generateQuestionAndOptions();
@@ -369,6 +424,9 @@ class _LetterState extends State<Letter> {
   void dispose() {
     clickTimers.values.forEach((timer) => timer?.cancel());
     audioPlayer.dispose();
+    _connectivitySub?.cancel();
+    _progressBox.close();
+    _pendingBox.close();
     super.dispose();
   }
 
@@ -377,22 +435,6 @@ class _LetterState extends State<Letter> {
     return ShowCaseWidget(
       builder: Builder(
         builder: (context) {
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (showShowcase && iterationCounter == 0) {
-              ShowCaseWidget.of(context).startShowCase([
-                _letterKey,
-                _clickKey,
-                _doubleclickKey,
-                _confirmButtonKey,
-              ]);
-              // Save it so next time it's skipped
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('showShowcase_1', false);
-              setState(() {
-                showShowcase = false;
-              });
-            }
-          });
           return Stack(
             children: [
               Positioned.fill(
@@ -400,47 +442,24 @@ class _LetterState extends State<Letter> {
                     Image.asset('assets/img/Letter_bg.png', fit: BoxFit.cover),
               ),
               Scaffold(
-                backgroundColor: Colors.transparent, // Important!
-                // appBar: CustomAppBar(titleKey: 'letter'),
-                appBar: CustomAppBar(
-                  titleKey: 'letter',
-                  onLearnPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('showShowcase_1', true);
-                    setState(() {
-                      showShowcase = true;
-                    });
-                    ShowCaseWidget.of(context).startShowCase([
-                      _letterKey,
-                      _clickKey,
-                      _doubleclickKey,
-                      _confirmButtonKey,
-                    ]);
-                  },
-                ),
-
+                backgroundColor: Colors.transparent,
+                appBar: CustomAppBar(titleKey: 'letter'),
                 body: Column(
                   children: [
                     CustomContainer(text: S.of(context).vc_starting_question),
                     if (!_showGameElements)
                       StartButton(
-                        onPressed: () {
-                          setState(() {
-                            _showGameElements = true;
-                          });
-                        },
+                        onPressed: () =>
+                            setState(() => _showGameElements = true),
                       ),
                     if (_showGameElements)
                       Expanded(
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             double screenWidth = constraints.maxWidth;
-                            double imageSize =
-                                screenWidth * 0.40; // Scales for tablet
-                            double fontSize =
-                                screenWidth * 0.10; // Responsive font size
-                            double spacing =
-                                screenWidth * 0.04; // Spacing between options
+                            double imageSize = screenWidth * 0.40;
+                            double fontSize = screenWidth * 0.10;
+                            double spacing = screenWidth * 0.04;
 
                             return Center(
                               child: Column(
@@ -460,9 +479,7 @@ class _LetterState extends State<Letter> {
                                         bottom: 20,
                                         child: Showcase(
                                           key: _letterKey,
-                                          description: S
-                                              .of(context)
-                                              .Read_Text, // e.g. "Read this letter"
+                                          description: S.of(context).Read_Text,
                                           child: Text(
                                             question.toUpperCase(),
                                             style: TextStyle(
@@ -478,23 +495,6 @@ class _LetterState extends State<Letter> {
                                     ],
                                   ),
                                   SizedBox(height: spacing),
-                                  // Wrap(
-                                  //   alignment: WrapAlignment.center,
-                                  //   spacing: spacing,
-                                  //   runSpacing: spacing / 2,
-                                  //   children:
-                                  //       options.asMap().entries.map((entry) {
-                                  //     int index = entry.key + 1;
-                                  //     String option = entry.value;
-
-                                  //     return OptionButton(
-                                  //       index: index,
-                                  //       isSelected: selectedOption == option,
-                                  //       clickCount: clickCountMap[option] ?? 0,
-                                  //       onPressed: () => handleClick(option),
-                                  //     );
-                                  //   }).toList(),
-                                  // ),
                                   Wrap(
                                     spacing: 20,
                                     alignment: WrapAlignment.center,
@@ -515,8 +515,7 @@ class _LetterState extends State<Letter> {
                                             .of(context)
                                             .double_click_to_select;
                                       } else {
-                                        key =
-                                            GlobalKey(); // dummy key, not showcased
+                                        key = GlobalKey();
                                         desc = '';
                                       }
 
