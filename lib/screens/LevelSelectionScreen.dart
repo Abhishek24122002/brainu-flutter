@@ -41,10 +41,10 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
     Listen(),
     Story(),
     Swap(),
-    Ph_deletion_final(),
-    Ph_deletion_initial(),
-    Ph_substitution_final(),
-    Ph_substitution_initial(),
+    // Ph_deletion_final(),
+    // Ph_deletion_initial(),
+    // Ph_substitution_final(),
+    // Ph_substitution_initial(),
   ];
 
   late Box<List> completedLevelsBox;

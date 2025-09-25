@@ -60,69 +60,96 @@ class FirebaseSave {
   }
 
   Future<void> saveAnswer_Word({
-    required String uploadedUrl,
-    required String currentWord,
-    required String userLanguage,
-  }) async {
-    if (userId.isEmpty) return;
+  required String uploadedUrl,
+  required String currentWord,
+  required String userLanguage,
+}) async {
+  if (userId.isEmpty) return;
 
-    final box = await Hive.openBox('answers');
-    await box.put('${userId}_word_$currentWord', {'audioUrl': uploadedUrl});
+  // ✅ Save locally in Hive (offline-first)
+  final box = await Hive.openBox('answers');
+  await box.put('${userId}_word_$currentWord', {
+    'audioUrl': uploadedUrl,
+    'word': currentWord,
+    'userLanguage': userLanguage,
+  });
 
-    final docRef = _firestore
-        .collection("users")
-        .doc(userId)
-        .collection("3 Word")
-        .doc(userLanguage);
+  // ✅ Save to Firestore
+  final docRef = _firestore
+      .collection("users")
+      .doc(userId)
+      .collection("3 Word")
+      .doc(userLanguage);
 
-    await docRef.set({
-      currentWord: {'audioUrl': uploadedUrl}
-    }, SetOptions(merge: true));
-  }
+  await docRef.set({
+    currentWord: {
+      'audioUrl': uploadedUrl,
+    }
+  }, SetOptions(merge: true));
+}
+
 
   Future<void> saveAnswer_Listen({
-    required String uploadedUrl,
-    required String currentWord,
-    required String userLanguage,
-  }) async {
-    if (userId.isEmpty) return;
+  required String uploadedUrl,
+  required String currentWord,
+  required String userLanguage,
+}) async {
+  if (userId.isEmpty) return;
 
-    final box = await Hive.openBox('answers');
-    await box.put('${userId}_listen_$currentWord', {'imageUrl': uploadedUrl});
+  // ✅ Save locally in Hive for offline use
+  final box = await Hive.openBox('answers');
+  await box.put('${userId}_listen_$currentWord', {
+    'imageUrl': uploadedUrl,
+    'word': currentWord,
+    'userLanguage': userLanguage,
+  });
 
-    final docRef = _firestore
-        .collection("users")
-        .doc(userId)
-        .collection("4 Listen")
-        .doc(userLanguage);
+  // ✅ Save to Firestore
+  final docRef = _firestore
+      .collection("users")
+      .doc(userId)
+      .collection("4 Listen")
+      .doc(userLanguage);
 
-    await docRef.set({
-      currentWord: {'imageUrl': uploadedUrl}
-    }, SetOptions(merge: true));
-  }
+  await docRef.set({
+    currentWord: {
+      'imageUrl': uploadedUrl,
+    }
+  }, SetOptions(merge: true));
+}
+
 
   Future<void> saveAnswer_Story({
-    required String iterationKey,
-    required String storyText,
-    required String audioUrl,
-    required String userLanguage,
-  }) async {
-    if (userId.isEmpty) return;
+  required String iterationKey,
+  required String storyText,
+  required String audioUrl,
+  required String userLanguage,
+}) async {
+  if (userId.isEmpty) return;
 
-    final box = await Hive.openBox('answers');
-    await box.put('${userId}_story_$iterationKey',
-        {'story': storyText, 'audioUrl': audioUrl});
+  // ✅ Save locally in Hive (offline-first)
+  final box = await Hive.openBox('answers');
+  await box.put('${userId}_story_$iterationKey', {
+    'story': storyText,
+    'audioUrl': audioUrl,
+    'userLanguage': userLanguage,
+  });
 
-    final docRef = _firestore
-        .collection("users")
-        .doc(userId)
-        .collection("5 Story")
-        .doc(userLanguage);
+  // ✅ Save to Firestore
+  final docRef = _firestore
+      .collection("users")
+      .doc(userId)
+      .collection("5 Story")
+      .doc(userLanguage);
 
-    await docRef.set({
-      iterationKey: {'story': storyText, 'audiourl': audioUrl}
-    }, SetOptions(merge: true));
-  }
+  await docRef.set({
+    iterationKey: {
+      'story': storyText,
+      'audioUrl': audioUrl, // keep naming consistent
+    }
+  }, SetOptions(merge: true));
+}
+
 
   // Ph Deletion Final
   Future<void> saveAnswer_PhDeletionFinal({

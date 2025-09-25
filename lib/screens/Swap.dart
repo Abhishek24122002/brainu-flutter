@@ -28,7 +28,7 @@ class Swap extends StatefulWidget {
 }
 
 class _SwapState extends State<Swap> {
-  final FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseServices _firebaseServices = FirebaseServices(userId: '');
   String _userLanguage = "english"; // Default language
 
   String word1 = '';

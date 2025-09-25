@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:brainu/aws/FileUploader.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,10 @@ import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
 import 'package:showcaseview/showcaseview.dart';
 
+import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
+
 class Listen extends StatefulWidget {
   @override
   _ListenState createState() => _ListenState();
@@ -28,9 +34,10 @@ class Listen extends StatefulWidget {
 
 class _ListenState extends State<Listen> {
   final GlobalKey _canvasKey = GlobalKey();
-  final FirebaseServices _firebaseServices = FirebaseServices();
-  final FirebaseSave _firebaseSave = FirebaseSave();
-  late String userLanguage = "english"; // Default to English
+  final FirebaseServices _firebaseServices = FirebaseServices(userId: '');
+  final FirebaseSave _firebaseSave = FirebaseSave(userId: '');
+  late String userLanguage = "english";
+  final FileUploader _fileUploader = FileUploader(); // Default to English
   late AudioPlayer _audioPlayer;
   bool _isDrawingDone = false;
 
@@ -44,6 +51,14 @@ class _ListenState extends State<Listen> {
 
   String currentLocale = "en"; // Default language
 
+    // Hive boxes
+late Box _progressBox;    // to store question index
+late Box<List> _pendingBox; // to store pending answers (recordings)
+
+// Connectivity
+final Connectivity _connectivity = Connectivity();
+StreamSubscription<ConnectivityResult>? _connectivitySub;
+
   bool showShowcase = false;
 
   final GlobalKey _boardKey = GlobalKey();
@@ -52,6 +67,7 @@ class _ListenState extends State<Listen> {
   @override
   void initState() {
     _fetchUserLanguage();
+    _initLocalBoxesAndListeners();
     loadTrophyCount();
     _loadShowcaseStatus();
     super.initState();
@@ -139,6 +155,22 @@ class _ListenState extends State<Listen> {
     super.dispose();
   }
 
+  Future<void> _initLocalBoxesAndListeners() async {
+    _progressBox = await Hive.openBox('listen_progress');
+    _pendingBox = await Hive.openBox<List>('listen_pending');
+
+    _connectivitySub = _connectivity.onConnectivityChanged.listen((result) {
+      if (result != ConnectivityResult.none) {
+        _processPendingAnswers();
+      }
+    });
+
+    var current = await _connectivity.checkConnectivity();
+    if (current != ConnectivityResult.none) {
+      _processPendingAnswers();
+    }
+  }
+
   Future<void> _fetchUserLanguage() async {
     userLanguage = await _firebaseServices.getUserLanguage();
   }
@@ -150,14 +182,20 @@ class _ListenState extends State<Listen> {
     });
   }
 
-  Future<void> saveProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('Listen_questionIndex', questionIndex);
-  }
+  // Future<void> saveProgress() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.setInt('Listen_questionIndex', questionIndex);
+  // }
+   Future<void> _saveProgress() async {
+  await _progressBox.put('Listen_questionIndex', questionIndex);
+}
 
-  Future<void> loadProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    questionIndex = prefs.getInt('Listen_questionIndex') ?? 0;
+  // Future<void> loadProgress() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   questionIndex = prefs.getInt('Listen_questionIndex') ?? 0;
+  // }
+  Future<void> _loadProgress() async {
+    questionIndex = _progressBox.get('Listen_questionIndex', defaultValue: 0);
   }
 
   Future<void> loadTrophyCount() async {
@@ -204,7 +242,10 @@ class _ListenState extends State<Listen> {
         // ✅ Save file URL to Firebase
         // await saveAnswer_Listen(uploadedUrl);
         await _firebaseSave.saveAnswer_Listen(
-            uploadedUrl, userLanguage, _currentWord);
+          uploadedUrl: uploadedUrl,
+          currentWord: _currentWord,
+          userLanguage: userLanguage,
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -289,7 +330,7 @@ class _ListenState extends State<Listen> {
     });
 
     questionIndex++;
-    await saveProgress();
+    await _saveProgress();
 
     if (_remainingWords.isEmpty) {
       showCompletionDialog();
@@ -303,18 +344,48 @@ class _ListenState extends State<Listen> {
       showIterationCompleteDialog();
     }
   }
+  Future<void> _processPendingAnswers() async {
+  final pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+  if (pending.isEmpty) return;
+
+  final List items = List.from(pending);
+  bool anyUploaded = false;
+
+  for (var item in items) {
+    try {
+      File audioFile = File(item['filePath']);
+      if (!audioFile.existsSync()) continue;
+
+      // Upload to AWS
+      String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+      if (uploadedUrl != null) {
+        await _firebaseSave.saveAnswer_Word(
+          uploadedUrl: uploadedUrl,
+          currentWord: item['word'],
+          userLanguage: item['userLanguage'],
+        );
+
+        pending.remove(item);
+        anyUploaded = true;
+      }
+    } catch (e) {
+      debugPrint('Failed to upload word answer: $e');
+    }
+  }
+
+  if (anyUploaded) {
+    await _pendingBox.put('pending', pending);
+  }
+}
 
   Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyManager.increase(); // this updates the provider
+    trophyManager.increase();
+    setState(() => trophyCount = trophyManager.trophyCount);
 
-    // Now refresh local trophyCount from provider
-    setState(() {
-      trophyCount = trophyManager.trophyCount;
-    });
-
-    // Optionally also save to Firebase if needed:
     await trophyManager.saveToFirebase();
+    await trophyManager.saveToHive();
   }
 
   void showIterationCompleteDialog() {

@@ -20,6 +20,10 @@ import '../components/popups/trophy.dart';
 import '../components/popups/completion.dart';
 import '../components/showcase/AudioShowcaseButtons.dart';
 
+import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
+
 class Word extends StatefulWidget {
   @override
   _WordState createState() => _WordState();
@@ -32,8 +36,8 @@ class _WordState extends State<Word> {
   bool _showGameElements = false;
   bool _isUploading = false; // Prevent multiple confirm presses
 
-  final FirebaseServices _firebaseServices = FirebaseServices();
-  final FirebaseSave _firebaseSave = FirebaseSave();
+  final FirebaseServices _firebaseServices = FirebaseServices(userId: '');
+  final FirebaseSave _firebaseSave = FirebaseSave(userId: '');
   late String userLanguage = "english"; // Default to English
   final FileUploader _fileUploader = FileUploader();
 
@@ -52,14 +56,38 @@ class _WordState extends State<Word> {
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
 
+  // Hive boxes
+late Box _progressBox;    // to store question index
+late Box<List> _pendingBox; // to store pending answers (recordings)
+
+// Connectivity
+final Connectivity _connectivity = Connectivity();
+StreamSubscription<ConnectivityResult>? _connectivitySub;
+
   @override
   void initState() {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
+    _initLocalBoxesAndListeners();
     _fetchUserLanguage();
     loadTrophyCount();
     _loadShowcaseStatus();
+  }
+  Future<void> _initLocalBoxesAndListeners() async {
+    _progressBox = await Hive.openBox('word_progress');
+    _pendingBox = await Hive.openBox<List>('word_pending');
+
+    _connectivitySub = _connectivity.onConnectivityChanged.listen((result) {
+      if (result != ConnectivityResult.none) {
+        _processPendingAnswers();
+      }
+    });
+
+    var current = await _connectivity.checkConnectivity();
+    if (current != ConnectivityResult.none) {
+      _processPendingAnswers();
+    }
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -233,26 +261,44 @@ class _WordState extends State<Word> {
     print("Current Word: $currentWord");
   }
 
-  Future<void> saveProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('Word_questionIndex', questionIndex);
+  // Future<void> saveProgress() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.setInt('Word_questionIndex', questionIndex);
+  // }
+  Future<void> _saveProgress() async {
+  await _progressBox.put('Word_questionIndex', questionIndex);
+}
+
+  // Future<void> loadProgress() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
+  // }
+  Future<void> _loadProgress() async {
+    questionIndex = _progressBox.get('Word_questionIndex', defaultValue: 0);
   }
 
-  Future<void> loadProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    questionIndex = prefs.getInt('Word_questionIndex') ?? 0;
-  }
-
-  Future<void> loadTrophyCount() async {
-    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    int trophyC = trophyManager.trophyCount;
-    trophyCount = trophyC;
-  }
 
   Future<void> _saveWords() async {
     await prefs.setStringList('remainingWords_$userLanguage', remainingWords);
   }
 
+Future<void> _saveTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyManager.increase();
+    setState(() => trophyCount = trophyManager.trophyCount);
+
+    await trophyManager.saveToFirebase();
+    await trophyManager.saveToHive();
+  }
+  // Future<void> loadTrophyCount() async {
+  //   final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+  //   int trophyC = trophyManager.trophyCount;
+  //   trophyCount = trophyC;
+  // }
+  Future<void> loadTrophyCount() async {
+    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+    trophyCount = trophyManager.trophyCount;
+  }
   Future<void> _resetWords(List<String> selectedWords) async {
     await prefs.remove('remainingWords_$userLanguage'); // Clear stored words
 
@@ -318,77 +364,113 @@ class _WordState extends State<Word> {
       });
     }
   }
+  
 
   void _onConfirm() async {
-    if (_isUploading) {
-      print("Upload already in progress. Please wait.");
-      return;
-    }
+  if (_isUploading) return;
 
-    if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
-      print("No recording available to upload.");
-      return;
-    }
+  if (_recordingPath == null || !File(_recordingPath!).existsSync()) {
+    print("No recording available to upload.");
+    return;
+  }
 
+  setState(() {
+    _isUploading = true;
+  });
+
+  final pendingItem = {
+    'filePath': _recordingPath,
+    'word': currentWord,
+    'userLanguage': userLanguage,
+    'timestamp': DateTime.now().toIso8601String(),
+  };
+
+  List pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+  pending.add(pendingItem);
+  await _pendingBox.put('pending', pending.cast());
+
+  // Try processing if online
+  var conn = await _connectivity.checkConnectivity();
+  if (conn != ConnectivityResult.none) {
+    await _processPendingAnswers();
+  }
+
+  // Move to next word regardless
+  if (remainingWords.isNotEmpty) {
     setState(() {
-      _isUploading = true;
-    });
-
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-    if (uploadedUrl != null) {
-      await _firebaseSave.saveAnswer_word(
-          uploadedUrl, userLanguage, currentWord);
-
-      if (remainingWords.isNotEmpty) {
-        setState(() {
-          remainingWords.removeAt(0);
-          currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
-        });
-        await _saveWords();
-      }
-
-      setState(() {
-        _showGameElements = false;
-        _recordingAvailable = false;
-        _recordingPath = null;
-      });
-
-      questionIndex++;
-      await saveProgress();
-
-      // 🏆 Check for trophy every 5 words
-      if (questionIndex % 5 == 0) {
-        trophyCount++;
-        await _saveTrophyCount();
-        showIterationCompleteDialog();
-      }
-
-      if (remainingWords.isEmpty) {
-        _showCompletionDialog();
-      }
-    } else {
-      print("File upload failed.");
-    }
-
-    setState(() {
-      _isUploading = false;
+      remainingWords.removeAt(0);
+      currentWord = remainingWords.isNotEmpty ? remainingWords.first : "";
     });
   }
 
-  Future<void> _saveTrophyCount() async {
-    final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyManager.increase(); // this updates the provider
+  questionIndex++;
+  await _saveProgress();
 
-    // Now refresh local trophyCount from provider
-    setState(() {
-      trophyCount = trophyManager.trophyCount;
-    });
-
-    // Optionally also save to Firebase if needed:
-    await trophyManager.saveToFirebase();
+  // Trophy logic
+  if (questionIndex % 5 == 0) {
+    await _saveTrophyCount();
+    showIterationCompleteDialog();
   }
+  if (remainingWords.isEmpty) {
+    _showCompletionDialog();
+  }
+
+  setState(() {
+    _isUploading = false;
+    _recordingAvailable = false;
+    _recordingPath = null;
+    _showGameElements = false;
+  });
+}
+Future<void> _processPendingAnswers() async {
+  final pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+  if (pending.isEmpty) return;
+
+  final List items = List.from(pending);
+  bool anyUploaded = false;
+
+  for (var item in items) {
+    try {
+      File audioFile = File(item['filePath']);
+      if (!audioFile.existsSync()) continue;
+
+      // Upload to AWS
+      String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+
+      if (uploadedUrl != null) {
+        await _firebaseSave.saveAnswer_Word(
+          uploadedUrl: uploadedUrl,
+          currentWord: item['word'],
+          userLanguage: item['userLanguage'],
+        );
+
+        pending.remove(item);
+        anyUploaded = true;
+      }
+    } catch (e) {
+      debugPrint('Failed to upload word answer: $e');
+    }
+  }
+
+  if (anyUploaded) {
+    await _pendingBox.put('pending', pending);
+  }
+}
+
+
+
+  // Future<void> _saveTrophyCount() async {
+  //   final trophyManager = Provider.of<TrophyManager>(context, listen: false);
+  //   trophyManager.increase(); // this updates the provider
+
+  //   // Now refresh local trophyCount from provider
+  //   setState(() {
+  //     trophyCount = trophyManager.trophyCount;
+  //   });
+
+  //   // Optionally also save to Firebase if needed:
+  //   await trophyManager.saveToFirebase();
+  // }
 
   void showIterationCompleteDialog() {
     showDialog(
@@ -409,9 +491,12 @@ class _WordState extends State<Word> {
 
   @override
   void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
-    super.dispose();
+    _connectivitySub?.cancel();
+  _progressBox.close();
+  _pendingBox.close();
+  _recorder.closeRecorder();
+  _player.closePlayer();
+  super.dispose();
   }
 
   @override

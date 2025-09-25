@@ -8,23 +8,21 @@ import '../aws/FileUploader.dart';
 import '../firebase/firebase_save_answer.dart';
 import '../firebase/firebase_services.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../generated/l10n.dart';
 
 import '../components/appbar.dart';
-
-import '../components/audio_buttons.dart';
-
 import '../components/question_container.dart';
 import '../components/start_button.dart';
+import '../components/popups/trophy.dart';
+import '../components/popups/completion.dart';
+import '../components/showcase/AudioShowcaseButtons.dart';
 
 import 'package:brainu/managers/trophy_manager.dart';
 import 'package:provider/provider.dart';
 
-import '../components/popups/trophy.dart';
-import '../components/popups/completion.dart';
-import '../components/showcase/AudioShowcaseButtons.dart';
+import 'package:hive/hive.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 
 class Story extends StatefulWidget {
   @override
@@ -42,28 +40,55 @@ class _StoryState extends State<Story> {
   int questionIndex = 0;
   int trophyCount = 0;
   bool showShowcase = false;
+
   final GlobalKey _storyContainerKey = GlobalKey();
   final GlobalKey _recordButtonKey = GlobalKey();
   final GlobalKey _playButtonKey = GlobalKey();
   final GlobalKey _confirmButtonKey = GlobalKey();
 
-  final FirebaseServices _firebaseServices = FirebaseServices();
-  final FirebaseSave _firebaseSave = FirebaseSave();
-  late String userLanguage = "english"; // Default to English
+  final FirebaseServices _firebaseServices = FirebaseServices(userId: '');
+  final FirebaseSave _firebaseSave = FirebaseSave(userId: '');
+  late String userLanguage = "english";
   final FileUploader _fileUploader = FileUploader();
 
   FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   FlutterSoundPlayer _player = FlutterSoundPlayer();
+
+  // Hive boxes
+  late Box _progressBox;
+  late Box<List> _pendingBox;
+
+  // Connectivity
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult>? _connectivitySub;
 
   @override
   void initState() {
     super.initState();
     _initializeRecorder();
     _player.openPlayer();
+    _initLocalBoxesAndListeners();
     _fetchUserLanguage();
     loadTrophyCount();
-    loadProgress();
     _loadShowcaseStatus();
+  }
+
+  Future<void> _initLocalBoxesAndListeners() async {
+    _progressBox = await Hive.openBox('story_progress');
+    _pendingBox = await Hive.openBox<List>('story_pending');
+
+    _connectivitySub = _connectivity.onConnectivityChanged.listen((result) {
+      if (result != ConnectivityResult.none) {
+        _processPendingAnswers();
+      }
+    });
+
+    var current = await _connectivity.checkConnectivity();
+    if (current != ConnectivityResult.none) {
+      _processPendingAnswers();
+    }
+
+    _loadProgress();
   }
 
   Future<void> _initializeRecorder() async {
@@ -72,7 +97,6 @@ class _StoryState extends State<Story> {
     await _recorder.openRecorder();
   }
 
-  /// Function to get stories dynamically from ARB files
   List<String> getStories(BuildContext context) {
     return [
       S.of(context).paragraph_reading_0,
@@ -80,7 +104,7 @@ class _StoryState extends State<Story> {
       S.of(context).paragraph_reading_2,
       S.of(context).paragraph_reading_3,
       S.of(context).paragraph_reading_4,
-    ].where((story) => story.isNotEmpty).toList(); // Filter out empty stories
+    ].where((story) => story.isNotEmpty).toList();
   }
 
   Future<void> _fetchUserLanguage() async {
@@ -88,26 +112,28 @@ class _StoryState extends State<Story> {
   }
 
   Future<void> _loadShowcaseStatus() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = await Hive.openBox('showcase_flags');
     setState(() {
-      showShowcase = prefs.getBool('showShowcase_5') ?? true;
+      showShowcase = box.get('showShowcase_5', defaultValue: true);
     });
   }
 
-  Future<void> saveProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('Story_questionIndex', questionIndex);
+  Future<void> _saveShowcaseStatus(bool value) async {
+    final box = await Hive.openBox('showcase_flags');
+    await box.put('showShowcase_5', value);
   }
 
-  Future<void> loadProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    questionIndex = prefs.getInt('Story_questionIndex') ?? 0;
+  Future<void> _saveProgress() async {
+    await _progressBox.put('Story_questionIndex', questionIndex);
+  }
+
+  Future<void> _loadProgress() async {
+    questionIndex = _progressBox.get('Story_questionIndex', defaultValue: 0);
   }
 
   Future<void> loadTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    int trophyC = trophyManager.trophyCount;
-    trophyCount = trophyC;
+    trophyCount = trophyManager.trophyCount;
   }
 
   Future<void> _playRecording() async {
@@ -115,84 +141,97 @@ class _StoryState extends State<Story> {
       await _player.startPlayer(
         fromURI: _recordingPath,
         whenFinished: () {
-          setState(() {
-            _isPlaying = false;
-          });
+          setState(() => _isPlaying = false);
         },
       );
-      setState(() {
-        _isPlaying = true;
-      });
+      setState(() => _isPlaying = true);
     }
   }
 
   void _confirmStory() async {
-    if (_recordingPath == null) {
-      print("No recording found.");
-      return;
-    }
+    if (_recordingPath == null) return;
 
     File recordedFile = File(_recordingPath!);
-    if (!recordedFile.existsSync()) {
-      print("Recorded file does not exist.");
+    if (!recordedFile.existsSync()) return;
+
+    final pendingItem = {
+      'filePath': _recordingPath,
+      'storyIndex': currentStoryIndex,
+      'storyText': stories[currentStoryIndex],
+      'userLanguage': userLanguage,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    List pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+    pending.add(pendingItem);
+    await _pendingBox.put('pending', pending.cast());
+
+    var conn = await _connectivity.checkConnectivity();
+    if (conn != ConnectivityResult.none) {
+      await _processPendingAnswers();
+    }
+
+    questionIndex++;
+    await _saveProgress();
+
+    if (questionIndex % 5 == 0) {
+      await _saveTrophyCount();
+      showIterationCompleteDialog();
       return;
     }
 
-    File audioFile = File(_recordingPath!);
-    String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
-
-    if (uploadedUrl != null) {
-      print("File uploaded successfully: $uploadedUrl");
-
-      String currentStory = stories[currentStoryIndex];
-      String iterationKey = 'iteration${currentStoryIndex + 1}';
-
-      await _firebaseSave.saveAnswer_Story(
-        userLanguage,
-        iterationKey,
-        currentStory,
-        uploadedUrl,
-      );
-
-      // ✅ INCREMENT first
-      questionIndex++;
-      await saveProgress();
-
-      // ✅ Trophy only after every 5 stories (5, 10, 15, ...)
-      if (questionIndex % 5 == 0) {
-        trophyCount++;
-        await _saveTrophyCount();
-        showIterationCompleteDialog();
-        return; // Stop here to avoid advancing to next story before dialog
-      }
-
-      // ✅ Proceed to next story if not the end
-      if (currentStoryIndex < stories.length - 1) {
-        setState(() {
-          _recordingAvailable = false;
-          currentStoryIndex++;
-          _recordingPath = null;
-          _showGameElements = false;
-        });
-      } else {
-        showAllWordsDoneDialog();
-      }
+    if (currentStoryIndex < stories.length - 1) {
+      setState(() {
+        _recordingAvailable = false;
+        currentStoryIndex++;
+        _recordingPath = null;
+        _showGameElements = false;
+      });
     } else {
-      print("File upload failed.");
+      showAllStoriesDoneDialog();
     }
   }
 
+  Future<void> _processPendingAnswers() async {
+  final pending = _pendingBox.get('pending', defaultValue: [])!.toList();
+  if (pending.isEmpty) return;
+
+  final List items = List.from(pending);
+  bool anyUploaded = false;
+
+  for (var item in items) {
+    try {
+      File audioFile = File(item['filePath']);
+      if (!audioFile.existsSync()) continue;
+
+      String? uploadedUrl = await _fileUploader.uploadFile(audioFile);
+      if (uploadedUrl != null) {
+        await _firebaseSave.saveAnswer_Story(
+          iterationKey: 'iteration${item['storyIndex'] + 1}',
+          storyText: item['storyText'],
+          audioUrl: uploadedUrl,
+          userLanguage: item['userLanguage'],
+        );
+        pending.remove(item);
+        anyUploaded = true;
+      }
+    } catch (e) {
+      debugPrint('Failed to upload story answer: $e');
+    }
+  }
+
+  if (anyUploaded) {
+    await _pendingBox.put('pending', pending);
+  }
+}
+
+
   Future<void> _saveTrophyCount() async {
     final trophyManager = Provider.of<TrophyManager>(context, listen: false);
-    trophyManager.increase(); // this updates the provider
-
-    // Now refresh local trophyCount from provider
-    setState(() {
-      trophyCount = trophyManager.trophyCount;
-    });
-
-    // Optionally also save to Firebase if needed:
+    trophyManager.increase();
+    setState(() => trophyCount = trophyManager.trophyCount);
     await trophyManager.saveToFirebase();
+    await trophyManager.saveToHive();
   }
 
   void showIterationCompleteDialog() {
@@ -202,14 +241,13 @@ class _StoryState extends State<Story> {
     );
   }
 
-  void showAllWordsDoneDialog() {
+  void showAllStoriesDoneDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => CompletionDialog(
         onReset: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('Story_questionIndex', 0);
+          await _progressBox.put('Story_questionIndex', 0);
           setState(() {
             questionIndex = 0;
             currentStoryIndex = 0;
@@ -223,6 +261,9 @@ class _StoryState extends State<Story> {
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
+    _progressBox.close();
+    _pendingBox.close();
     _recorder.closeRecorder();
     _player.closePlayer();
     super.dispose();
@@ -234,7 +275,7 @@ class _StoryState extends State<Story> {
     if (!test1Dir.existsSync()) {
       test1Dir.createSync(recursive: true);
     }
-    return '${test1Dir.path}/audio_recording$currentStoryIndex.aac';
+    return '${test1Dir.path}/audio_story$currentStoryIndex.aac';
   }
 
   Future<void> _stopRecording() async {
@@ -248,17 +289,7 @@ class _StoryState extends State<Story> {
   Future<void> _startRecording() async {
     _recordingPath = await _getFilePath();
     await _recorder.startRecorder(toFile: _recordingPath);
-    setState(() {
-      _isRecording = true;
-    });
-  }
-
-  void _resetLevel() {
-    setState(() {
-      currentStoryIndex = 0;
-      _recordingAvailable = false;
-      _showGameElements = false;
-    });
+    setState(() => _isRecording = true);
   }
 
   Future<void> _toggleRecording() async {
@@ -271,8 +302,7 @@ class _StoryState extends State<Story> {
 
   @override
   Widget build(BuildContext context) {
-    stories = getStories(context); // Fetch localized stories
-    // ✅ Set the currentStoryIndex based on saved progress
+    stories = getStories(context);
     currentStoryIndex = questionIndex.clamp(0, stories.length - 1);
 
     return ShowCaseWidget(
@@ -286,12 +316,8 @@ class _StoryState extends State<Story> {
                 _playButtonKey,
                 _confirmButtonKey,
               ]);
-              // Save it so next time it's skipped
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('showShowcase_5', false);
-              setState(() {
-                showShowcase = false;
-              });
+              await _saveShowcaseStatus(false);
+              setState(() => showShowcase = false);
             }
           });
 
@@ -305,15 +331,11 @@ class _StoryState extends State<Story> {
               ),
               Scaffold(
                 backgroundColor: Colors.transparent,
-                // appBar: CustomAppBar(titleKey: 'story'),
                 appBar: CustomAppBar(
                   titleKey: 'story',
                   onLearnPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('showShowcase_5', true);
-                    setState(() {
-                      showShowcase = true;
-                    });
+                    await _saveShowcaseStatus(true);
+                    setState(() => showShowcase = true);
                     ShowCaseWidget.of(context).startShowCase([
                       _storyContainerKey,
                       _recordButtonKey,
@@ -322,101 +344,64 @@ class _StoryState extends State<Story> {
                     ]);
                   },
                 ),
-                body: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment
-                        .start, // Align to start instead of center
-                    children: [
-                      // Question Section
-                      CustomContainer(
-                          text: S.of(context).paragraph_reading_question),
-
-                      // Story Section with Scroll only for text
-                      if (_showGameElements &&
-                          currentStoryIndex < stories.length)
-                        Showcase(
-                          key: _storyContainerKey,
-                          description:
-                              S.of(context).Read_text_loudly, // ✅ instruction
-                          child: GestureDetector(
-                            onTap: () {
-                              ShowCaseWidget.of(context)
-                                  .dismiss(); // dismiss on touch
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              height: MediaQuery.of(context).size.height * 0.37,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/img/Story_container.png'),
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(70, 60, 70, 65),
-                                child: ScrollbarTheme(
-                                  data: ScrollbarThemeData(
-                                    thumbColor: MaterialStateProperty.all(
-                                        Color.fromARGB(154, 141, 110, 99)),
-                                    trackColor: MaterialStateProperty.all(
-                                        Colors.brown[100]),
-                                    thickness: MaterialStateProperty.all(5),
-                                    radius: Radius.circular(10),
-                                  ),
-                                  child: Scrollbar(
-                                    thumbVisibility: true,
-                                    child: SingleChildScrollView(
-                                      child: Text(
-                                        stories[currentStoryIndex],
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          color: Color.fromRGBO(114, 64, 23, 1),
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                body: Column(
+                  children: [
+                    CustomContainer(
+                        text: S.of(context).paragraph_reading_question),
+                    if (!_showGameElements)
+                      StartButton(
+                        onPressed: () {
+                          setState(() => _showGameElements = true);
+                        },
+                      ),
+                    if (_showGameElements && currentStoryIndex < stories.length)
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Center(
+                                child: Showcase(
+                                  key: _storyContainerKey,
+                                  description: S.of(context).Read_text_loudly,
+                                  child: SingleChildScrollView(
+                                    child: Text(
+                                      stories[currentStoryIndex],
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 25.0, vertical: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  AudioShowcaseButtons(
+                                    isRecording: _isRecording,
+                                    isPlaying: _isPlaying,
+                                    isEnabled: _recordingAvailable,
+                                    onRecordPressed: _toggleRecording,
+                                    onPlayPressed: _playRecording,
+                                    onConfirmPressed: _confirmStory,
+                                    keys: {
+                                      'record': _recordButtonKey,
+                                      'play': _playButtonKey,
+                                      'confirm': _confirmButtonKey,
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      // const SizedBox(height: 10),
-
-                      // Start Button
-                      if (!_showGameElements)
-                        StartButton(
-                          onPressed: () {
-                            setState(() {
-                              _showGameElements = true;
-                            });
-                          },
-                        ),
-
-                      // Recording & Confirm Buttons
-                      if (_showGameElements) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                          child: AudioShowcaseButtons(
-                            isRecording: _isRecording,
-                            isPlaying: _isPlaying,
-                            isEnabled: _recordingAvailable,
-                            onRecordPressed: _toggleRecording,
-                            onPlayPressed: _playRecording,
-                            onConfirmPressed: _confirmStory,
-                            keys: {
-                              'record': _recordButtonKey,
-                              'play': _playButtonKey,
-                              'confirm': _confirmButtonKey,
-                            },
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ],
