@@ -80,8 +80,8 @@ class FirebaseSave {
     }, SetOptions(merge: true));
   }
 
-  Future<void> saveAnswer_Listen({
-    required String uploadedUrl,
+  Future<void> saveAnswer_Listen(
+    String uploadedUrl, {
     required String currentWord,
     required String userLanguage,
   }) async {
@@ -120,7 +120,7 @@ class FirebaseSave {
         .doc(userLanguage);
 
     await docRef.set({
-      iterationKey: {'story': storyText, 'audiourl': audioUrl}
+      iterationKey: {'story': storyText, 'audioUrl': audioUrl} // corrected key
     }, SetOptions(merge: true));
   }
 
